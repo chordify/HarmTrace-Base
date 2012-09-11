@@ -97,7 +97,7 @@ pChordLabel = toChord <$> pRoot <* pSym ':'  <*> pMaybe pShorthand
         remTriadDeg = filter (\(Add (Note _ i)) -> i /= I3 || i /= I5)
 
 pInversion :: Parser (Maybe (Note Interval))
-pInversion = (Just <$> (pSym '/' *> (Note <$> pMaybe pModifier <*> pInterval))
+pInversion = (Just <$> (pSym '/' *> (Note <$> pMaybe pAccidental <*> pInterval))
              ) `opt` Nothing
              
 -- parses a musical key description
@@ -145,15 +145,15 @@ pDegrees = pPacked (pSym '(') (pSym ')') ( pListSep (pSym ',') pDegree )
 
 -- TODO removing degrees is not implemented 
 pDegree :: Parser Addition
-pDegree =   (Add   <$>              (Note <$> pMaybe pModifier <*> pInterval))
-        <|> (NoAdd <$> (pSym '*' *> (Note <$> pMaybe pModifier <*> pInterval)))
+pDegree =  (Add   <$>              (Note <$> pMaybe pAccidental <*> pInterval))
+       <|> (NoAdd <$> (pSym '*' *> (Note <$> pMaybe pAccidental <*> pInterval)))
               
-pModifier :: Parser Modifier
-pModifier =     Sh <$ pSym    's'
-            <|> Sh <$ pSym    '#'
-            <|> Fl <$ pSym    'b'
-            <|> SS <$ pString "ss"
-            <|> FF <$ pString "bb" <?> "Modifier"
+pAccidental :: Parser Accidental
+pAccidental =    Sh <$ pSym    's'
+             <|> Sh <$ pSym    '#'
+             <|> Fl <$ pSym    'b'
+             <|> SS <$ pString "ss"
+             <|> FF <$ pString "bb" <?> "Accidental"
 
 pInterval :: Parser Interval
 pInterval =  ((!!) [minBound..] ) . pred <$> pNaturalRaw

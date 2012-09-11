@@ -1,45 +1,66 @@
 {-# OPTIONS_GHC -Wall           #-}
 
+--------------------------------------------------------------------------------
+-- |
+-- Module      :  HarmTrace.Base.MusicRep
+-- Copyright   :  (c) 2010-2012 Universiteit Utrecht, 2012 University of Oxford
+-- License     :  GPL3
+--
+-- Maintainer  :  bash@cs.uu.nl, jpm@cs.ox.ac.uk
+-- Stability   :  experimental
+-- Portability :  non-portable
+--
+-- Summary: A set of types and classes for representing musical chords. The 
+-- chord datatypes are based on the unambiguous chord representation presented 
+-- in: Harte, C. et al. (2005). /Symbolic representation of musical chords: 
+-- a proposed syntax for text annotations./ Proceedings of 6th International 
+-- Conference on Music Information Retrieval. 
+--------------------------------------------------------------------------------
+
 module HarmTrace.Base.MusicRep where
   
 import Data.Maybe
-import Data.List (elemIndex, intersperse, intercalate, (\\), partition)  
+import Data.List (elemIndex, intersperse, intercalate, (\\), partition)
 
--- import Control.DeepSeq
--- import HarmTrace.HAnTree.Binary
--- import Generics.Instant.TH
--- import Data.Binary
-  
 --------------------------------------------------------------------------------
 -- Representing musical information at the value level
 --------------------------------------------------------------------------------
 
-data PieceLabel = PieceLabel Key [ChordLabel]
 
--- Keys (at the value level)
+-- | A musical key consising of a 'Root' and 'Mode'
 data Key  = Key { keyRoot :: Root, keyMode :: Mode } deriving (Eq, Ord)
+
+-- | The 'Mode' of a key, which can be major or minor
 data Mode = MajMode | MinMode deriving (Eq, Ord)
 
--- instance NFData Mode where
-  -- rnf MinMode = ()
-  -- rnf MajMode = ()
-  
+-- | A container type combinint a key and a list of 'ChordLabel's
+data PieceLabel = PieceLabel Key [ChordLabel]
+
+-- | A chord based on absolute 'Root' notes
 type ChordLabel   = Chord Root
+
+-- | A chord based on relative 'ScaleDegree's
 type ChordDegree  = Chord ScaleDegree
 
--- the representation for a single tokenized chord 
+-- | The representation for a single chord 
 data Chord a = Chord { chordRoot        :: a
                      , chordShorthand   :: Shorthand
                      , chordAdditions   :: [Addition]
-                     , getLoc           :: Int -- the index of the chord  
-                     , duration         :: Int -- in the list of tokens
+                     -- | the index of the chord in the list of tokens
+                     , getLoc           :: Int 
+                     -- | the duration of the chord 
+                     , duration         :: Int 
                      }
 
+-- is this used somewhere?
 data Class = Class ClassType Shorthand
 
+-- | We introduce four chord categories: major chords, minor chords, dominant
+-- seventh chords, and diminshed seventh chords
 data ClassType = MajClass | MinClass | DomClass | DimClass | NoClass
   deriving (Eq)
 
+-- Following Harte et al., we define a number of chord 'Shorthand's
 data Shorthand = -- | Triadic chords
                  Maj | Min | Dim | Aug
                  -- | Seventh chords
@@ -61,16 +82,21 @@ data Shorthand = -- | Triadic chords
   deriving (Show, Eq, Enum, Bounded) 
 
 
--- Key relative scale degrees to abstract from the absolute Root notes
+-- | Key relative scale degrees to abstract from the absolute Root notes
 type ScaleDegree = Note DiatonicDegree
 
-data DiatonicDegree = I | II | III | IV | V | VI | VII | Imp
+-- | All Diatonic scale degrees 
+data DiatonicDegree = I | II | III | IV | V | VI | VII 
+                    | Imp -- ^ for unrepresentable scale degrees
   deriving (Show, Eq, Enum, Ord, Bounded)
 
--- Representing absolute root notes  
+-- | Representing absolute 'Root' notes  
 type Root = Note DiatonicNatural
-  
-data DiatonicNatural =  C | D | E | F | G | A | B | N | X -- N is for no root, X is for MIREX
+
+-- | The seven diatonic naturals
+data DiatonicNatural =  C | D | E | F | G | A | B 
+                     |  N -- ^ for no root
+                     |  X -- ^ for representing unknown roots (used in MIREX)
   deriving (Show, Eq, Enum, Ord, Bounded)
   
 -- | Intervals for additonal chord notes    
@@ -81,12 +107,20 @@ data Addition = Add   (Note Interval)
 data Interval = I1  | I2  | I3  | I4 | I5 | I6 | I7 | I8 | I9 | I10 
               | I11 | I12 | I13 
   deriving (Eq, Enum, Ord, Bounded)     
+
+-- | A musical note is a pitch (either absolute or relative) posibly modified
+-- by an 'Accidental'
+data Note a = Note (Maybe Accidental) a   deriving (Eq, Ord) 
   
-data Note a = Note (Maybe Modifier) a   deriving (Eq, Ord) 
-  
-data Modifier = Sh | Fl | SS | FF -- Sharp, flat, double sharp, double flat
+-- | A musical 'Accidental'
+data Accidental = Sh -- ^ sharp 
+                | Fl -- ^ flat
+                | SS -- ^ double sharp
+                | FF -- ^ double flat
   deriving (Eq, Ord)
 
+-- | A 'Triad' comes in for flavours: major, minor, augmented, dimished, and 
+-- sometimes a chord does not have a triad (e.g. suspended chords, etc.)
 data Triad = MajTriad | MinTriad | AugTriad | DimTriad | NoTriad 
                deriving (Ord, Eq)
   
@@ -130,7 +164,7 @@ instance Show Interval where
                 . fromJust $ elemIndex a [minBound..]
    
   
-instance Show Modifier where 
+instance Show Accidental where 
   show Sh = "#"
   show Fl = "b"
   show SS = "##"
@@ -387,8 +421,8 @@ toSemitone (Note m p)
   | otherwise = ([0,2,4,5,7,9,11] !! ix) + modToSemi m where
     ix = fromEnum p
 
--- transforms type-level modifiers to semitones (Int values)
-modToSemi :: Maybe Modifier -> Int
+-- transforms type-level Accidentals to semitones (Int values)
+modToSemi :: Maybe Accidental -> Int
 modToSemi  Nothing  =  0
 modToSemi (Just Sh) =  1
 modToSemi (Just Fl) = -1
@@ -409,43 +443,3 @@ scaleDegrees = [ Note  Nothing   I
                , Note  (Just Fl) VII
                , Note  Nothing   VII
                ]
-
---------------------------------------------------------------------------------
--- Binary instances
---------------------------------------------------------------------------------
-
--- deriveAllL [''Note, ''DiatonicDegree, ''Addition
-           -- , ''Mode, ''Chord, ''DiatonicNatural, ''ClassType
-           -- , ''Modifier, ''Shorthand, ''Interval]
-
--- instance (Binary a) => Binary (Note a) where
-  -- put = putDefault
-  -- get = getDefault
--- instance Binary DiatonicDegree where
-  -- put = putDefault
-  -- get = getDefault
--- instance Binary Mode where
-  -- put = putDefault
-  -- get = getDefault
--- instance (Binary a) => Binary (Chord a) where
-  -- put = putDefault
-  -- get = getDefault
--- instance Binary DiatonicNatural where
-  -- put = putDefault
-  -- get = getDefault
--- instance Binary ClassType where
-  -- put = putDefault
-  -- get = getDefault
--- instance Binary Modifier where
-  -- put = putDefault
-  -- get = getDefault
--- instance Binary Shorthand where
-  -- put = putDefault
-  -- get = getDefault
--- instance Binary Interval where
-  -- put = putDefault
-  -- get = getDefault
--- instance Binary Addition where
-  -- put = putDefault
-  -- get = getDefault
-  

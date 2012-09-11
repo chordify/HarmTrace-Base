@@ -1,7 +1,5 @@
-{-# OPTIONS_GHC -Wall -fno-warn-orphans #-}
-{-# LANGUAGE DeriveDataTypeable       #-}
-{-# LANGUAGE RankNTypes               #-}
-{-# LANGUAGE FlexibleContexts         #-}
+{-# OPTIONS_GHC -Wall           #-}
+{-# LANGUAGE FlexibleContexts   #-}
 
 module HarmTrace.Base.ChordTokenizer ( pChord, pShorthand
                                      , pSongAbs, pRoot

@@ -1,7 +1,4 @@
-{-# LANGUAGE TemplateHaskell                #-}
-{-# LANGUAGE EmptyDataDecls                 #-}
-{-# LANGUAGE TypeFamilies                   #-}
-{-# LANGUAGE GADTs                          #-}
+{-# OPTIONS_GHC -Wall           #-}
 
 module HarmTrace.Base.MusicRep where
   
@@ -293,9 +290,9 @@ shToTriad Thirteen = MajTriad
 --
 toDegreeList :: Chord a -> [Addition]
 toDegreeList (Chord  _r sh []  _loc _d) = map Add (shToDeg sh)
-toDegreeList (Chord  _r sh deg _loc _d) = adds  \\ (toAdds rem) where
+toDegreeList (Chord  _r sh deg _loc _d) = adds  \\ (toAdds remv) where
 
-  (adds, rem) = partition isAddition ((map Add . shToDeg $ sh) ++ deg)
+  (adds, remv) = partition isAddition ((map Add . shToDeg $ sh) ++ deg)
 
   toAdds :: [Addition] -> [Addition]
   toAdds = map (\(NoAdd x) -> (Add x))

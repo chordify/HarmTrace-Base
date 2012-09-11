@@ -1,5 +1,5 @@
-{-# LANGUAGE FlexibleContexts #-}
 {-# OPTIONS_GHC -Wall         #-}
+{-# LANGUAGE FlexibleContexts #-}
 
 module HarmTrace.Base.Parsing ( parseData, parseDataWithErrors
                               , pString, pLineEnd, pManyTill

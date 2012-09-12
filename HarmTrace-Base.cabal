@@ -9,7 +9,7 @@ author:              W. Bas de Haas
 maintainer:          w.b.dehaas@uu.nl
 -- copyright:           
 
-category:            Sound
+category:            Music
 build-type:          Simple
 tested-with:         GHC == 7.4.1
 cabal-version:       >=1.8

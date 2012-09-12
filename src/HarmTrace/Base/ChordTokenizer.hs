@@ -45,43 +45,14 @@ pChordDur :: Parser ChordLabel
 pChordDur = setDur <$> pChord <*> (pSym ';' *> pNaturalRaw) where
   setDur c d = c {duration = d}
 
+-- | Parses a 'ChordLabel' in Harte et al. syntax including possible additions, 
+-- and removal of chord additions. If a chord has no 'Shorthand', the 'Degree' 
+-- list (if any) is analysed and depending on the 'Triad' (if any) a 
+-- 'Maj', 'Min','Aug', or 'Dim' 'Shorthand' is stored.
 pChord :: Parser ChordLabel 
-pChord =     pDepricatedParseChord 
+pChord =     pChordLabel 
          <|> (noneLabel    <$ (pString "N" <|> pString "&pause"))
          <|> (unknownLabel <$ (pString "*" <|> pString "X"))
-
--- but then there certainly are degrees.
-
-pDepricatedParseChord :: Parser ChordLabel
-pDepricatedParseChord = f <$> pDeprRoot <* pSym ':' <*> pMaybe pShorthand
-                          <*> ((pDegrees `opt` [])  <*  pInversion)
-  where f r (Just s)    [] = Chord r s [] 0 1
-        -- if there are no degrees and no shorthand (should not occur)
-        -- we make it a minor chord
-        f r Nothing     [] = Chord r Maj [] 0 1
-        -- in case of there is no short hand we analyse the degree list
-        f r Nothing     d  = Chord r (analyseDegs d) d 0 1
-        -- in case of a sus4/maj we also analyse the degree list
-        f r (Just Sus4) d  = Chord r (analyseDegs d) d 0 1
-        f r (Just Maj)  d  = Chord r (analyseDegs d) d 0 1
-        -- if we have another short hand we ignore the degrees list
-        f r (Just s)    d  = Chord r s d 0 1
-
-        -- analyses a list of Degrees and assigns a shortHand i.e. Chord Class        
-        analyseDegs :: [Addition] -> Shorthand        
-        analyseDegs d 
-          | (Add (Note (Just Fl) I3) ) `elem` d = Min
-          | (Add (Note (Just Sh) I5) ) `elem` d = Sev
-          | (Add (Note (Just Fl) I7) ) `elem` d = Sev
-          | (Add (Note  Nothing  I7) ) `elem` d = Maj7
-          | (Add (Note (Just Fl) I9) ) `elem` d = Sev
-          | (Add (Note (Just Sh) I9) ) `elem` d = Sev
-          | (Add (Note  Nothing  I11)) `elem` d = Sev
-          | (Add (Note (Just Sh) I11)) `elem` d = Sev
-          | (Add (Note (Just Fl) I13)) `elem` d = Sev
-          | (Add (Note  Nothing  I13)) `elem` d = Sev
-          | (Add (Note  Nothing  I3) ) `elem` d = Maj
-          | otherwise                     = Maj
 
 pDeprRoot :: Parser Root 
 pDeprRoot =     pRoot

@@ -53,6 +53,9 @@ module HarmTrace.Base.MusicRep (
   , toClassType
   , toTriad
   , analyseDegTriad
+  , analyseThird
+  , analyseFifth
+  , analyseSevth
   , toDegreeList
   , toMode
   , toMajMin
@@ -268,10 +271,60 @@ isAddition (NoAdd _) = False
 --------------------------------------------------------------------------------
 -- Transformation and analysis of chords
 --------------------------------------------------------------------------------
+toClassType :: Chord a -> ClassType
+toClassType (Chord  _r  sh []   _loc _d) = shToClassType sh -- no additions
+-- combine the degrees and analyse them. N.B., also NoAdd degrees are resolved
+toClassType c = analyseDegClassType . toDegreeList $ c
 
--- | /depricated/ Categorises a 'Shorthand' into a 'ClassType'.
-toClassType :: Shorthand -> ClassType
-toClassType sh -- TODO: reconsider these categories...
+-- | Analyses a degree list and returns 'MajTriad', 'MinTriad' or 'NoTriad' if
+-- the degrees make a chord a major, minor, or no triad, respectivly.
+analyseDegClassType :: [Addition] -> ClassType
+analyseDegClassType degs = 
+    case (analyseThird degs, analyseFifth degs, analyseSevth degs) of
+       -- Triads
+       (MajThird, _        , MinSev) -> DomClass
+       (MajThird, AugFifth , _     ) -> DomClass
+       (MajThird, DimFifth , _     ) -> NoClass
+       (MajThird, _        , _     ) -> MajClass
+       (MinThird, PerfFifth, _     ) -> MinClass
+       (MinThird, AugFifth , _     ) -> NoClass
+       (MinThird, DimFifth , DimSev) -> DimClass
+       (MinThird, _        , _     ) -> MinClass
+       (NoThird,  _        , _     ) -> NoClass
+
+
+-- | Categorises a 'Shorthand' into a 'ClassType'.
+shToClassType :: Shorthand -> ClassType
+shToClassType Maj     = MajClass
+shToClassType Min     = MinClass
+shToClassType Dim     = MinClass
+shToClassType Aug     = DomClass
+shToClassType Maj7    = MajClass
+shToClassType Min7    = MinClass
+shToClassType Sev     = DomClass
+shToClassType Dim7    = DimClass
+shToClassType HDim7   = MinClass
+shToClassType MinMaj7 = MinClass
+shToClassType Maj6    = MajClass 
+shToClassType Min6    = MinClass
+shToClassType Nin     = DomClass
+shToClassType Maj9    = MajClass
+shToClassType Min9    = MinClass
+shToClassType Five    = NoClass
+shToClassType Sus2    = NoClass
+shToClassType Sus4    = NoClass
+shToClassType None    = NoClass
+-- additional Billboard shorthands
+shToClassType Min11    = MinClass
+shToClassType Eleven   = DomClass
+shToClassType Min13    = MinClass
+shToClassType Maj13    = MajClass
+shToClassType Thirteen = DomClass
+
+       
+-- | /Depricated/ Categorises a 'Shorthand' into a 'ClassType'.
+toClassType' :: Shorthand -> ClassType
+toClassType' sh -- TODO: reconsider these categories...
   | sh `elem` [Maj,Maj7,Maj6,Maj9,MinMaj7,Five,Sus4,Sus2] = MajClass
   | sh `elem` [Min,Min7,Min6,Min9,HDim7] = MinClass
   | sh `elem` [Sev,Nin,Aug] = DomClass
@@ -280,8 +333,9 @@ toClassType sh -- TODO: reconsider these categories...
       ("HarmTrace.Base.MusicRep.toClassType: unknown shorthand: " ++ show sh)
 
 -- should not be exported, used only in toTriad
-data Third = MajThird | MinThird  | NoThird deriving Eq
-data Fifth = DimFifth | PerfFifth | AugFifth | NoFifth deriving Eq
+data Third = MajThird | MinThird             | NoThird deriving (Eq, Show)
+data Fifth = DimFifth | PerfFifth | AugFifth | NoFifth deriving (Eq, Show)
+data Sevth = DimSev   | MinSev    | MajSev   | NoSev   deriving (Eq, Show)
       
 -- | Takes a 'Chord' and determines the 'Triad'
 --
@@ -302,23 +356,8 @@ toTriad c = analyseDegTriad . toDegreeList $ c
 -- | Analyses a degree list and returns 'MajTriad', 'MinTriad' or 'NoTriad' if
 -- the degrees make a chord a major, minor, or no triad, respectivly.
 analyseDegTriad :: [Addition] -> Triad
-analyseDegTriad degs = 
-      -- analyses the third in a degree list
-  let analyseThird :: [Addition] -> Third
-      analyseThird d 
-        | (Add (Note (Just Fl) I3)) `elem` d = MinThird
-        | (Add (Note  Nothing  I3)) `elem` d = MajThird
-        | otherwise                          = NoThird
-      
-      -- analyses the fifth in a degree list 
-      analyseFifth :: [Addition] -> Fifth
-      analyseFifth d  
-        | (Add (Note (Just Fl) I5)) `elem` d = DimFifth
-        | (Add (Note (Just Sh) I5)) `elem` d = AugFifth
-        | (Add (Note  Nothing  I5)) `elem` d = PerfFifth
-        | otherwise                          = NoFifth
-     
-  in case (analyseThird degs, analyseFifth degs) of
+analyseDegTriad degs =  
+    case (analyseThird degs, analyseFifth degs) of
        (MajThird, PerfFifth) -> MajTriad
        (MajThird, AugFifth ) -> AugTriad
        (MajThird, DimFifth ) -> NoTriad
@@ -328,6 +367,29 @@ analyseDegTriad degs =
        (NoThird,  _        ) -> NoTriad
        (_      ,  NoFifth  ) -> NoTriad
       
+-- analyses the third in a degree list
+analyseThird :: [Addition] -> Third
+analyseThird d 
+  | (Add (Note (Just Fl) I3)) `elem` d = MinThird
+  | (Add (Note  Nothing  I3)) `elem` d = MajThird
+  | otherwise                          = NoThird
+      
+-- analyses the fifth in a degree list 
+analyseFifth :: [Addition] -> Fifth
+analyseFifth d  
+  | (Add (Note (Just Fl) I5)) `elem` d = DimFifth
+  | (Add (Note (Just Sh) I5)) `elem` d = AugFifth
+  | (Add (Note  Nothing  I5)) `elem` d = PerfFifth
+  | otherwise                          = NoFifth
+
+-- analyses the fifth in a degree list 
+analyseSevth :: [Addition] -> Sevth
+analyseSevth d  
+  | (Add (Note (Just FF) I7)) `elem` d = DimSev
+  | (Add (Note (Just Fl) I7)) `elem` d = MinSev
+  | (Add (Note  Nothing  I7)) `elem` d = MajSev
+  | otherwise                          = NoSev
+  
 -- | Converts a 'Shorthand' to a 'Triad' 
 -- N.B. this function should not be exported because the shorthand alone cannot
 -- determine the triad 
@@ -367,6 +429,10 @@ shToTriad Thirteen = MajTriad
 -- >>> toDegreeList (Chord (Note Nothing C) Min13 [NoAdd (Note Nothing I11)] 0 0)
 -- [3b,5,7b,9,13]
 --
+-- >>> toDegreeList (parseData pChord "D:7(b9)")
+-- [3,5,7b,9b]
+--
+
 toDegreeList :: Chord a -> [Addition]
 toDegreeList (Chord  _r sh []  _loc _d) = map Add (shToDeg sh)
 toDegreeList (Chord  _r sh deg _loc _d) = adds  \\ (toAdds remv) where
@@ -375,14 +441,6 @@ toDegreeList (Chord  _r sh deg _loc _d) = adds  \\ (toAdds remv) where
 
   toAdds :: [Addition] -> [Addition]
   toAdds = map (\(NoAdd x) -> (Add x))
-  
--- takes the set based difference of two sorted lists
--- sortDiv [] _  = []
--- sortDiv l  [] = l
--- sortDiv (d:ds) rrs@(r:rs) 
-  -- | d <  r    = sortDiv ds rrs -- the degree does not have to be removed
-  -- | d == r    = sortDiv ds rs  -- remove the degree
-  -- | otherwise = sortDiv ds rrs -- the degree to be removed is not in the chord
   
 -- | Expands a 'Shorthand' to its list of degrees
 shToDeg :: Shorthand -> [Note Interval]     

@@ -12,15 +12,63 @@
 --
 -- Summary: A set of types and classes for representing musical chords. The 
 -- chord datatypes are based on the unambiguous chord representation presented 
--- in: Harte, C. et al. (2005). /Symbolic representation of musical chords: 
--- a proposed syntax for text annotations./ Proceedings of 6th International 
--- Conference on Music Information Retrieval. 
+-- in: Christopher Harte, Mark Sandler and Samer Abdallah (2005), 
+-- /Symbolic representation of musical chords: a proposed syntax for text annotations/, 
+-- In: Proceedings of 6th International Conference on Music Information 
+-- Retrieval (<http://ismir2005.ismir.net/proceedings/1080.pdf>). 
 --------------------------------------------------------------------------------
 
-module HarmTrace.Base.MusicRep where
+module HarmTrace.Base.MusicRep (
+  -- * Representing musical chords and keys
+    PieceLabel (..)
+  , Note (..)
+  , Accidental (..)
+  , Root 
+  , DiatonicNatural (..)
+  , ScaleDegree 
+  , DiatonicDegree (..)
+  -- ** Keys
+  , Key (..)
+  , Mode (..)
+  -- ** Chords
+  , Chord (..)
+  -- , Class
+  , Shorthand (..)
+  , Addition (..)
+  , Interval (..)
+  , ChordLabel
+  , ChordDegree
+  , noneLabel
+  , unknownLabel
+  -- * Derived types for classification of chords
+  , ClassType (..)
+  , Triad (..)
+  -- * Tests
+  , isNone
+  , isNoneChord
+  , isUnknown
+  , isUnknownChord
+  , isAddition
+  -- * Transformation and analysis of chords
+  , toClassType
+  , toTriad
+  , analyseDegTriad
+  , toDegreeList
+  , toMode
+  , toMajMin
+  , toMajMinChord
+  -- * Scale degree transposition
+  , toChordDegree
+  , toScaleDegree
+  , transposeSem
+  , toSemitone
+  -- , modeToSemi
+  -- * Miscellaneous
+  , scaleDegrees
+  ) where
   
 import Data.Maybe
-import Data.List (elemIndex, intersperse, intercalate, (\\), partition)
+import Data.List (elemIndex, intercalate, (\\), partition)
 
 --------------------------------------------------------------------------------
 -- Representing musical information at the value level
@@ -39,6 +87,15 @@ data PieceLabel = PieceLabel Key [ChordLabel]
 -- | A chord based on absolute 'Root' notes
 type ChordLabel   = Chord Root
 
+-- rename to noLabel?
+-- | No Chord label
+noneLabel :: ChordLabel
+noneLabel = (Chord (Note Nothing N) None [] 0 0)
+
+-- | Unknown Chord label
+unknownLabel :: ChordLabel
+unknownLabel = (Chord (Note Nothing X) None [] 0 0)
+
 -- | A chord based on relative 'ScaleDegree's
 type ChordDegree  = Chord ScaleDegree
 
@@ -51,9 +108,6 @@ data Chord a = Chord { chordRoot        :: a
                      -- | the duration of the chord 
                      , duration         :: Int 
                      }
-
--- is this used somewhere?
-data Class = Class ClassType Shorthand
 
 -- | We introduce four chord categories: major chords, minor chords, dominant
 -- seventh chords, and diminshed seventh chords
@@ -119,7 +173,7 @@ data Accidental = Sh -- ^ sharp
                 | FF -- ^ double flat
   deriving (Eq, Ord)
 
--- | A 'Triad' comes in for flavours: major, minor, augmented, dimished, and 
+-- | A 'Triad' comes in four flavours: major, minor, augmented, dimished, and 
 -- sometimes a chord does not have a triad (e.g. suspended chords, etc.)
 data Triad = MajTriad | MinTriad | AugTriad | DimTriad | NoTriad 
                deriving (Ord, Eq)
@@ -146,8 +200,6 @@ instance (Show a) => Show (Chord a) where
 
 showAdds :: Show a => [a] -> String                                
 showAdds x = '(' : intercalate "," (map show x) ++ ")"
-     
-instance Show Class where show (Class ct _) = show ct
                             
 instance Show ClassType where
   show MajClass = ""
@@ -172,13 +224,7 @@ instance Show Accidental where
 
 instance Show Addition where
   show (Add   n) = show n
-  show (NoAdd n) = '*' : show n
-  
--- for showing additional additions
-showAdditions :: [Addition] -> String
-showAdditions a 
-  | null a    = ""
-  | otherwise = "(" ++ concat (intersperse ","  (map show a)) ++ ")"           
+  show (NoAdd n) = '*' : show n    
 
 instance Show Triad where
   show MajTriad = "maj"
@@ -191,24 +237,22 @@ instance Show Triad where
 -- Tests     
 --------------------------------------------------------------------------------
 
+-- | Returns True if the 'Root' is 'N', and False otherwise 
 isNone :: Root -> Bool
 isNone (Note _ N) = True
 isNone  _         = False
 
-noneLabel :: ChordLabel
-noneLabel = (Chord (Note Nothing N) None [] 0 0)
-
+-- | Returns True if the 'ChordLabel' is not a chord, and False otherwise 
 isNoneChord :: ChordLabel -> Bool
 isNoneChord (Chord (Note _ N) _ _ _ _) = True
 isNoneChord _                          = False
 
+-- | Returns True if the 'Root' is unknown, and False otherwise 
 isUnknown :: Root -> Bool
 isUnknown (Note _ X) = True
 isUnknown _          = False
 
-unknownLabel :: ChordLabel
-unknownLabel = (Chord (Note Nothing X) None [] 0 0)
-
+-- | Returns True if the 'ChordLabel' is not a unknown, and False otherwise 
 isUnknownChord :: ChordLabel -> Bool
 isUnknownChord (Chord (Note _ X) _ _ _ _) = True
 isUnknownChord (Chord (Note _ N) _ _ _ _) = False -- known to be NoneChord
@@ -222,9 +266,10 @@ isAddition (Add   _) = True
 isAddition (NoAdd _) = False
 
 --------------------------------------------------------------------------------
--- Transformations and analysis of chords
+-- Transformation and analysis of chords
 --------------------------------------------------------------------------------
 
+-- | /depricated/ Categorises a 'Shorthand' into a 'ClassType'.
 toClassType :: Shorthand -> ClassType
 toClassType sh -- TODO: reconsider these categories...
   | sh `elem` [Maj,Maj7,Maj6,Maj9,MinMaj7,Five,Sus4,Sus2] = MajClass
@@ -254,7 +299,7 @@ toTriad (Chord  _r  sh []   _loc _d) = shToTriad sh -- there are no additions
 -- combine the degrees and analyse them. N.B., also NoAdd degrees are resolved
 toTriad c = analyseDegTriad . toDegreeList $ c
 
--- Analyses a degree list and returns 'MajTriad', 'MinTriad' or 'NoTriad' if
+-- | Analyses a degree list and returns 'MajTriad', 'MinTriad' or 'NoTriad' if
 -- the degrees make a chord a major, minor, or no triad, respectivly.
 analyseDegTriad :: [Addition] -> Triad
 analyseDegTriad degs = 
@@ -399,10 +444,15 @@ toMajMinChord c = c {chordShorthand = majMinSh}
 -------------------------------------------------------------------------------- 
     
 -- Chord root shorthand degrees location duration
+-- | Given a 'Key', calculates the the 'ChordDegree' (i.e. relative, 
+-- 'ScaleDegree' based 'Chord') for an absolute 'ChordLabel' using 
+-- 'toScaleDegree'.
 toChordDegree :: Key -> ChordLabel -> ChordDegree
 toChordDegree k (Chord r sh degs loc d) = 
                  Chord (toScaleDegree k r) sh degs loc d    
     
+-- | Transformes a absolute 'Root' 'Note' into a relative 'ScaleDegree', given
+-- a 'Key'.
 toScaleDegree :: Key -> Root -> ScaleDegree
 toScaleDegree _ n@(Note _ N) = 
   error ("HarmTrace.Base.MusicRep.toScaleDegree: cannot transpose" ++ show n)
@@ -421,14 +471,15 @@ toSemitone (Note m p)
   | otherwise = ([0,2,4,5,7,9,11] !! ix) + modToSemi m where
     ix = fromEnum p
 
--- transforms type-level Accidentals to semitones (Int values)
+-- | Transforms type-level Accidentals to semitones (Int values)
 modToSemi :: Maybe Accidental -> Int
 modToSemi  Nothing  =  0
 modToSemi (Just Sh) =  1
 modToSemi (Just Fl) = -1
 modToSemi (Just SS) =  2
 modToSemi (Just FF) = -2
-           
+
+-- | A list of 12 'ScaleDegree's, ignoring pitch spelling.
 scaleDegrees ::[ScaleDegree]  
 scaleDegrees = [ Note  Nothing   I
                , Note  (Just Fl) II

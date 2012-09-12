@@ -282,12 +282,11 @@ analyseDegClassType :: [Addition] -> ClassType
 analyseDegClassType degs = 
     case (analyseThird degs, analyseFifth degs, analyseSevth degs) of
        -- Triads
-       (MajThird, _        , MinSev) -> DomClass
-       (MajThird, AugFifth , _     ) -> DomClass
-       (MajThird, DimFifth , _     ) -> NoClass
+       (_       , _        , MinSev) -> DomClass
+       (_       , AugFifth , _     ) -> DomClass
+       (MajThird, DimFifth , _     ) -> DomClass
        (MajThird, _        , _     ) -> MajClass
        (MinThird, PerfFifth, _     ) -> MinClass
-       (MinThird, AugFifth , _     ) -> NoClass
        (MinThird, DimFifth , DimSev) -> DimClass
        (MinThird, _        , _     ) -> MinClass
        (NoThird,  _        , _     ) -> NoClass
@@ -297,7 +296,7 @@ analyseDegClassType degs =
 shToClassType :: Shorthand -> ClassType
 shToClassType Maj     = MajClass
 shToClassType Min     = MinClass
-shToClassType Dim     = MinClass
+shToClassType Dim     = DimClass
 shToClassType Aug     = DomClass
 shToClassType Maj7    = MajClass
 shToClassType Min7    = MinClass

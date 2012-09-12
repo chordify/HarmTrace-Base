@@ -15,7 +15,7 @@
 -- representations.
 --------------------------------------------------------------------------------
 
-module HarmTrace.Base.ChordTokenizer ( pChord, pShorthand
+module HarmTrace.Base.ChordTokenizer ( pChord, pShorthand, parseChordSeq
                                      , pSongAbs, pRoot
                                      , pDegrees, pDegree
                                      , pDeprRoot, pKey
@@ -25,12 +25,18 @@ import HarmTrace.Base.Parsing
 import HarmTrace.Base.MusicRep
 
 --------------------------------------------------------------------------------
+-- Top level Chord sequence parser
+--------------------------------------------------------------------------------
+
+parseChordSeq :: String -> (PieceLabel, [Error LineColPos])
+parseChordSeq = parseDataWithErrors pSongAbs
+
+--------------------------------------------------------------------------------
 -- Tokenizing: parsing strings into tokens
 --------------------------------------------------------------------------------  
 
-
 -- Input is a string of whitespace-separated chords, e.g.
--- Bb:9(s11) E:min7 Eb:min7 Ab:7 D:min7 G:7(13) C:maj6(9)
+-- @Bb:9(s11) E:min7 Eb:min7 Ab:7 D:min7 G:7(13) C:maj6(9)@
 -- First token is the key of the piece
 pSongAbs :: Parser PieceLabel -- PieceRelToken -- 
 pSongAbs = PieceLabel <$> pKey <* pLineEnd 

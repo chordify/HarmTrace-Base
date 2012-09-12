@@ -1,15 +1,28 @@
 {-# OPTIONS_GHC -Wall           #-}
 {-# LANGUAGE FlexibleContexts   #-}
 
+--------------------------------------------------------------------------------
+-- |
+-- Module      :  HarmTrace.Base.Parsing
+-- Copyright   :  (c) 2010-2012 Universiteit Utrecht, 2012 University of Oxford
+-- License     :  GPL3
+--
+-- Maintainer  :  bash@cs.uu.nl, jpm@cs.ox.ac.uk
+-- Stability   :  experimental
+-- Portability :  non-portable
+--
+-- Summary: Some general parsing utilities used for parsing textual chord
+-- representations.
+--------------------------------------------------------------------------------
+
 module HarmTrace.Base.ChordTokenizer ( pChord, pShorthand
                                      , pSongAbs, pRoot
                                      , pDegrees, pDegree
-                                     , pDeprRoot
+                                     , pDeprRoot, pKey
                                      ) where
 
 import HarmTrace.Base.Parsing
 import HarmTrace.Base.MusicRep
--- import HarmTrace.Models.ChordTokens
 
 --------------------------------------------------------------------------------
 -- Tokenizing: parsing strings into tokens
@@ -100,7 +113,7 @@ pInversion :: Parser (Maybe (Note Interval))
 pInversion = (Just <$> (pSym '/' *> (Note <$> pMaybe pAccidental <*> pInterval))
              ) `opt` Nothing
              
--- parses a musical key description
+-- | parses a musical key description, e.g. @C:maj@, or @D:min@
 pKey :: Parser Key        
 pKey = f <$> pRoot <* pSym ':' <*> pShorthand
   where f r m | m == Maj = Key r MajMode
@@ -108,6 +121,8 @@ pKey = f <$> pRoot <* pSym ':' <*> pShorthand
               | otherwise = error ("Tokenizer: key must be Major or Minor, "
                           ++ "found: " ++ show m)
 
+-- | Parses a shorthand following Harte et al. syntax, but also the shorthands
+-- added to the Billboard dataset, e.g. @maj@, @min@, or @9@.
 pShorthand :: Parser Shorthand
 pShorthand =     Maj      <$ pString "maj"
              <|> Min      <$ pString "min"
@@ -143,11 +158,13 @@ pShorthand =     Maj      <$ pString "maj"
 pDegrees :: Parser [Addition]
 pDegrees = pPacked (pSym '(') (pSym ')') ( pListSep (pSym ',') pDegree )
 
--- TODO removing degrees is not implemented 
+-- | Parses the a 'Chord' 'Addition' (or the removal of a chord addition, 
+-- prefixed by  a @*@)
 pDegree :: Parser Addition
 pDegree =  (Add   <$>              (Note <$> pMaybe pAccidental <*> pInterval))
        <|> (NoAdd <$> (pSym '*' *> (Note <$> pMaybe pAccidental <*> pInterval)))
-              
+
+-- | Parses in 'Accidental'       
 pAccidental :: Parser Accidental
 pAccidental =    Sh <$ pSym    's'
              <|> Sh <$ pSym    '#'
@@ -155,9 +172,11 @@ pAccidental =    Sh <$ pSym    's'
              <|> SS <$ pString "ss"
              <|> FF <$ pString "bb" <?> "Accidental"
 
+-- | Parses an 'Interval'
 pInterval :: Parser Interval
 pInterval =  ((!!) [minBound..] ) . pred <$> pNaturalRaw
 
+-- | Parses a 'Root' 'Note', e.g. @A@, @Bb@, or @F#@.
 pRoot :: Parser Root
 pRoot =     Note Nothing   A  <$ pSym 'A'
         <|> Note Nothing   B  <$ pSym 'B'

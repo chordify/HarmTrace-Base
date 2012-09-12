@@ -11,20 +11,18 @@ maintainer:          w.b.dehaas@uu.nl
 
 category:            Sound
 build-type:          Simple
-
--- Constraint on the version of Cabal needed to build this package.
+tested-with:         GHC == 7.4.1
 cabal-version:       >=1.8
-
 
 library
   exposed-modules:     HarmTrace.Base.Parsing, HarmTrace.Base.MusicTime, 
                        HarmTrace.Base.MusicRep, HarmTrace.Base.ChordTokenizer
-  
-  -- Modules included in this library but not exported.
-  -- other-modules:       
-  
+        
   hs-source-dirs:       src  
   
-  -- Other library packages from which modules are imported.
   build-depends:       base ==4.5.*, uu-parsinglib ==2.7.*, ListLike ==3.1.*
+  
+  
+  ghc-options:         -Wall
+                       -O2
   

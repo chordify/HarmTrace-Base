@@ -19,6 +19,7 @@
 module HarmTrace.Base.Parsing ( -- * Top level parsers 
                                 parseData
                               , parseDataWithErrors
+                              , parseDataSafe
                                 -- * Some general parsers
                               , pString
                               , pLineEnd
@@ -34,10 +35,27 @@ import Text.ParserCombinators.UU
 import Text.ParserCombinators.UU.Utils hiding (pSpaces)
 import Text.ParserCombinators.UU.BasicInstances hiding (IsLocationUpdatedBy)
 import Data.ListLike.Base (ListLike)
+import Data.List (intersperse)
 
 --------------------------------------------------------------------------------
 -- A collection of parsing functions used by parsers throughout the project
 --------------------------------------------------------------------------------     
+
+-- | This is identical to 'parseData' however it will throw an 'error' when
+-- the the list with parsing errors is not empty. No, this will not make your
+-- program more \safe\. However, in certain cases you really want to be sure
+-- that parsing has finished without errors. In those cases you should use
+-- 'parseDataSafe'.
+parseDataSafe :: (ListLike s a, Show a, Show s) => 
+                  P (Str a s LineColPos) b -> s -> b
+parseDataSafe p inp = case parseDataWithErrors p inp of
+                        (dat, [] ) -> dat
+                        (_  , err) -> error ("HarmTrace.Base.Parsing: a parsing"
+                            ++ " function did not finish without errors. While" 
+                            ++ " parsing the data starting with:\n"
+                            ++ (take 80 $ show inp)
+                            ++ "\nThe following errors were encountered:\n"
+                            ++ (concat . intersperse "\n" . map show $ err))
 
 -- | Toplevel parser that ignores error-reporting, regardless of there were
 -- error in the parse

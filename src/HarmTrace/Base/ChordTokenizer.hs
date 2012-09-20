@@ -15,7 +15,10 @@
 -- representations.
 --------------------------------------------------------------------------------
 
-module HarmTrace.Base.ChordTokenizer ( pChord, pShorthand, parseChordSeq
+module HarmTrace.Base.ChordTokenizer ( -- * Top level parser
+                                       parseChordSeq 
+                                       -- * Parsing (elements of) chords
+                                     , pChord, pShorthand
                                      , pSongAbs, pRoot
                                      , pDegrees, pDegree
                                      , pDeprRoot, pKey
@@ -28,6 +31,8 @@ import HarmTrace.Base.MusicRep
 -- Top level Chord sequence parser
 --------------------------------------------------------------------------------
 
+-- | Top level parser that parsers a string into a 'PieceLabel' and a posibly
+-- empty list of errors
 parseChordSeq :: String -> (PieceLabel, [Error LineColPos])
 parseChordSeq = parseDataWithErrors pSongAbs
 
@@ -35,9 +40,11 @@ parseChordSeq = parseDataWithErrors pSongAbs
 -- Tokenizing: parsing strings into tokens
 --------------------------------------------------------------------------------  
 
--- Input is a string of whitespace-separated chords, e.g.
--- @Bb:9(s11) E:min7 Eb:min7 Ab:7 D:min7 G:7(13) C:maj6(9)@
--- First token is the key of the piece
+-- | Parser that parses a string of whitespace-separated 'Chord's, e.g.
+-- @C:maj Bb:9(s11);1 E:min7;1 Eb:min7;1 Ab:7;1 D:min7;1 G:7(13);1 C:maj6(9);1@
+-- The first 'Chord' must be the key of the piece, and the after each chord
+-- the semicolumn and an Integer representing the duration of the chord must 
+-- be presented
 pSongAbs :: Parser PieceLabel -- PieceRelToken -- 
 pSongAbs = PieceLabel <$> pKey <* pLineEnd 
                       <*> (setLoc 0 <$> pListSep_ng pLineEnd pChordDur )
@@ -64,9 +71,7 @@ pDeprRoot :: Parser Root
 pDeprRoot =     pRoot
             <|> Note Nothing   N  <$ pSym 'N' -- for no chord   
                     
--- For now, I assume there is always a shorthand, and sometimes extra
--- degrees. I guess it might be the case that sometimes there is no shorthand,
--- but then there certainly are degrees. 
+-- Parses a chord label
 pChordLabel :: Parser ChordLabel
 pChordLabel = toChord <$> pRoot <* pSym ':'  <*> pMaybe pShorthand
                       -- we ignore optional inversions for now
@@ -86,6 +91,7 @@ pChordLabel = toChord <$> pRoot <* pSym ':'  <*> pMaybe pShorthand
         remTriadDeg :: [Addition] -> [Addition]
         remTriadDeg = filter (\(Add (Note _ i)) -> i /= I3 || i /= I5)
 
+-- Parses an inversion, but inversionsion are ignored for now.
 pInversion :: Parser (Maybe (Note Interval))
 pInversion = (Just <$> (pSym '/' *> (Note <$> pMaybe pAccidental <*> pInterval))
              ) `opt` Nothing
@@ -130,8 +136,7 @@ pShorthand =     Maj      <$ pString "maj"
                                          -- denote a rootnote only
              <?> "Shorthand"
 
--- We don't produce intervals for a shorthand. This could easily be added,
--- though.
+-- | Parses a list of 'Chord' 'Addition's within parenthesis 
 pDegrees :: Parser [Addition]
 pDegrees = pPacked (pSym '(') (pSym ')') ( pListSep (pSym ',') pDegree )
 

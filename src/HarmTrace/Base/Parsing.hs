@@ -55,7 +55,8 @@ parseDataSafe p inp = case parseDataWithErrors p inp of
                             ++ " parsing the data starting with:\n"
                             ++ (take 80 $ show inp)
                             ++ "\nThe following errors were encountered:\n"
-                            ++ (concat . intersperse "\n" . map show $ err))
+                            ++ (concat . intersperse "\n" . take 50 
+                                       . map show $ err))
 
 -- | Toplevel parser that ignores error-reporting, regardless of there were
 -- error in the parse

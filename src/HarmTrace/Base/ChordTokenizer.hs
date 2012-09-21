@@ -55,8 +55,8 @@ pSongAbs = PieceLabel <$> pKey <* pLineEnd
 
 -- parses chords with a duration (separated by a ';')
 pChordDur :: Parser ChordLabel
-pChordDur = setDur <$> pChord <*> (pSym ';' *> pNaturalRaw) where
-  setDur c d = c {duration = d}
+pChordDur = setDur <$> pChord <*> (pSym ';' *> pNaturalRaw) <?> "Chord;Int"
+  where setDur c d = c {duration = d}
 
 -- | Parses a 'ChordLabel' in Harte et al. syntax including possible additions, 
 -- and removal of chord additions. If a chord has no 'Shorthand', the 'Degree' 
@@ -64,8 +64,9 @@ pChordDur = setDur <$> pChord <*> (pSym ';' *> pNaturalRaw) where
 -- 'Maj', 'Min','Aug', or 'Dim' 'Shorthand' is stored.
 pChord :: Parser ChordLabel 
 pChord =     pChordLabel 
-         <|> (noneLabel    <$ (pString "N" <|> pString "&pause"))
-         <|> (unknownLabel <$ (pString "*" <|> pString "X"))
+         <|> (noneLabel    <$ (pString "N"  <|> pString "&pause"))
+         <|> (unknownLabel <$ (pSym '*'     <|> pSym 'X'))
+         <?> "Chord"
 
 pDeprRoot :: Parser Root 
 pDeprRoot =     pRoot
@@ -94,11 +95,11 @@ pChordLabel = toChord <$> pRoot <* pSym ':'  <*> pMaybe pShorthand
 -- Parses an inversion, but inversionsion are ignored for now.
 pInversion :: Parser (Maybe (Note Interval))
 pInversion = (Just <$> (pSym '/' *> (Note <$> pMaybe pAccidental <*> pInterval))
-             ) `opt` Nothing
+                   <?> "/Inversion") `opt` Nothing 
              
 -- | parses a musical key description, e.g. @C:maj@, or @D:min@
 pKey :: Parser Key        
-pKey = f <$> pRoot <* pSym ':' <*> pShorthand
+pKey = f <$> pRoot <* pSym ':' <*> pShorthand <?> "Key"
   where f r m | m == Maj = Key r MajMode
               | m == Min = Key r MinMode
               | otherwise = error ("Tokenizer: key must be Major or Minor, "
@@ -138,13 +139,15 @@ pShorthand =     Maj      <$ pString "maj"
 
 -- | Parses a list of 'Chord' 'Addition's within parenthesis 
 pDegrees :: Parser [Addition]
-pDegrees = pPacked (pSym '(') (pSym ')') ( pListSep (pSym ',') pDegree )
+pDegrees = pPacked (pSym '(') (pSym ')') ( pListSep (pSym ',') pDegree ) 
+           <?> "Addition List"
 
 -- | Parses the a 'Chord' 'Addition' (or the removal of a chord addition, 
 -- prefixed by  a @*@)
 pDegree :: Parser Addition
 pDegree =  (Add   <$>              (Note <$> pMaybe pAccidental <*> pInterval))
        <|> (NoAdd <$> (pSym '*' *> (Note <$> pMaybe pAccidental <*> pInterval)))
+       <?> "Addition"
 
 -- | Parses in 'Accidental'       
 pAccidental :: Parser Accidental
@@ -156,7 +159,7 @@ pAccidental =    Sh <$ pSym    's'
 
 -- | Parses an 'Interval'
 pInterval :: Parser Interval
-pInterval =  ((!!) [minBound..] ) . pred <$> pNaturalRaw
+pInterval =  ((!!) [minBound..] ) . pred <$> pNaturalRaw <?> "Interval"
 
 -- | Parses a 'Root' 'Note', e.g. @A@, @Bb@, or @F#@.
 pRoot :: Parser Root

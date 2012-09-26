@@ -20,7 +20,7 @@ module HarmTrace.Base.ChordTokenizer ( -- * Top level parser
                                        -- * Parsing (elements of) chords
                                      , pChord, pShorthand
                                      , pSongAbs, pRoot
-                                     , pDegrees, pDegree
+                                     , pAdditions, pAddition
                                      , pDeprRoot, pKey
                                      ) where
 
@@ -76,7 +76,7 @@ pDeprRoot =     pRoot
 pChordLabel :: Parser ChordLabel
 pChordLabel = toChord <$> pRoot <* pSym ':'  <*> pMaybe pShorthand
                       -- we ignore optional inversions for now
-                      <*> ((pDegrees `opt` []) <* pInversion)
+                      <*> ((pAdditions `opt` []) <* pInversion)
   where -- if there are no degrees and no shorthand 
         toChord :: Root -> Maybe Shorthand -> [Addition] -> ChordLabel
         toChord r Nothing     [] = Chord r None [] 0 1
@@ -138,16 +138,16 @@ pShorthand =     Maj      <$ pString "maj"
              <?> "Shorthand"
 
 -- | Parses a list of 'Chord' 'Addition's within parenthesis 
-pDegrees :: Parser [Addition]
-pDegrees = pPacked (pSym '(') (pSym ')') ( pListSep (pSym ',') pDegree ) 
-           <?> "Addition List"
+pAdditions :: Parser [Addition]
+pAdditions = pPacked (pSym '(') (pSym ')') ( pListSep (pSym ',') pAddition ) 
+             <?> "Addition List"
 
 -- | Parses the a 'Chord' 'Addition' (or the removal of a chord addition, 
 -- prefixed by  a @*@)
-pDegree :: Parser Addition
-pDegree =  (Add   <$>              (Note <$> pMaybe pAccidental <*> pInterval))
-       <|> (NoAdd <$> (pSym '*' *> (Note <$> pMaybe pAccidental <*> pInterval)))
-       <?> "Addition"
+pAddition :: Parser Addition
+pAddition = (Add   <$>             (Note <$> pMaybe pAccidental <*> pInterval))
+        <|> (NoAdd <$> (pSym '*'*> (Note <$> pMaybe pAccidental <*> pInterval)))
+        <?> "Addition"
 
 -- | Parses in 'Accidental'       
 pAccidental :: Parser Accidental

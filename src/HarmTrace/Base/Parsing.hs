@@ -77,7 +77,7 @@ pString s = foldr (\a b -> (:) <$> a <*> b) (pure []) (map pSym s)
 
 -- | parses UNIX and DOS/WINDOWS line endings inclucing trailing whitespace
 pLineEnd :: Parser String
-pLineEnd  = pString "\n" <|> pString "\r\n" <|> pString " " <|> pString "\t"  
+pLineEnd  = pString "\n" <|> pString "\r\n" <|> pString " " <|> pString "\t"
 
 -- | Parses an arbitrary times the first parsing combinator until the parsing 
 -- second parsing combinator is encountered. The result of the second parsing

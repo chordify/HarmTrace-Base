@@ -18,10 +18,13 @@
 module HarmTrace.Base.ChordTokenizer ( -- * Top level parser
                                        parseChordSeq 
                                        -- * Parsing (elements of) chords
-                                     , pChord, pShorthand
-                                     , pSongAbs, pRoot
-                                     , pAdditions, pAddition
-                                     , pDeprRoot, pKey
+                                     , pChord
+                                     , pShorthand
+                                     , pSongAbs
+                                     , pRoot
+                                     , pAdditions
+                                     , pAddition
+                                     , pKey
                                      ) where
 
 import HarmTrace.Base.Parsing
@@ -67,14 +70,10 @@ pChord =     pChordLabel
          <|> (noneLabel    <$ (pString "N"  <|> pString "&pause"))
          <|> (unknownLabel <$ (pSym '*'     <|> pSym 'X'))
          <?> "Chord"
-
-pDeprRoot :: Parser Root 
-pDeprRoot =     pRoot
-            <|> Note Nothing   N  <$ pSym 'N' -- for no chord   
                     
 -- Parses a chord label
 pChordLabel :: Parser ChordLabel
-pChordLabel = toChord <$> pRoot <* pSym ':'  <*> pMaybe pShorthand
+pChordLabel = toChord <$> pRoot <* (pSym ':' `opt` ':') <*> pMaybe pShorthand
                       -- we ignore optional inversions for now
                       <*> ((pAdditions `opt` []) <* pInversion)
   where -- if there are no degrees and no shorthand 

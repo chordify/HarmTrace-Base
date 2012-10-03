@@ -53,9 +53,9 @@ module HarmTrace.Base.MusicRep (
   , toClassType
   , toTriad
   , analyseDegTriad
-  , analyseThird
-  , analyseFifth
-  , analyseSevth
+  -- , analyseThird
+  -- , analyseFifth
+  -- , analyseSevth
   , toDegreeList
   , toMode
   , toMajMin

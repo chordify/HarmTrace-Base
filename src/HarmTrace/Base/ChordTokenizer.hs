@@ -64,7 +64,9 @@ pChordDur = setDur <$> pChord <*> (pSym ';' *> pNaturalRaw) <?> "Chord;Int"
 -- | Parses a 'ChordLabel' in Harte et al. syntax including possible additions, 
 -- and removal of chord additions. If a chord has no 'Shorthand', the 'Degree' 
 -- list (if any) is analysed and depending on the 'Triad' (if any) a 
--- 'Maj', 'Min','Aug', or 'Dim' 'Shorthand' is stored.
+-- 'Maj', 'Min','Aug', or 'Dim' 'Shorthand' is stored. By default all the 
+-- duration stored in every 'Chord' is 1 (where the unit is application 
+-- dependend, often these are beats, but they can also be eightnotes)
 pChord :: Parser ChordLabel 
 pChord =     pChordLabel 
          <|> (noneLabel    <$ (pString "N"  <|> pString "&pause"))
@@ -72,6 +74,7 @@ pChord =     pChordLabel
          <?> "Chord"
                     
 -- Parses a chord label
+-- TODO add support for inversion
 pChordLabel :: Parser ChordLabel
 pChordLabel = toChord <$> pRoot <* (pSym ':' `opt` ':') <*> pMaybe pShorthand
                       -- we ignore optional inversions for now

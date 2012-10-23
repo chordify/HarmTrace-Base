@@ -191,7 +191,9 @@ instance Show Key where
 instance Show Mode where
   show MajMode = ""
   show MinMode = "m"  
-  
+
+-- TODO: it is probably best to derive eq for Chord and define other eq's 
+-- for specific tasks if needed.  
 instance Eq a => Eq (Chord a) where
   (Chord ra sha dega _loc _d) == (Chord rb shb degb _locb _db) 
      = ra == rb && sha == shb && dega == degb 

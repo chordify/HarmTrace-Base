@@ -93,11 +93,11 @@ type ChordLabel   = Chord Root
 -- rename to noLabel?
 -- | No Chord label
 noneLabel :: ChordLabel
-noneLabel = (Chord (Note Nothing N) None [] 0 0)
+noneLabel = (Chord (Note Nothing N) None [] 0 1)
 
 -- | Unknown Chord label
 unknownLabel :: ChordLabel
-unknownLabel = (Chord (Note Nothing X) None [] 0 0)
+unknownLabel = (Chord (Note Nothing X) None [] 0 1)
 
 -- | A chord based on relative 'ScaleDegree's
 type ChordDegree  = Chord ScaleDegree

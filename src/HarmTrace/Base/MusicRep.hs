@@ -514,7 +514,7 @@ toChordDegree k (Chord r sh degs loc d) =
 -- a 'Key'.
 toScaleDegree :: Key -> Root -> ScaleDegree
 toScaleDegree _ n@(Note _ N) = 
-  error ("HarmTrace.Base.MusicRep.toScaleDegree: cannot transpose" ++ show n)
+  error ("HarmTrace.Base.MusicRep.toScaleDegree: cannot transpose " ++ show n)
 toScaleDegree (Key kr _) cr  = -- Note Nothing I
   scaleDegrees!!(((toSemitone cr) - (toSemitone kr)) `mod` 12)
 
@@ -525,7 +525,7 @@ transposeSem deg sem = scaleDegrees!!((sem + (toSemitone deg)) `mod` 12) where
 -- | Returns the semitone value [0 .. 11] of a 'ScaleDegree', e.g. F# = 6  
 toSemitone :: (Show a, Enum a) => Note a -> Int
 toSemitone (Note m p)
-  | ix > 6    = error ("HarmTrace.Base.MusicRep.toSemitone: no semitone for"
+  | ix > 6    = error ("HarmTrace.Base.MusicRep.toSemitone: no semitone for "
                         ++ show (Note m p))
   | otherwise = ([0,2,4,5,7,9,11] !! ix) + modToSemi m where
     ix = fromEnum p

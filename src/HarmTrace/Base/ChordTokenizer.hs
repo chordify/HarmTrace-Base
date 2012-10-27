@@ -68,6 +68,7 @@ pChordDur = setDur <$> pChord <*> (pSym ';' *> pNaturalRaw) <?> "Chord;Int"
 -- duration stored in every 'Chord' is 1 (where the unit is application 
 -- dependend, often these are beats, but they can also be eightnotes)
 pChord :: Parser ChordLabel 
+{-# INLINE pChord #-}
 pChord =     pChordLabel 
          <|> (noneLabel    <$ (pString "N"  <|> pString "&pause"))
          <|> (unknownLabel <$ (pSym '*'     <|> pSym 'X'))
@@ -76,6 +77,7 @@ pChord =     pChordLabel
 -- Parses a chord label
 -- TODO add support for inversion
 pChordLabel :: Parser ChordLabel
+{-# INLINE pChordLabel #-}
 pChordLabel = toChord <$> pRoot <* (pSym ':' `opt` ':') <*> pMaybe pShorthand
                       -- we ignore optional inversions for now
                       <*> ((pAdditions `opt` []) <* pInversion)
@@ -110,6 +112,7 @@ pKey = f <$> pRoot <* pSym ':' <*> pShorthand <?> "Key"
 -- | Parses a shorthand following Harte et al. syntax, but also the shorthands
 -- added to the Billboard dataset, e.g. @maj@, @min@, or @9@.
 pShorthand :: Parser Shorthand
+{-# INLINE pShorthand #-}
 pShorthand =     Maj      <$ pString "maj"
              <|> Min      <$ pString "min"
              <|> Dim      <$ pString "dim"
@@ -165,6 +168,7 @@ pInterval =  ((!!) [minBound..] ) . pred <$> pNaturalRaw <?> "Interval"
 
 -- | Parses a 'Root' 'Note', e.g. @A@, @Bb@, or @F#@.
 pRoot :: Parser Root
+{-# INLINE pRoot #-}
 pRoot =     Note Nothing   A  <$ pSym 'A'
         <|> Note Nothing   B  <$ pSym 'B'
         <|> Note Nothing   C  <$ pSym 'C'

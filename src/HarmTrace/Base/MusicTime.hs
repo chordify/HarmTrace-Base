@@ -67,6 +67,11 @@ import HarmTrace.Base.MusicRep
 import Text.Printf (printf)
 -- import Control.DeepSeq
 
+
+-- | A type synonym is defined for our main numerical representation, this 
+-- allows us to easily change the precision.
+type NumData = Double
+
 --------------------------------------------------------------------------------
 -- High-level structure
 --------------------------------------------------------------------------------
@@ -248,10 +253,6 @@ type BeatTrackerData = [NumData]
 newtype BeatBar = BeatBar {beatBar :: (NumData, Beat)} deriving Eq
 
 type BeatBarTrackData = [BeatBar]
-
--- | A type synonym is defined for our main numerical representation, this 
--- allows us to easily change the precision.
-type NumData = Double
 
 type BeatChroma = BeatTimedData [ChordinoLine] -- one list per beat
 

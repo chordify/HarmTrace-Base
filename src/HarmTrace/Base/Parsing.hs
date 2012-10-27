@@ -73,6 +73,7 @@ parseDataWithErrors p inp = (parse ( (,) <$> p <*> pEnd)
 -- | Parses a specific string
 pString :: (ListLike state a, IsLocationUpdatedBy loc a, Show a, Eq a) 
         => [a] -> P (Str a state loc) [a]
+{-# INLINABLE  pString #-}        
 pString s = foldr (\a b -> (:) <$> a <*> b) (pure []) (map pSym s)
 
 -- | parses UNIX and DOS/WINDOWS line endings inclucing trailing whitespace

@@ -19,19 +19,19 @@
 
 module HarmTrace.Base.MusicTime (
   -- * The 'Timed' class
-    Timed (..)
+    -- Timed (..)
   
   -- * Datatypes
   -- ** Types for representing Chords and their probabilities
-  , ChordBeatAnnotation 
-  , ChordAnnotation 
+  -- , ChordBeatAnnotation 
+    ChordAnnotation 
   , ProbChordSeg (..)
   , ProbChord (..)
   , ChordCand (..)
   
   -- ** Representing musical time
   , TimedData (..)
-  , BeatTimedData (..)
+  -- , BeatTimedData (..)
   , Beat (..)
   , BeatBar (..)
   , BeatBarTrackData 
@@ -51,10 +51,13 @@ module HarmTrace.Base.MusicTime (
   , getBeatTrack
   , getBeat 
   , setBeat 
+  , setOnset
+  , setOffset
+  , setData
   , nextBeat
   , prevBeat 
-  , dumpBeats
-  , dumpBeat
+  -- , dumpBeats
+  -- , dumpBeat
   , updateTPChord
   , dropProb
   , dropTimed
@@ -66,7 +69,7 @@ module HarmTrace.Base.MusicTime (
 )where
              
 import HarmTrace.Base.MusicRep
-import Text.Printf (printf)
+-- import Text.Printf (printf)
 -- import Control.DeepSeq
 
 
@@ -80,7 +83,7 @@ type NumData = Double
 
 -- | Represents a chord transcription, similar to 'ChordAnnotation', but 
 -- 'ChordBeatAnnotation' also contains 'Beat' information.
-type ChordBeatAnnotation = [BeatTimedData ProbChord]
+-- type ChordBeatAnnotation = [BeatTimedData ProbChord]
 
 -- | A chord annotation consists of a
 -- list with chords and segment boundaries.
@@ -89,15 +92,19 @@ type ChordAnnotation = [TimedData ProbChord]
 
 -- TODO: * combine TimedData and BeatTimedData into one datatype 
 --       * remove Timed class -> make into records
-data TimedData a = TimedData a NumData NumData deriving Functor
+-- data TimedData a = TimedData a NumData NumData deriving Functor
 
 -- | A datatype that wraps around an arbitrary datatype, adding (in this order)
 -- a 'Beat', an onset, and an offset.
-data BeatTimedData a = BeatTimedData a Beat NumData NumData deriving Functor
+data TimedData a = TimedData { getData :: a 
+                             , getBeat :: Beat 
+                             , onset   :: NumData
+                             , offset  :: NumData } deriving Functor
 
+                             
 -- | Clustering 'ProbChord's in a collection of chords that share a key
 data ProbChordSeg = Segment { segKey    :: Key 
-                            , segChords :: [BeatTimedData [ProbChord]] }
+                            , segChords :: [TimedData [ProbChord]] }
   
 -- | Combines a 'ChordLabel' with a probability.
 data ProbChord = ProbChord {chordLab :: ChordLabel, prob :: NumData}
@@ -114,7 +121,7 @@ type ChordStruct = [NumData]
 
 -- | For now, we fix the number of available beats to four, because this is also
 -- hard-coded into the bar and beat-tracker.
-data Beat = One | Two | Three | Four deriving (Eq, Enum)
+data Beat = One | Two | Three | Four | NoBeat deriving (Eq, Enum)
 
 -- | An iterable list of Roots
 chromaPC ::[Root]  
@@ -135,35 +142,35 @@ chromaPC = [ Note Nothing   C
 -- | 'Timed' provides an interface for datatypes that add (musical) time 
 -- information to other datatypes. Hence, it allows for accessing the fields
 -- of 'TimedData' and 'BeatTimedData' via the same interface.
-class Functor t => Timed t where
-  -- | Returns the contained datatype 
-  getData   :: t a -> a
-  -- | Returns the onset time stamp
-  onset     :: t a -> NumData
-  -- | Returns the offset time stamp
-  offset    :: t a -> NumData
-  -- | wraps a datatype in 't'
-  setData   :: t a -> b       -> t b
-  -- | Sets the onset time stamp
-  setOnset  :: t a -> NumData -> t a
-  -- | Sets the offset time stamp
-  setOffset :: t a -> NumData -> t a
+-- class Functor t => Timed t where
+  -- -- | Returns the contained datatype 
+  -- getData   :: t a -> a
+  -- -- | Returns the onset time stamp
+  -- onset     :: t a -> NumData
+  -- -- | Returns the offset time stamp
+  -- offset    :: t a -> NumData
+  -- -- | wraps a datatype in 't'
+  -- setData   :: t a -> b       -> t b
+  -- -- | Sets the onset time stamp
+  -- setOnset  :: t a -> NumData -> t a
+  -- -- | Sets the offset time stamp
+  -- setOffset :: t a -> NumData -> t a
            
-instance Timed TimedData where
-  getData   (TimedData d _  _  ) = d
-  onset     (TimedData _ on _  ) = on
-  offset    (TimedData _ _  off) = off
-  setData   (TimedData _ on off) d   = TimedData d on off
-  setOnset  (TimedData d _  off) on  = TimedData d on off
-  setOffset (TimedData d on _  ) off = TimedData d on off
+-- instance Timed TimedData where
+  -- getData   (TimedData d _  _  ) = d
+  -- onset     (TimedData _ on _  ) = on
+  -- offset    (TimedData _ _  off) = off
+  -- setData   (TimedData _ on off) d   = TimedData d on off
+  -- setOnset  (TimedData d _  off) on  = TimedData d on off
+  -- setOffset (TimedData d on _  ) off = TimedData d on off
   
-instance Timed BeatTimedData where
-  getData   (BeatTimedData d _ _  _  ) = d
-  onset     (BeatTimedData _ _ on _  ) = on
-  offset    (BeatTimedData _ _ _  off) = off
-  setData   (BeatTimedData _ b on off) d   = BeatTimedData d b on off
-  setOnset  (BeatTimedData d b _  off) on  = BeatTimedData d b on off
-  setOffset (BeatTimedData d b on _  ) off = BeatTimedData d b on off
+-- instance Timed BeatTimedData where
+  -- getData   (BeatTimedData d _ _  _  ) = d
+  -- onset     (BeatTimedData _ _ on _  ) = on
+  -- offset    (BeatTimedData _ _ _  off) = off
+  -- setData   (BeatTimedData _ b on off) d   = BeatTimedData d b on off
+  -- setOnset  (BeatTimedData d b _  off) on  = BeatTimedData d b on off
+  -- setOffset (BeatTimedData d b on _  ) off = BeatTimedData d b on off
 
 --------------------------------------------------------------------------------
 -- NFData instances
@@ -190,10 +197,10 @@ instance Eq (ProbChord) where
 
 instance Show (ProbChord) where 
   show (ProbChord (Chord r sh _ _ _) p) = 
-    show r ++ ':' : show sh ++ ':' : printf "%.2f" p  
+    show r ++ ':' : show sh -- ++ ':' : printf "%.2f" p  
 
 instance Show a => Show (TimedData a) where 
-  show (TimedData bk s l) = show bk ++ " (" ++ show s ++ ':' : show l ++ ")\n"
+  show (TimedData bk _bt s l) = show bk ++ " (" ++ show s ++ ':' : show l ++ ")\n"
 
 instance Show ProbChordSeg where
   show pc = concatMap (\x -> show (segKey pc) ++ ' ' : show x) (segChords pc)
@@ -207,9 +214,9 @@ instance Show Beat where
 instance Show BeatBar where
   show = show . beatBar
   
-instance Show a => Show (BeatTimedData a) where
-  show (BeatTimedData dat bt on off) = 
-    show bt ++ ';' : show dat ++ ';' : show on ++ ';' : show off ++ "\n"
+-- instance Show a => Show (BeatTimedData a) where
+  -- show (BeatTimedData dat bt on off) = 
+    -- show bt ++ ';' : show dat ++ ';' : show on ++ ';' : show off ++ "\n"
     
 --------------------------------------------------------------------------------
 -- numerical data representation
@@ -249,7 +256,7 @@ newtype BeatBar = BeatBar {beatBar :: (NumData, Beat)} deriving Eq
 
 type BeatBarTrackData = [BeatBar]
 
-type BeatChroma = BeatTimedData [ChordinoLine] -- one list per beat
+type BeatChroma = TimedData [ChordinoLine] -- one list per beat
 
 -- we compare based on the timestamp only
 instance Ord BeatBar where
@@ -265,12 +272,21 @@ getBeatTrack = map (fst . beatBar)
 
 -- | Provides access to the 'Beat' field of a 'BeatTimedData'. The other fields
 -- should be accessed by the methods of the 'Timed' class.
-getBeat :: BeatTimedData a -> Beat
-getBeat (BeatTimedData _ b _ _) = b
+-- getBeat :: TimedData a -> Beat
+-- getBeat (TimedData _ b _ _) = b
+
+setData :: TimedData a -> b -> TimedData b
+setData td d = td {getData = d}
+
+setOnset :: TimedData a -> NumData -> TimedData a
+setOnset td on = td {onset = on}
+
+setOffset :: TimedData a -> NumData -> TimedData a
+setOffset td off = td {offset = off}
 
 -- | Adds 'Beat' information to a 'Timed' datatype
-setBeat :: Timed t => t a -> Beat -> BeatTimedData a
-setBeat tdat bt = BeatTimedData (getData tdat) bt (onset tdat) (offset tdat)
+setBeat :: TimedData a -> Beat -> TimedData a
+setBeat td bt = td {getBeat = bt}
 
 nextBeat, prevBeat :: Beat -> Beat 
 
@@ -285,28 +301,28 @@ nextBeat b    = succ b
 prevBeat One  = Four
 prevBeat b    = pred b
 
-updateTPChord :: Timed t => (ChordLabel -> ChordLabel) -> t ProbChord 
-              -> t ProbChord
+updateTPChord :: (ChordLabel -> ChordLabel) -> TimedData ProbChord 
+              -> TimedData ProbChord
 updateTPChord f = fmap (update f) where
   update g (ProbChord c p) = (ProbChord (g c) p)
 
 -- | drops the probabilties paired with chordlabels (in a list of 'ProbChord's)
 -- and returns a list of 'ChordLabel's
-dropProb :: Timed t => [t ProbChord] -> [t ChordLabel]
+dropProb :: [TimedData ProbChord] -> [TimedData ChordLabel]
 dropProb = map (fmap chordLab)
 
 -- | drops the time (with or without 'Beat') information of a list 
 -- 'Timed' data structure 
-dropTimed :: Timed t => [t a] -> [a]
+dropTimed :: [TimedData a] -> [a]
 dropTimed = map getData
 
 -- | Converts a list of 'BeatTimedData's into a list of 'TimedData's
-dumpBeats :: [BeatTimedData a] -> [TimedData a]
-dumpBeats = map dumpBeat
+-- dumpBeats :: [TimedData a] -> [TimedData a]
+-- dumpBeats = map dumpBeat
 
--- | Converts a 'BeatTimedData' into a 'TimedData'
-dumpBeat :: BeatTimedData a -> TimedData a
-dumpBeat (BeatTimedData dat _bt on off) = TimedData dat on off
+-- -- | Converts a 'BeatTimedData' into a 'TimedData'
+-- dumpBeat :: BeatTimedData a -> TimedData a
+-- dumpBeat (BeatTimedData dat _bt on off) = TimedData dat on off
 
 -- | Returns the time stamp of a 'BeatBar'
 timeStamp :: BeatBar -> NumData

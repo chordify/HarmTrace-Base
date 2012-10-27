@@ -48,9 +48,10 @@ module HarmTrace.Base.MusicTime (
 
   -- * Functions
   -- ** Data access
-  , setBeat 
-  , setOnset
-  , setOffset
+  , getBeatBar 
+  , getBeat 
+  , getOnset
+  , getOffset
   , setData
   -- ** Type conversion and other utilities
   , getBeatTrack
@@ -88,11 +89,14 @@ type ChordAnnotation = [TimedData ProbChord]
 data TimedData a = TimedData { -- | Returns the contained datatype 
                                getData :: a 
                                -- | Returns the 'Beat'
-                             , getBeat :: Beat 
+                             -- , getBeat :: Beat 
                                -- | Returns the onset timestamp
-                             , onset   :: NumData
+                             -- , onset   :: NumData
                                -- | Returns the offset timestamp
-                             , offset  :: NumData } deriving Functor
+                             -- , offset  :: NumData 
+                               -- | Returns the list of TimeStamps
+                             , getTimeStamps :: [BeatBar]
+                             } deriving Functor
 
 -- | Clustering 'ProbChord's in a collection of chords that share a key
 data ProbChordSeg = Segment { segKey    :: Key 
@@ -146,7 +150,8 @@ instance Show (ProbChord) where
     show r ++ ':' : show sh -- ++ ':' : printf "%.2f" p  
 
 instance Show a => Show (TimedData a) where 
-  show (TimedData bk _bt s l) = show bk ++ " (" ++ show s ++ ':' : show l ++ ")\n"
+  show td = (show . getData $ td) ++ " (" ++ (show . getOnset  $ td) 
+                                  ++ ':'   : (show . getOffset $ td) ++ ")\n"
 
 instance Show ProbChordSeg where
   show pc = concatMap (\x -> show (segKey pc) ++ ' ' : show x) (segChords pc)
@@ -159,7 +164,8 @@ instance Show Beat where
   show NoBeat = "x"
 
 instance Show BeatBar where
-  show = show . beatBar
+  show (BeatBar t bt) = '(' : show t ++ ", " ++ show bt ++ ")"
+  show (Time t)       = '(' : show t ++ ")"
   
 -- instance Show a => Show (BeatTimedData a) where
   -- show (BeatTimedData dat bt on off) = 
@@ -199,8 +205,10 @@ type KeyStrengthData = ChordinoData
 
 type BeatTrackerData = [NumData]
 
+-- TODO Rename to BeatTime
 -- | Combines a 'Beat' and a timestamp
-newtype BeatBar = BeatBar {beatBar :: (NumData, Beat)} deriving Eq
+data BeatBar = BeatBar NumData Beat
+             | Time    NumData      deriving Eq
 
 type BeatBarTrackData = [BeatBar]
 
@@ -208,7 +216,7 @@ type BeatChroma = TimedData [ChordinoLine] -- one list per beat
 
 -- we compare based on the timestamp only
 instance Ord BeatBar where
-  compare (BeatBar (b1,_)) (BeatBar (b2,_)) = compare b1 b2
+  compare a b = compare (timeStamp a) (timeStamp b)
 
 --------------------------------------------------------------------------------
 -- Some type conversion utilities
@@ -216,23 +224,49 @@ instance Ord BeatBar where
 
 -- | Converts  'BeatBarTrackData' into 'BeatTrackerData'
 getBeatTrack :: BeatBarTrackData -> BeatTrackerData
-getBeatTrack = map (fst . beatBar)
+getBeatTrack = map timeStamp
 
 -- | wraps a datatype in 'TimedData'
 setData :: TimedData a -> b -> TimedData b
 setData td d = td {getData = d}
 
+-- | Returns the start time stamp
+getBeatBar :: TimedData a -> BeatBar
+getBeatBar td = case getTimeStamps td of
+  []    -> error "HarmTrace.Base.MusicTime.getOnset: no timestamps are stored"
+  (h:_) -> h
+
+-- | Returns the start 'Beat'
+getBeat :: TimedData a -> Beat
+getBeat = beat . getBeatBar 
+  
 -- | Returns the onset time stamp
-setOnset :: TimedData a -> NumData -> TimedData a
-setOnset td on = td {onset = on}
+getOnset :: TimedData a -> NumData
+getOnset = timeStamp . getBeatBar 
+
+timeStamp :: BeatBar -> NumData
+timeStamp (BeatBar t _bt) = t
+timeStamp (Time    t    ) = t  
+
+beat :: BeatBar -> Beat
+beat (BeatBar _t bt) = bt
+beat (Time    _t   ) = NoBeat
+
+-- setOnset :: TimedData a -> NumData -> TimedData a
+-- setOnset td on = td {onset = on}
 
 -- | Returns the offset time stamp
-setOffset :: TimedData a -> NumData -> TimedData a
-setOffset td off = td {offset = off}
+getOffset :: TimedData a -> NumData
+getOffset td = case getTimeStamps td of
+  []  -> error "HarmTrace.Base.MusicTime.getOffset: no timestamps are stored"
+  l   -> timeStamp . last $ l
+
+-- setOffset :: TimedData a -> NumData -> TimedData a
+-- setOffset td off = td {offset = off}
 
 -- | Adds 'Beat' information to a 'Timed' datatype
-setBeat :: TimedData a -> Beat -> TimedData a
-setBeat td bt = td {getBeat = bt}
+-- setBeat :: TimedData a -> Beat -> TimedData a
+-- setBeat td bt = td {getBeat = bt}
 
 nextBeat, prevBeat :: Beat -> Beat 
 
@@ -264,10 +298,10 @@ dropTimed :: [TimedData a] -> [a]
 dropTimed = map getData
 
 
--- | Returns the time stamp of a 'BeatBar'
-timeStamp :: BeatBar -> NumData
-timeStamp = fst . beatBar
+-- -- | Returns the time stamp of a 'BeatBar'
+-- timeStamp :: BeatBar -> NumData
+-- timeStamp = fst . beatBar
 
--- | Returns the 'Beat' of a 'BeatBar'
-beat :: BeatBar -> Beat
-beat = snd . beatBar
+-- -- | Returns the 'Beat' of a 'BeatBar'
+-- beat :: BeatBar -> Beat
+-- beat = snd . beatBar

@@ -55,6 +55,8 @@ module HarmTrace.Base.MusicTime (
   , prevBeat 
   , dumpBeats
   , dumpBeat
+  , updateTPChord
+  , dropProb
   , dropTimed
   , timeStamp
   , beat 
@@ -78,27 +80,20 @@ type NumData = Double
 
 -- | Represents a chord transcription, similar to 'ChordAnnotation', but 
 -- 'ChordBeatAnnotation' also contains 'Beat' information.
-type ChordBeatAnnotation = [BeatTimedData ChordLabel]
+type ChordBeatAnnotation = [BeatTimedData ProbChord]
 
 -- | A chord annotation consists of a
 -- list with chords and segment boundaries.
-type ChordAnnotation = [TimedData ChordLabel]
+type ChordAnnotation = [TimedData ProbChord]
 
 
 -- TODO: * combine TimedData and BeatTimedData into one datatype 
---       * deriving Functor / Applicative
---       * remove Timed/ Functor instances / class -> make into records
+--       * remove Timed class -> make into records
 data TimedData a = TimedData a NumData NumData deriving Functor
 
 -- | A datatype that wraps around an arbitrary datatype, adding (in this order)
 -- a 'Beat', an onset, and an offset.
 data BeatTimedData a = BeatTimedData a Beat NumData NumData deriving Functor
-
--- | An alternative constructor for a BeatTimedData using two BeatBar datatypes
--- instead of a 'Beat' and two 'NumData's.
--- beatTimedData :: a -> BeatBar -> BeatBar -> BeatTimedData a
--- beatTimedData a on off = let (onnum,onbt) = beatBar on 
-                         -- in  BeatTimedData a onbt onnum (fst $ beatBar off)
 
 -- | Clustering 'ProbChord's in a collection of chords that share a key
 data ProbChordSeg = Segment { segKey    :: Key 
@@ -140,7 +135,7 @@ chromaPC = [ Note Nothing   C
 -- | 'Timed' provides an interface for datatypes that add (musical) time 
 -- information to other datatypes. Hence, it allows for accessing the fields
 -- of 'TimedData' and 'BeatTimedData' via the same interface.
-class Timed t where
+class Functor t => Timed t where
   -- | Returns the contained datatype 
   getData   :: t a -> a
   -- | Returns the onset time stamp
@@ -289,6 +284,16 @@ nextBeat b    = succ b
 -- | returns the previous 'Beat', similar to 'prevBeat'.
 prevBeat One  = Four
 prevBeat b    = pred b
+
+updateTPChord :: Timed t => (ChordLabel -> ChordLabel) -> t ProbChord 
+              -> t ProbChord
+updateTPChord f = fmap (update f) where
+  update g (ProbChord c p) = (ProbChord (g c) p)
+
+-- | drops the probabilties paired with chordlabels (in a list of 'ProbChord's)
+-- and returns a list of 'ChordLabel's
+dropProb :: Timed t => [t ProbChord] -> [t ChordLabel]
+dropProb = map (fmap chordLab)
 
 -- | drops the time (with or without 'Beat') information of a list 
 -- 'Timed' data structure 

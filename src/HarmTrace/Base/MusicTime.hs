@@ -50,8 +50,8 @@ module HarmTrace.Base.MusicTime (
   -- ** Data access
   , getBeatBar 
   , getBeat 
-  , getOnset
-  , getOffset
+  , onset
+  , offset
   , setData
   -- ** Type conversion and other utilities
   , getBeatTrack
@@ -150,8 +150,8 @@ instance Show (ProbChord) where
     show r ++ ':' : show sh -- ++ ':' : printf "%.2f" p  
 
 instance Show a => Show (TimedData a) where 
-  show td = (show . getData $ td) ++ " (" ++ (show . getOnset  $ td) 
-                                  ++ ':'   : (show . getOffset $ td) ++ ")\n"
+  show td = (show . getData $ td) ++ " (" ++ (show . onset  $ td) 
+                                  ++ ':'   : (show . offset $ td) ++ ")\n"
 
 instance Show ProbChordSeg where
   show pc = concatMap (\x -> show (segKey pc) ++ ' ' : show x) (segChords pc)
@@ -241,8 +241,8 @@ getBeat :: TimedData a -> Beat
 getBeat = beat . getBeatBar 
   
 -- | Returns the onset time stamp
-getOnset :: TimedData a -> NumData
-getOnset = timeStamp . getBeatBar 
+onset :: TimedData a -> NumData
+onset = timeStamp . getBeatBar 
 
 timeStamp :: BeatBar -> NumData
 timeStamp (BeatBar t _bt) = t
@@ -256,8 +256,8 @@ beat (Time    _t   ) = NoBeat
 -- setOnset td on = td {onset = on}
 
 -- | Returns the offset time stamp
-getOffset :: TimedData a -> NumData
-getOffset td = case getTimeStamps td of
+offset :: TimedData a -> NumData
+offset td = case getTimeStamps td of
   []  -> error "HarmTrace.Base.MusicTime.getOffset: no timestamps are stored"
   l   -> timeStamp . last $ l
 

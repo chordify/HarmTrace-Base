@@ -24,7 +24,7 @@ module HarmTrace.Base.Parsing ( -- * Top level parsers
                               , pString
                               , pLineEnd
                               , pManyTill
-                                -- * reexporting the uu-parsinglib
+                                -- Re-exporting the uu-parsinglib
                               , module Data.ListLike.Base
                               , module Text.ParserCombinators.UU 
                               , module Text.ParserCombinators.UU.Utils
@@ -75,7 +75,7 @@ pString :: (ListLike state a, IsLocationUpdatedBy loc a, Show a, Eq a)
         => [a] -> P (Str a state loc) [a]
 pString s = foldr (\a b -> (:) <$> a <*> b) (pure []) (map pSym s)
 
--- | parses UNIX and DOS/WINDOWS line endings inclucing trailing whitespace
+-- | Parses UNIX and DOS/WINDOWS line endings including trailing whitespace
 pLineEnd :: Parser String
 pLineEnd  = pString "\n" <|> pString "\r\n" <|> pString " " <|> pString "\t"
 

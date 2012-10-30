@@ -48,6 +48,8 @@ module HarmTrace.Base.MusicTime (
 
   -- * Functions
   -- ** Data access
+  , timedData
+  , timedDataBT
   , getBeatBar 
   , getBeat 
   , onset
@@ -223,9 +225,19 @@ instance Ord BeatBar where
 -- Some type conversion utilities
 --------------------------------------------------------------------------------
 
-concatTimedData :: a -> TimedData a -> TimedData a -> [TimedData a]
+-- | alternative 'TimedData' constructor
+timedData :: a -> NumData -> NumData -> TimedData a
+timedData d x y = TimedData d [Time x, Time y]
+
+-- | alternative 'TimedData' constructor
+timedDataBT :: a -> BeatBar -> BeatBar -> TimedData a
+timedDataBT d x y = TimedData d [x, y]
+
+-- | concatenates the 'BeatBar' timestamps of two 'TimedData's and 
+-- creates a new 'TimedData' that stores the first argument. 
+concatTimedData :: a -> TimedData a -> TimedData a -> TimedData a
 concatTimedData dat (TimedData _ ta) (TimedData _ tb) = 
-  [ TimedData dat (mergeBeatTime ta tb) ]
+  TimedData dat (mergeBeatTime ta tb)
 
 mergeBeatTime :: [BeatBar] -> [BeatBar] -> [BeatBar]
 mergeBeatTime [] b = b

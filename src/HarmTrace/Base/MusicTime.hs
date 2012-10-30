@@ -223,11 +223,9 @@ instance Ord BeatBar where
 -- Some type conversion utilities
 --------------------------------------------------------------------------------
 
-concatTimedData :: Eq a => (a -> a -> Bool) -> TimedData a -> TimedData a 
-                -> [TimedData a]
-concatTimedData eq (TimedData da ta) (TimedData db tb) 
-  | da `eq` db = [ TimedData da (mergeBeatTime ta tb) ]
-  | otherwise  = [ TimedData da ta, TimedData db tb   ]
+concatTimedData :: a -> TimedData a -> TimedData a -> [TimedData a]
+concatTimedData dat (TimedData _ ta) (TimedData _ tb) = 
+  [ TimedData dat (mergeBeatTime ta tb) ]
 
 mergeBeatTime :: [BeatBar] -> [BeatBar] -> [BeatBar]
 mergeBeatTime [] b = b
@@ -237,18 +235,6 @@ mergeBeatTime a b = case compare (timeStamp . last $ a) (timeStamp. head $ b) of
   EQ -> a ++ tail b -- do not include the same timestamp twice
   LT -> a ++ b
   
-
--- mergeBeatTime []  bb = bb -- should not occur, but incase it does
--- mergeBeatTime bb  [] = bb
--- mergeBeatTime [a]  (h : t) -- one time stamp should
- -- | timeStamp a == timeStamp h = (    h : t)
- -- | otherwise                  = (a : h : t) 
--- mergeBeatTime [a, b] (h : t) 
- -- | timeStamp b == timeStamp h = (a     : h : t)
- -- | otherwise                  = (a : b : h : t)
--- mergeBeatTime x y 
- -- | onset  
- 
 -- | Converts  'BeatBarTrackData' into 'BeatTrackerData'
 getBeatTrack :: BeatBarTrackData -> BeatTrackerData
 getBeatTrack = map timeStamp

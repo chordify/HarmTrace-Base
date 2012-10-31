@@ -71,9 +71,14 @@ module HarmTrace.Base.MusicTime (
 ) where
              
 import HarmTrace.Base.MusicRep
--- import Text.Printf (printf)
--- import Control.DeepSeq
 
+
+-- | When reducing and expaninding 'TimedData' types there might be rounding
+-- errors in the floating point time stamps. The 'roundingError' parameter
+-- sets the acceptable rounding error that is used in the comparison of 
+-- time stamps (e.g. see 'timeComp')
+roundingError :: NumData 
+roundingError = 0.0001 -- = one milisecond  
 
 -- | A type synonym is defined for our main numerical representation, this 
 -- allows us to easily change the precision.
@@ -242,11 +247,18 @@ concatTimedData dat (TimedData _ ta) (TimedData _ tb) =
 mergeBeatTime :: [BeatBar] -> [BeatBar] -> [BeatBar]
 mergeBeatTime [] b = b
 mergeBeatTime a [] = a
-mergeBeatTime a b = case compare (timeStamp . last $ a) (timeStamp. head $ b) of
-  GT -> error "HarmTrace.Base.MusicTime.mergeBeatTime: cannot merge BeatTimes"
+mergeBeatTime a b = case timeComp (timeStamp . last $ a) (timeStamp. head $ b) of
+  GT -> error ("HarmTrace.Base.MusicTime.mergeBeatTime: cannot merge BeatTimes " 
+                ++ show a ++ " and " ++ show b)
   EQ -> a ++ tail b -- do not include the same timestamp twice
-  LT -> a ++ b
+  LT -> a ++ b  
   
+timeComp :: NumData -> NumData -> Ordering
+timeComp a b 
+ | a > (b + roundingError) = GT
+ | a < (b - roundingError) = LT
+ | otherwise               = EQ
+
 -- | Converts  'BeatBarTrackData' into 'BeatTrackerData'
 getBeatTrack :: BeatBarTrackData -> BeatTrackerData
 getBeatTrack = map timeStamp

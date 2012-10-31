@@ -242,17 +242,20 @@ timedDataBT d x y = TimedData d [x, y]
 -- creates a new 'TimedData' that stores the first argument. 
 concatTimedData :: a -> TimedData a -> TimedData a -> TimedData a
 concatTimedData dat (TimedData _ ta) (TimedData _ tb) = 
-  TimedData dat (mergeBeatTime ta tb)
+  TimedData dat (mergeBeatTime ta tb) where
 
-mergeBeatTime :: [BeatBar] -> [BeatBar] -> [BeatBar]
-mergeBeatTime [] b = b
-mergeBeatTime a [] = a
-mergeBeatTime a b = case timeComp (timeStamp . last $ a) (timeStamp. head $ b) of
-  GT -> error ("HarmTrace.Base.MusicTime.mergeBeatTime: cannot merge BeatTimes " 
-                ++ show a ++ " and " ++ show b)
-  EQ -> a ++ tail b -- do not include the same timestamp twice
-  LT -> a ++ b  
-  
+  mergeBeatTime :: [BeatBar] -> [BeatBar] -> [BeatBar]
+  mergeBeatTime [] b = b
+  mergeBeatTime a [] = a
+  mergeBeatTime a b = case timeComp (timeStamp . last $ a) 
+                                    (timeStamp . head $ b) of
+    GT -> error ("HarmTrace.Base.MusicTime.mergeBeatTime: " ++
+                 "cannot merge BeatTimes "  ++ show a ++ " and " ++ show b)
+    EQ -> a ++ tail b -- do not include the same timestamp twice
+    LT -> a ++ b  
+ 
+-- | compares to 'NumData' timestamps taking a rounding error 'roundingError'
+-- into account.
 timeComp :: NumData -> NumData -> Ordering
 timeComp a b 
  | a > (b + roundingError) = GT
@@ -276,21 +279,20 @@ getBeatBar td = case getTimeStamps td of
 -- | Returns the start 'Beat'
 getBeat :: TimedData a -> Beat
 getBeat = beat . getBeatBar 
-  
--- | Returns the onset time stamp
-onset :: TimedData a -> NumData
-onset = timeStamp . getBeatBar 
 
+-- | Returns the 'NumData' timestamp, given a 'BeatBar'
 timeStamp :: BeatBar -> NumData
 timeStamp (BeatBar t _bt) = t
 timeStamp (Time    t    ) = t  
 
+-- | Returns the 'NumData' timestamp, given a 'BeatBar'
 beat :: BeatBar -> Beat
 beat (BeatBar _t bt) = bt
 beat (Time    _t   ) = NoBeat
 
--- setOnset :: TimedData a -> NumData -> TimedData a
--- setOnset td on = td {onset = on}
+-- | Returns the onset time stamp
+onset :: TimedData a -> NumData
+onset = timeStamp . getBeatBar 
 
 -- | Returns the offset time stamp
 offset :: TimedData a -> NumData
@@ -298,15 +300,7 @@ offset td = case getTimeStamps td of
   []  -> error "HarmTrace.Base.MusicTime.getOffset: no timestamps are stored"
   l   -> timeStamp . last $ l
 
--- setOffset :: TimedData a -> NumData -> TimedData a
--- setOffset td off = td {offset = off}
-
--- | Adds 'Beat' information to a 'Timed' datatype
--- setBeat :: TimedData a -> Beat -> TimedData a
--- setBeat td bt = td {getBeat = bt}
-
 nextBeat, prevBeat :: Beat -> Beat 
-
 -- TODO: replace by ad-hoc enum instance
 -- | returns the next beat, e.g. @ nextBeat Two = Three @. 
 -- Following the (current) definition of 'Beat', we still assume 4/4, in the 
@@ -333,12 +327,3 @@ dropProb = map (fmap chordLab)
 -- 'Timed' data structure 
 dropTimed :: [TimedData a] -> [a]
 dropTimed = map getData
-
-
--- -- | Returns the time stamp of a 'BeatBar'
--- timeStamp :: BeatBar -> NumData
--- timeStamp = fst . beatBar
-
--- -- | Returns the 'Beat' of a 'BeatBar'
--- beat :: BeatBar -> Beat
--- beat = snd . beatBar

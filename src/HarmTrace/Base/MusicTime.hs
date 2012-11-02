@@ -61,9 +61,9 @@ module HarmTrace.Base.MusicTime (
   , timeStamp
   , beat 
 
-  -- ** miscellaneous
+  -- ** Miscellaneous
   , chromaPC
-)where
+) where
              
 import HarmTrace.Base.MusicRep
 import Text.Printf (printf)

@@ -322,7 +322,7 @@ shToClassType Min13    = MinClass
 shToClassType Maj13    = MajClass
 shToClassType Thirteen = DomClass
 
-       
+{-
 -- | /Depricated/ Categorises a 'Shorthand' into a 'ClassType'.
 toClassType' :: Shorthand -> ClassType
 toClassType' sh -- TODO: reconsider these categories...
@@ -332,7 +332,7 @@ toClassType' sh -- TODO: reconsider these categories...
   | sh `elem` [Dim,Dim7] = DimClass 
   | otherwise = error 
       ("HarmTrace.Base.MusicRep.toClassType: unknown shorthand: " ++ show sh)
-
+-}
 -- should not be exported, used only in toTriad
 data Third = MajThird | MinThird             | NoThird deriving (Eq, Show)
 data Fifth = DimFifth | PerfFifth | AugFifth | NoFifth deriving (Eq, Show)

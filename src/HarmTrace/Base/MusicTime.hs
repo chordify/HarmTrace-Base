@@ -96,15 +96,9 @@ type ChordAnnotation = [TimedData ProbChord]
 -- a 'Beat', an onset, and an offset.
 data TimedData a = TimedData { -- | Returns the contained datatype 
                                getData :: a 
-                               -- | Returns the 'Beat'
-                             -- , getBeat :: Beat 
-                               -- | Returns the onset timestamp
-                             -- , onset   :: NumData
-                               -- | Returns the offset timestamp
-                             -- , offset  :: NumData 
                                -- | Returns the list of TimeStamps
                              , getTimeStamps :: [BarTime]
-                             } deriving Functor
+                             } deriving (Functor, Show)
 
 -- | Clustering 'ProbChord's in a collection of chords that share a key
 data ProbChordSeg = Segment { segKey    :: Key 
@@ -151,15 +145,9 @@ chromaPC = [ Note Nothing   C
 instance Eq (ProbChord) where
   a == b = chordLab a == chordLab b
 
--- TODO remove line-endings from show instances
-
 instance Show (ProbChord) where 
   show (ProbChord (Chord r sh _ _ _) _p) = 
     show r ++ ':' : show sh -- ++ ':' : printf "%.2f" p  
-
-instance Show a => Show (TimedData a) where 
-  show td = (show . getData $ td) ++ " (" ++ (show . onset  $ td) 
-                                  ++ ':'   : (show . offset $ td) ++ ")\n"
 
 instance Show ProbChordSeg where
   show pc = concatMap (\x -> show (segKey pc) ++ ' ' : show x) (segChords pc)
@@ -174,10 +162,7 @@ instance Show Beat where
 instance Show BarTime where
   show (BarTime t bt) = '(' : show t ++ ", " ++ show bt ++ ")"
   show (Time t)       = '(' : show t ++ ")"
-  
--- instance Show a => Show (BeatTimedData a) where
-  -- show (BeatTimedData dat bt on off) = 
-    -- show bt ++ ';' : show dat ++ ';' : show on ++ ';' : show off ++ "\n"
+
     
 --------------------------------------------------------------------------------
 -- numerical data representation
@@ -273,7 +258,7 @@ setData td d = td {getData = d}
 -- | Returns the start time stamp
 getBarTime :: TimedData a -> BarTime
 getBarTime td = case getTimeStamps td of
-  []    -> error "HarmTrace.Base.MusicTime.getOnset: no timestamps are stored"
+  []    -> error "HarmTrace.Base.MusicTime.getBarTime: no timestamps are stored"
   (h:_) -> h
 
 -- | Returns the start 'Beat'
@@ -297,7 +282,7 @@ onset = timeStamp . getBarTime
 -- | Returns the offset time stamp
 offset :: TimedData a -> NumData
 offset td = case getTimeStamps td of
-  []  -> error "HarmTrace.Base.MusicTime.getOffset: no timestamps are stored"
+  []  -> error "HarmTrace.Base.MusicTime.offset: no timestamps are stored"
   l   -> timeStamp . last $ l
 
 -- TODO: replace by ad-hoc enum instance?

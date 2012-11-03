@@ -115,7 +115,7 @@ data Chord a = Chord { chordRoot        :: a
 -- | We introduce four chord categories: major chords, minor chords, dominant
 -- seventh chords, and diminshed seventh chords
 data ClassType = MajClass | MinClass | DomClass | DimClass | NoClass
-  deriving (Eq)
+  deriving (Eq, Enum, Ord, Bounded)
 
 -- Following Harte et al., we define a number of chord 'Shorthand's
 data Shorthand = -- | Triadic chords
@@ -136,7 +136,7 @@ data Shorthand = -- | Triadic chords
                  -- Additional shorthands in billboard collection
                | Eleven | Thirteen | Min11 | Maj13 | Min13
                
-  deriving (Show, Eq, Enum, Bounded) 
+  deriving (Show, Eq, Ord, Enum, Bounded) 
 
 
 -- | Key relative scale degrees to abstract from the absolute Root notes

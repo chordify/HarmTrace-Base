@@ -70,8 +70,9 @@ module HarmTrace.Base.MusicRep (
   , scaleDegrees
   ) where
   
-import Data.Maybe
+import Data.Maybe (fromJust)
 import Data.List (elemIndex, intercalate, (\\), partition)
+import Data.Char (toLower)
 
 --------------------------------------------------------------------------------
 -- Representing musical information at the value level
@@ -197,14 +198,26 @@ instance Show Mode where
 instance Eq a => Eq (Chord a) where
   (Chord ra sha dega _loc _d) == (Chord rb shb degb _locb _db) 
      = ra == rb && sha == shb && dega == degb 
-  
-instance (Show a) => Show (Chord a) where
-  show (Chord r sh deg _loc _d) =  show r ++ ':' : show sh 
-                            ++ (if not (null deg) then showAdds deg else "")
-                            -- ++ '_' : show loc ++ ':' : show d
 
-showAdds :: Show a => [a] -> String                                
-showAdds x = '(' : intercalate "," (map show x) ++ ")"
+-- In showing chords, we obey Harte et al.'s syntax as much as possible
+instance (Show a) => Show (Chord a) where
+  show (Chord r None     []  _loc _d) =  show r 
+  show (Chord r None     add _loc _d) =  show r ++ ':' : showAdd add
+  show (Chord r Five     add _loc _d) =  show r ++ ":5"  ++ showAdd add
+  show (Chord r Sev      add _loc _d) =  show r ++ ":7"  ++ showAdd add
+  show (Chord r Nin      add _loc _d) =  show r ++ ":9"  ++ showAdd add
+  show (Chord r Eleven   add _loc _d) =  show r ++ ":11" ++ showAdd add
+  show (Chord r Thirteen add _loc _d) =  show r ++ ":13" ++ showAdd add
+  show (Chord r sh       add _loc _d) =  show r ++ ':' : showShorthand sh 
+                                                         ++ showAdd add
+    
+showAdd :: [Addition] -> String
+showAdd [] = ""
+showAdd x  = '(' : intercalate "," (map show x) ++ ")"
+
+-- change the first char to lowercase
+showShorthand :: Shorthand -> String
+showShorthand sh = let (c:cs) = show sh in toLower c : cs 
                             
 instance Show ClassType where
   show MajClass = ""

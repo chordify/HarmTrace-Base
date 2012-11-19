@@ -98,22 +98,26 @@ data TimedData a = TimedData { -- | Returns the contained datatype
                                getData :: a 
                                -- | Returns the list of TimeStamps
                              , getTimeStamps :: [BarTime]
-                             } deriving (Functor, Show)
+                             } deriving (Functor, Show, Eq)
 
 -- | Clustering 'ProbChord's in a collection of chords that share a key
 data ProbChordSeg = Segment { segKey    :: Key 
-                            , segChords :: [TimedData [ProbChord]] }
+                            , segChords :: [TimedData [ProbChord]] 
+                            } deriving (Show, Eq)
+                            
   
 -- | Combines a 'ChordLabel' with a probability.
-data ProbChord = ProbChord {chordLab :: ChordLabel, prob :: NumData}
+data ProbChord = ProbChord { chordLab :: ChordLabel
+                           , prob :: NumData
+                           }
 
 -- | A chord candidate: an intermediate datatype that matches shorthand, 
 -- chord structure and root note (plus inversion)
 data ChordCand = ChordCand { originalRootCC   :: Root
                            , inversionRootCC  :: Root
                            , shorthardCC      :: Shorthand
-                           , chordStructCC    :: ChordStruct }
-  deriving Show
+                           , chordStructCC    :: ChordStruct 
+                           } deriving (Show, Eq)
   
 type ChordStruct = [NumData] 
 
@@ -140,18 +144,16 @@ chromaPC = [ Note Nothing   C
 
 --------------------------------------------------------------------------------
 -- Instances of high-level data structure
--------------------------------------------------------------------------------- 
+--------------------------------------------------------------------------------
 
+-- TODO to be replaced by a deriving instance
 instance Eq (ProbChord) where
   a == b = chordLab a == chordLab b
-
-instance Show (ProbChord) where 
-  show (ProbChord (Chord r sh _ _ _) _p) = 
-    show r ++ ':' : show sh -- ++ ':' : printf "%.2f" p  
-
-instance Show ProbChordSeg where
-  show pc = concatMap (\x -> show (segKey pc) ++ ' ' : show x) (segChords pc)
-
+  
+instance Show (ProbChord) where
+  show (ProbChord (Chord r sh _ _ _) _p) =
+    show r ++ ':' : show sh -- ++ ':' : printf "%.2f" p
+  
 instance Show Beat where
   show One   = "1"
   show Two   = "2"

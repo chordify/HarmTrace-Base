@@ -72,7 +72,6 @@ module HarmTrace.Base.MusicRep (
   
 import Data.Maybe (fromJust)
 import Data.List (elemIndex, intercalate, (\\), partition)
-import Data.Char (toLower)
 
 --------------------------------------------------------------------------------
 -- Representing musical information at the value level
@@ -137,7 +136,7 @@ data Shorthand = -- | Triadic chords
                  -- Additional shorthands in billboard collection
                | Eleven | Thirteen | Min11 | Maj13 | Min13
                
-  deriving (Show, Eq, Ord, Enum, Bounded) 
+  deriving (Eq, Ord, Enum, Bounded) 
 
 
 -- | Key relative scale degrees to abstract from the absolute Root notes
@@ -201,24 +200,40 @@ instance Eq a => Eq (Chord a) where
 
 -- In showing chords, we obey Harte et al.'s syntax as much as possible
 instance (Show a) => Show (Chord a) where
-  show (Chord r None     []  _loc _d) =  show r 
-  show (Chord r None     add _loc _d) =  show r ++ ':' : showAdd add
-  show (Chord r Five     add _loc _d) =  show r ++ ":5"  ++ showAdd add
-  show (Chord r Sev      add _loc _d) =  show r ++ ":7"  ++ showAdd add
-  show (Chord r Nin      add _loc _d) =  show r ++ ":9"  ++ showAdd add
-  show (Chord r Eleven   add _loc _d) =  show r ++ ":11" ++ showAdd add
-  show (Chord r Thirteen add _loc _d) =  show r ++ ":13" ++ showAdd add
-  show (Chord r sh       add _loc _d) =  show r ++ ':' : showShorthand sh 
-                                                         ++ showAdd add
+  show (Chord r None []  _loc _d) = show r 
+  show (Chord r None add _loc _d) = show r ++ ':' : showAdd add
+  show (Chord r sh   add _loc _d) = show r ++ ':' : show sh ++ showAdd add
     
 showAdd :: [Addition] -> String
 showAdd [] = ""
 showAdd x  = '(' : intercalate "," (map show x) ++ ")"
 
--- change the first char to lowercase
-showShorthand :: Shorthand -> String
-showShorthand sh = let (c:cs) = show sh in toLower c : cs 
-                            
+instance Show Shorthand where
+  show Maj      = "maj"
+  show Min      = "min"
+  show Dim      = "dim"
+  show Aug      = "aug"
+  show Maj7     = "maj7"
+  show Min7     = "min7"
+  show Sev      = "7"
+  show Dim7     = "dim7"
+  show HDim7    = "hdim7"
+  show MinMaj7  = "minmaj7"
+  show Maj6     = "maj6"
+  show Min6     = "min6"
+  show Maj9     = "maj9"
+  show Min9     = "min9"
+  show Min11    = "min11"
+  show Min13    = "min13"
+  show Maj13    = "maj13" 
+  show Sus4     = "sus4"
+  show Sus2     = "sus2"
+  show Five     = "5" 
+  show Nin      = "9" 
+  show Eleven   = "11"
+  show Thirteen = "13"
+  show None     = ""
+  
 instance Show ClassType where
   show MajClass = ""
   show MinClass = "m"

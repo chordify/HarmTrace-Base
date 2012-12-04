@@ -151,8 +151,7 @@ instance Eq (ProbChord) where
   a == b = chordLab a == chordLab b
   
 instance Show (ProbChord) where
-  show (ProbChord (Chord r sh _ _ _) _p) =
-    show r ++ ':' : show sh -- ++ ':' : printf "%.2f" p
+  show (ProbChord c _p) = show c -- ++ ':' : printf "%.2f" p
   
 instance Show Beat where
   show One   = "1"

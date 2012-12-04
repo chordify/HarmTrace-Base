@@ -522,7 +522,7 @@ toMajMinChord c = c {chordShorthand = majMinSh}
   where majMinSh = case toMajMin (toTriad c) of
                      MajClass -> Maj
                      MinClass -> Min
-                     NoClass  -> Min -- this is odd, but this is how it was
+                     NoClass  -> None
                      -- catch all: cannot happen, see toMajMin
                      _        -> error ("HarmTrace.Base.MusicRep.toMajMinChord"
                                         ++ " unexpected chord " ++ show c)

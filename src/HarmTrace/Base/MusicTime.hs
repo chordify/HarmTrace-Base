@@ -66,8 +66,6 @@ module HarmTrace.Base.MusicTime (
   , timeStamp
   , beat 
 
-  -- ** Miscellaneous
-  , chromaPC
 ) where
              
 import HarmTrace.Base.MusicRep
@@ -124,23 +122,6 @@ type ChordStruct = [NumData]
 -- | For now, we fix the number of available beats to four, because this is also
 -- hard-coded into the bar and beat-tracker.
 data Beat = One | Two | Three | Four | NoBeat deriving (Eq, Enum)
-
--- | An iterable list of Roots
-chromaPC ::[Root]  
-chromaPC = [ Note Nothing   C
-           , Note (Just Fl) D
-           , Note Nothing   D
-           , Note (Just Fl) E
-           , Note Nothing   E
-           , Note Nothing   F
-           , Note (Just Sh) F
-           , Note Nothing   G
-           , Note (Just Fl) A
-           , Note Nothing   A
-           , Note (Just Fl) B
-           , Note Nothing   B
-           ]
-
 
 --------------------------------------------------------------------------------
 -- Instances of high-level data structure

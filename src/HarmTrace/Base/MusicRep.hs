@@ -65,9 +65,7 @@ module HarmTrace.Base.MusicRep (
   , toScaleDegree
   , transposeSem
   , toSemitone
-  -- , modeToSemi
-  -- * Miscellaneous
-  , scaleDegrees
+  , toRoot
   ) where
   
 import Data.Maybe (fromJust)
@@ -546,18 +544,29 @@ toScaleDegree _ n@(Note _ N) =
 toScaleDegree (Key kr _) cr  = -- Note Nothing I
   scaleDegrees!!(((toSemitone cr) - (toSemitone kr)) `mod` 12)
 
+  
 -- | Transposes a scale degree with @sem@ semitones up
 transposeSem :: ScaleDegree -> Int -> ScaleDegree
 transposeSem deg sem = scaleDegrees!!((sem + (toSemitone deg)) `mod` 12) where
 
--- | Returns the semitone value [0 .. 11] of a 'ScaleDegree', e.g. F# = 6  
+-- | Returns the semitone value [0 .. 11] of a 'ScaleDegree' where
+-- 0 = C, e.g. F# = 6. For the constructors 'N' and 'X' an error is thrown.
 toSemitone :: (Show a, Enum a) => Note a -> Int
 toSemitone (Note m p)
-  | ix > 6    = error ("HarmTrace.Base.MusicRep.toSemitone: no semitone for "
+  | ix <= 6   = ([0,2,4,5,7,9,11] !! ix) + modToSemi m
+  | otherwise = error ("HarmTrace.Base.MusicRep.toSemitone: no semitone for "
                         ++ show (Note m p))
-  | otherwise = ([0,2,4,5,7,9,11] !! ix) + modToSemi m where
-    ix = fromEnum p
+      where ix = fromEnum p
 
+-- | The reverse of 'toSemitone' returning the 'Note DiatonicNatural' given a 
+-- Integer [0..11] semitone, where 0 represents C. When the integer is out 
+-- of the range [0..11] an error is thrown.
+toRoot :: Int -> Root
+toRoot i 
+  | 0 <= i && i <= 11 = roots !! i
+  | otherwise         = error ("HarmTrace.Base.MusicRep.toRoot " ++
+                               "invalid semitone: " ++ show i)
+    
 -- | Transforms type-level Accidentals to semitones (Int values)
 modToSemi :: Maybe Accidental -> Int
 modToSemi  Nothing  =  0
@@ -567,7 +576,7 @@ modToSemi (Just SS) =  2
 modToSemi (Just FF) = -2
 
 -- | A list of 12 'ScaleDegree's, ignoring pitch spelling.
-scaleDegrees ::[ScaleDegree]  
+scaleDegrees ::[ ScaleDegree ]  
 scaleDegrees = [ Note  Nothing   I
                , Note  (Just Fl) II
                , Note  Nothing   II
@@ -581,3 +590,20 @@ scaleDegrees = [ Note  Nothing   I
                , Note  (Just Fl) VII
                , Note  Nothing   VII
                ]
+               
+
+-- | A list of 12 'Note DiatonicNatural's, ignoring pitch spelling.
+roots :: [ Root ]  
+roots =  [ Note Nothing   C
+         , Note (Just Fl) D
+         , Note Nothing   D
+         , Note (Just Fl) E
+         , Note Nothing   E
+         , Note Nothing   F
+         , Note (Just Sh) F
+         , Note Nothing   G
+         , Note (Just Fl) A
+         , Note Nothing   A
+         , Note (Just Fl) B
+         , Note Nothing   B
+         ]

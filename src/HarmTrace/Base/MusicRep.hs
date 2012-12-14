@@ -552,11 +552,13 @@ transposeSem deg sem = scaleDegrees!!((sem + (toSemitone deg)) `mod` 12) where
 -- | Returns the semitone value [0 .. 11] of a 'ScaleDegree' where
 -- 0 = C, e.g. F# = 6. For the constructors 'N' and 'X' an error is thrown.
 toSemitone :: (Show a, Enum a) => Note a -> Int
-toSemitone (Note m p)
-  | ix <= 6   = ([0,2,4,5,7,9,11] !! ix) + modToSemi m
+toSemitone (Note m p) 
+  | ix <= 6   = noNegatives (([0,2,4,5,7,9,11] !! ix) + modToSemi m) `mod` 12
   | otherwise = error ("HarmTrace.Base.MusicRep.toSemitone: no semitone for "
                         ++ show (Note m p))
       where ix = fromEnum p
+            noNegatives s | s < 0     = 12 + s
+                          | otherwise = s
 
 -- | The reverse of 'toSemitone' returning the 'Note DiatonicNatural' given a 
 -- Integer [0..11] semitone, where 0 represents C. When the integer is out 

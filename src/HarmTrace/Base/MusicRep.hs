@@ -1,4 +1,5 @@
-{-# OPTIONS_GHC -Wall           #-}
+{-# OPTIONS_GHC -Wall             #-}
+{-# LANGUAGE FlexibleInstances    #-}
 
 --------------------------------------------------------------------------------
 -- |
@@ -239,9 +240,16 @@ instance Show ClassType where
   show DimClass = "0"
   show NoClass  = "N"
 
-instance (Show a) => Show (Note a) where
-  show (Note m interval) = show interval ++ maybe "" show m
 
+instance Show (Note Interval) where
+  show (Note m i) = maybe "" show m ++ show i
+
+instance Show (Note DiatonicNatural) where
+  show (Note m r) = show r ++ maybe "" show m  
+  
+instance Show (Note DiatonicDegree) where
+  show (Note m r) = show r ++ maybe "" show m  
+  
 instance Show Interval where
   show a = show . ((!!) ([1..13]::[Integer])) 
                 . fromJust $ elemIndex a [minBound..]
@@ -555,7 +563,7 @@ toSemitone :: (Show a, Enum a) => Note a -> Int
 toSemitone (Note m p) 
   | ix <= 6   = noNegatives (([0,2,4,5,7,9,11] !! ix) + modToSemi m) `mod` 12
   | otherwise = error ("HarmTrace.Base.MusicRep.toSemitone: no semitone for "
-                        ++ show (Note m p))
+                        ++ show p ++ maybe "" show m )
       where ix = fromEnum p
             noNegatives s | s < 0     = 12 + s
                           | otherwise = s

@@ -198,10 +198,16 @@ instance Eq a => Eq (Chord a) where
      = ra == rb && sha == shb && dega == degb 
 
 -- In showing chords, we obey Harte et al.'s syntax as much as possible
-instance (Show a) => Show (Chord a) where
-  show (Chord r None []  _loc _d) = show r 
+instance Show ChordLabel where
+  show (Chord r None []  _loc _d) = show r ++ (if isRoot r then ":1" else "")
   show (Chord r None add _loc _d) = show r ++ ':' : showAdd add
   show (Chord r sh   add _loc _d) = show r ++ ':' : show sh ++ showAdd add
+  
+  
+instance Show ChordDegree where
+  show (Chord r None []  _loc _d) = show r ++ ":1"
+  show (Chord r None add _loc _d) = show r ++ ':' : showAdd add
+  show (Chord r sh   add _loc _d) = show r ++ ':' : show sh ++ showAdd add  
     
 showAdd :: [Addition] -> String
 showAdd [] = ""
@@ -275,6 +281,11 @@ instance Show Triad where
 --------------------------------------------------------------------------------
 -- Tests     
 --------------------------------------------------------------------------------
+-- | Returns True if the 'Root' is not unknown or none
+isRoot :: Root -> Bool
+isRoot r | isNone r    = False
+         | isUnknown r = False
+         | otherwise   = True
 
 -- | Returns True if the 'Root' is 'N', and False otherwise 
 isNone :: Root -> Bool
@@ -523,7 +534,7 @@ toMajMin DimTriad = MinClass
 toMajMin NoTriad  = NoClass
 
 -- | applies 'toMajMin' to a 'Chord'
-toMajMinChord :: Show a => Chord a -> Chord a
+toMajMinChord :: ChordLabel -> ChordLabel
 toMajMinChord c = c {chordShorthand = majMinSh}
   where majMinSh = case toMajMin (toTriad c) of
                      MajClass -> Maj

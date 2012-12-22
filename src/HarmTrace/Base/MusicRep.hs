@@ -294,8 +294,7 @@ isNone  _         = False
 
 -- | Returns True if the 'ChordLabel' is not a chord, and False otherwise 
 isNoneChord :: ChordLabel -> Bool
-isNoneChord (Chord (Note _ N) _ _ _ _) = True
-isNoneChord _                          = False
+isNoneChord = isNone . chordRoot
 
 -- | Returns True if the 'Root' is unknown, and False otherwise 
 isUnknown :: Root -> Bool

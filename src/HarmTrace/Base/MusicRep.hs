@@ -48,15 +48,12 @@ module HarmTrace.Base.MusicRep (
   , isNone
   , isNoneChord
   , isUnknown
-  , isUnknownChord
+  , isRoot
   , isAddition
   -- * Transformation and analysis of chords
   , toClassType
   , toTriad
   , analyseDegTriad
-  -- , analyseThird
-  -- , analyseFifth
-  -- , analyseSevth
   , toDegreeList
   , toMode
   , toMajMin
@@ -300,13 +297,6 @@ isNoneChord = isNone . chordRoot
 isUnknown :: Root -> Bool
 isUnknown (Note _ X) = True
 isUnknown _          = False
-
--- | Returns True if the 'ChordLabel' is not a unknown, and False otherwise 
-isUnknownChord :: ChordLabel -> Bool
-isUnknownChord (Chord (Note _ X) _ _ _ _) = True
-isUnknownChord (Chord (Note _ N) _ _ _ _) = False -- known to be NoneChord
-isUnknownChord (Chord _ None _ _ _)       = True
-isUnknownChord _                          = False
 
 -- | Returns true if the 'Chord' 'Addition' represents an addition and not 
 -- a degree that has to be removed (*).

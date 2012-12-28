@@ -81,16 +81,18 @@ pChordLabel :: Parser ChordLabel
 pChordLabel = toChord <$> pRoot <* (pSym ':' `opt` ':') <*> pMaybe pShorthand
                       -- we ignore optional inversions for now
                       <*> ((pAdditions `opt` []) <* pInversion)
-  where -- if there are no degrees and no shorthand 
-        toChord :: Root -> Maybe Shorthand -> [Addition] -> ChordLabel
-        toChord r Nothing     [] = Chord r None [] 0 1
-        toChord r Nothing     d  = case analyseDegTriad d of
-                                     MajTriad -> Chord r Maj (remTriadDeg d) 0 1
-                                     MinTriad -> Chord r Min (remTriadDeg d) 0 1
-                                     AugTriad -> Chord r Aug (remTriadDeg d) 0 1
-                                     DimTriad -> Chord r Dim (remTriadDeg d) 0 1
-                                     NoTriad  -> Chord r None d 0 1
-        toChord r (Just s)    d  = Chord r s d 0 1
+  
+  where toChord :: Root -> Maybe Shorthand -> [Addition] -> ChordLabel
+        -- if there are no degrees and no shorthand, following Harte it 
+        -- should be labelled a Maj chord
+        toChord r Nothing  [] = Chord r Maj [] 0 1
+        toChord r Nothing  d  = case analyseDegTriad d of
+                                  MajTriad -> Chord r Maj (remTriadDeg d) 0 1
+                                  MinTriad -> Chord r Min (remTriadDeg d) 0 1
+                                  AugTriad -> Chord r Aug (remTriadDeg d) 0 1
+                                  DimTriad -> Chord r Dim (remTriadDeg d) 0 1
+                                  NoTriad  -> Chord r None d 0 1
+        toChord r (Just s) d  = Chord r s d 0 1
         
         -- removes the third and the fifth from a Addtion list
         remTriadDeg :: [Addition] -> [Addition]

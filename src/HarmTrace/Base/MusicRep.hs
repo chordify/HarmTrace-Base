@@ -551,7 +551,6 @@ toScaleDegree _ n@(Note _ N) =
   error ("HarmTrace.Base.MusicRep.toScaleDegree: cannot transpose " ++ show n)
 toScaleDegree (Key kr _) cr  = -- Note Nothing I
   scaleDegrees!!(((toSemitone cr) - (toSemitone kr)) `mod` 12)
-
   
 -- | Transposes a scale degree with @sem@ semitones up
 transposeSem :: ScaleDegree -> Int -> ScaleDegree
@@ -588,7 +587,7 @@ modToSemi (Just FF) = -2
 -- | A list of 12 'ScaleDegree's, ignoring pitch spelling.
 scaleDegrees ::[ ScaleDegree ]  
 scaleDegrees = [ Note  Nothing   I
-               , Note  (Just Fl) II
+               , Note  (Just Sh) I
                , Note  Nothing   II
                , Note  (Just Fl) III
                , Note  Nothing   III
@@ -605,7 +604,7 @@ scaleDegrees = [ Note  Nothing   I
 -- | A list of 12 'Note DiatonicNatural's, ignoring pitch spelling.
 roots :: [ Root ]  
 roots =  [ Note Nothing   C
-         , Note (Just Fl) D
+         , Note (Just Sh) C
          , Note Nothing   D
          , Note (Just Fl) E
          , Note Nothing   E

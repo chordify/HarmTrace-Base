@@ -58,6 +58,7 @@ module HarmTrace.Base.MusicRep (
   , toMode
   , toMajMin
   , toMajMinChord
+  , simplifyRoot
   -- * Scale degree transposition
   , toChordDegree
   , toScaleDegree
@@ -551,6 +552,31 @@ toScaleDegree _ n@(Note _ N) =
   error ("HarmTrace.Base.MusicRep.toScaleDegree: cannot transpose " ++ show n)
 toScaleDegree (Key kr _) cr  = -- Note Nothing I
   scaleDegrees!!(((toSemitone cr) - (toSemitone kr)) `mod` 12)
+
+-- | Simplify note roots to a single enharmonic representation.
+-- For instance, D♭ becomes C♯, E♯ becomes F, and G𝄫 becomes F.
+simplifyRoot :: Root -> Root
+-- Simplify double sharps
+simplifyRoot (Note (Just SS) x) | x == E    = Note (Just Sh) F
+                                | x == B    = Note (Just Sh) C
+                                | otherwise = Note Nothing   (succ x)
+-- Simplify double flats
+simplifyRoot (Note (Just FF) x) | x == F    = Note (Just Fl) E
+                                | x == C    = Note (Just Fl) B
+                                | otherwise = Note Nothing   (pred x)
+-- Simplify sharps
+simplifyRoot (Note (Just Sh) D) = Note (Just Fl) E
+simplifyRoot (Note (Just Sh) E) = Note Nothing   F
+simplifyRoot (Note (Just Sh) G) = Note (Just Fl) A
+simplifyRoot (Note (Just Sh) A) = Note (Just Fl) B
+simplifyRoot (Note (Just Sh) B) = Note Nothing   C
+-- Simplify flats
+simplifyRoot (Note (Just Fl) C) = Note Nothing   B
+simplifyRoot (Note (Just Fl) D) = Note (Just Sh) C
+simplifyRoot (Note (Just Fl) F) = Note Nothing   E
+simplifyRoot (Note (Just Fl) G) = Note (Just Sh) F
+-- Everything else must be simple already
+simplifyRoot x                  = x
   
 -- | Transposes a scale degree with @sem@ semitones up
 transposeSem :: ScaleDegree -> Int -> ScaleDegree

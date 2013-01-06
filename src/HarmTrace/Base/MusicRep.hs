@@ -1,5 +1,6 @@
 {-# OPTIONS_GHC -Wall             #-}
 {-# LANGUAGE FlexibleInstances    #-}
+{-# LANGUAGE DeriveGeneric        #-}
 
 --------------------------------------------------------------------------------
 -- |
@@ -69,6 +70,8 @@ module HarmTrace.Base.MusicRep (
   
 import Data.Maybe (fromJust)
 import Data.List (elemIndex, intercalate, (\\), partition)
+import Data.Binary (Binary)
+import GHC.Generics (Generic)
 
 --------------------------------------------------------------------------------
 -- Representing musical information at the value level
@@ -76,13 +79,13 @@ import Data.List (elemIndex, intercalate, (\\), partition)
 
 
 -- | A musical key consising of a 'Root' and 'Mode'
-data Key  = Key { keyRoot :: Root, keyMode :: Mode } deriving (Eq, Ord)
+data Key  = Key { keyRoot :: Root, keyMode :: Mode } deriving (Eq, Ord, Generic)
 
 -- | The 'Mode' of a key, which can be major or minor
-data Mode = MajMode | MinMode deriving (Eq, Ord)
+data Mode = MajMode | MinMode deriving (Eq, Ord, Generic)
 
 -- | A container type combinint a key and a list of 'ChordLabel's
-data PieceLabel = PieceLabel Key [ChordLabel]
+data PieceLabel = PieceLabel Key [ChordLabel] deriving Generic
 
 -- | A chord based on absolute 'Root' notes
 type ChordLabel   = Chord Root
@@ -107,12 +110,12 @@ data Chord a = Chord { chordRoot        :: a
                      , getLoc           :: Int 
                      -- | the duration of the chord 
                      , duration         :: Int 
-                     }
+                     } deriving Generic
 
 -- | We introduce four chord categories: major chords, minor chords, dominant
 -- seventh chords, and diminshed seventh chords
 data ClassType = MajClass | MinClass | DomClass | DimClass | NoClass
-  deriving (Eq, Enum, Ord, Bounded)
+  deriving (Eq, Enum, Ord, Bounded, Generic)
 
 -- Following Harte et al., we define a number of chord 'Shorthand's
 data Shorthand = -- | Triadic chords
@@ -133,7 +136,7 @@ data Shorthand = -- | Triadic chords
                  -- Additional shorthands in billboard collection
                | Eleven | Thirteen | Min11 | Maj13 | Min13
                
-  deriving (Eq, Ord, Enum, Bounded) 
+  deriving (Eq, Ord, Enum, Bounded, Generic) 
 
 
 -- | Key relative scale degrees to abstract from the absolute Root notes
@@ -142,7 +145,7 @@ type ScaleDegree = Note DiatonicDegree
 -- | All Diatonic scale degrees 
 data DiatonicDegree = I | II | III | IV | V | VI | VII 
                     | Imp -- ^ for unrepresentable scale degrees
-  deriving (Show, Eq, Enum, Ord, Bounded)
+  deriving (Show, Eq, Enum, Ord, Bounded, Generic)
 
 -- | Representing absolute 'Root' notes  
 type Root = Note DiatonicNatural
@@ -151,32 +154,32 @@ type Root = Note DiatonicNatural
 data DiatonicNatural =  C | D | E | F | G | A | B 
                      |  N -- ^ for no root
                      |  X -- ^ for representing unknown roots (used in MIREX)
-  deriving (Show, Eq, Enum, Ord, Bounded)
+  deriving (Show, Eq, Enum, Ord, Bounded, Generic)
   
 -- | Intervals for additonal chord notes    
 data Addition = Add   (Note Interval)
-              | NoAdd (Note Interval) deriving (Eq, Ord)
+              | NoAdd (Note Interval) deriving (Eq, Ord, Generic)
 
 -- | Diatonic major intervals used to denote 'Chord' 'Addition's
 data Interval = I1  | I2  | I3  | I4 | I5 | I6 | I7 | I8 | I9 | I10 
               | I11 | I12 | I13 
-  deriving (Eq, Enum, Ord, Bounded)     
+  deriving (Eq, Enum, Ord, Bounded, Generic)     
 
 -- | A musical note is a pitch (either absolute or relative) posibly modified
 -- by an 'Accidental'
-data Note a = Note (Maybe Accidental) a   deriving (Eq, Ord) 
+data Note a = Note (Maybe Accidental) a   deriving (Eq, Ord, Generic) 
   
 -- | A musical 'Accidental'
 data Accidental = Sh -- ^ sharp 
                 | Fl -- ^ flat
                 | SS -- ^ double sharp
                 | FF -- ^ double flat
-  deriving (Eq, Ord)
+  deriving (Eq, Ord, Generic)
 
 -- | A 'Triad' comes in four flavours: major, minor, augmented, dimished, and 
 -- sometimes a chord does not have a triad (e.g. suspended chords, etc.)
 data Triad = MajTriad | MinTriad | AugTriad | DimTriad | NoTriad 
-               deriving (Ord, Eq)
+               deriving (Ord, Eq, Generic)
   
 --------------------------------------------------------------------------------
 -- Instances for the general music datatypes
@@ -642,3 +645,21 @@ roots =  [ Note Nothing   C
          , Note (Just Fl) B
          , Note Nothing   B
          ]
+
+--------------------------------------------------------------------------------
+-- Binary instances
+--------------------------------------------------------------------------------
+
+instance Binary Key
+instance Binary Mode 
+instance Binary PieceLabel
+instance Binary a => Binary (Chord a)
+instance Binary ClassType
+instance Binary Shorthand
+instance Binary DiatonicDegree
+instance Binary DiatonicNatural
+instance Binary Addition
+instance Binary Interval
+instance Binary a => Binary (Note a)
+instance Binary Accidental
+instance Binary Triad

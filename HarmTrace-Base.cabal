@@ -26,8 +26,8 @@ library
         
   hs-source-dirs:      src  
   
-  build-depends:       base >= 4.4, uu-parsinglib ==2.7.4.*, ListLike ==3.1.*,
-                       binary >= 0.6.4
+  build-depends:       base >= 4.4 && < 4.7, uu-parsinglib ==2.7.4.*, 
+                       ListLike ==3.1.*, binary >= 0.6.4
   
   
   ghc-options:         -Wall

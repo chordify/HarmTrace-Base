@@ -1,24 +1,30 @@
 
 name:                HarmTrace-Base
-version:             0.9.0.0
-synopsis:            A lightweight library for parsing and unambiguously representing musical chords.
--- description:         
-license:             GPL-3
+version:             1.0.0.0
+synopsis:            Parsing and unambiguously representing musical chords.
+description:         HarmTrace: Harmony Analysis and Retrieval of Music 
+                     with Type-level Representations of Abstract
+                     Chords Entities
+                     .
+                     We present HarmTrace-Base, a libary for parsing and 
+                     unambiguously representing musical chords.
+
+copyright:           (c) 2012--2013 W. Bas de Haas and Jose Pedro Magalhaes
+license:             LGPL-3
 license-file:        LICENSE
-author:              W. Bas de Haas
-maintainer:          w.b.dehaas@uu.nl
--- copyright:           
+author:              W. Bas de Haas and Jose Pedro Magalhaes
+maintainer:          bas@chordify.net, pedro@chordify.net 
 
 category:            Music
 build-type:          Simple
-tested-with:         GHC == 7.4.1
+tested-with:         GHC == 7.4.1, GHC == 7.6.1
 cabal-version:       >=1.8
 
 library
   exposed-modules:     HarmTrace.Base.Parsing, HarmTrace.Base.MusicTime, 
                        HarmTrace.Base.MusicRep, HarmTrace.Base.ChordTokenizer
         
-  hs-source-dirs:       src  
+  hs-source-dirs:      src  
   
   build-depends:       base >= 4.4, uu-parsinglib ==2.7.4.*, ListLike ==3.1.*,
                        binary >= 0.6.4

@@ -18,12 +18,9 @@
 --------------------------------------------------------------------------------
 
 module HarmTrace.Base.MusicTime (
-  -- * The 'Timed' class
-    -- Timed (..)
   
   -- * Datatypes
   -- ** Types for representing Chords and their probabilities
-  -- , ChordBeatAnnotation 
     ChordAnnotation 
   , ProbChordSeg (..)
   , ProbChord (..)
@@ -31,7 +28,6 @@ module HarmTrace.Base.MusicTime (
   
   -- ** Representing musical time
   , TimedData (..)
-  -- , BeatTimedData (..)
   , Beat (..)
   , BarTime (..)
   , BarTimeTrackData 
@@ -116,7 +112,8 @@ data ChordCand = ChordCand { originalRootCC   :: Root
                            , shorthardCC      :: Shorthand
                            , chordStructCC    :: ChordStruct 
                            } deriving (Show, Eq)
-  
+
+-- | A chord template is list of 'NumData's
 type ChordStruct = [NumData] 
 
 -- | For now, we fix the number of available beats to four, because this is also

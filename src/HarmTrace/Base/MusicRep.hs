@@ -311,6 +311,9 @@ isAddition (NoAdd _) = False
 --------------------------------------------------------------------------------
 -- Transformation and analysis of chords
 --------------------------------------------------------------------------------
+
+-- | Returns the 'ClassType' given a 'Chord'. This function uses 
+-- 'analyseDegClassType' to analyse a chord and derive the 'ClassType'
 toClassType :: Chord a -> ClassType
 toClassType (Chord  _r  sh []   _loc _d) = shToClassType sh -- no additions
 -- combine the degrees and analyse them. N.B., also NoAdd degrees are resolved
@@ -360,17 +363,6 @@ shToClassType Min13    = MinClass
 shToClassType Maj13    = MajClass
 shToClassType Thirteen = DomClass
 
-{-
--- | /Depricated/ Categorises a 'Shorthand' into a 'ClassType'.
-toClassType' :: Shorthand -> ClassType
-toClassType' sh -- TODO: reconsider these categories...
-  | sh `elem` [Maj,Maj7,Maj6,Maj9,MinMaj7,Five,Sus4,Sus2] = MajClass
-  | sh `elem` [Min,Min7,Min6,Min9,HDim7] = MinClass
-  | sh `elem` [Sev,Nin,Aug] = DomClass
-  | sh `elem` [Dim,Dim7] = DimClass 
-  | otherwise = error 
-      ("HarmTrace.Base.MusicRep.toClassType: unknown shorthand: " ++ show sh)
--}
 -- should not be exported, used only in toTriad
 data Third = MajThird | MinThird             | NoThird deriving (Eq, Show)
 data Fifth = DimFifth | PerfFifth | AugFifth | NoFifth deriving (Eq, Show)
@@ -471,7 +463,6 @@ shToTriad Thirteen = MajTriad
 -- >>> toDegreeList (parseData pChord "D:7(b9)")
 -- [3,5,7b,9b]
 --
-
 toDegreeList :: Chord a -> [Addition]
 toDegreeList (Chord  _r sh []  _loc _d) = map Add (shToDeg sh)
 toDegreeList (Chord  _r sh deg _loc _d) = adds  \\ (toAdds remv) where

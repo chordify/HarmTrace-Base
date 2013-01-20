@@ -4,10 +4,10 @@
 --------------------------------------------------------------------------------
 -- |
 -- Module      :  HarmTrace.Base.Parsing
--- Copyright   :  (c) 2010-2012 Universiteit Utrecht, 2012 University of Oxford
--- License     :  GPL3
+-- Copyright   :  (c) 2012--2013 W. Bas de Haas and Jose Pedro Magalhaes
+-- License     :  LGPL-3
 --
--- Maintainer  :  bash@cs.uu.nl, jpm@cs.ox.ac.uk
+-- Maintainer  :  bas@chordify.net, dreixel@chordify.net 
 -- Stability   :  experimental
 -- Portability :  non-portable
 --

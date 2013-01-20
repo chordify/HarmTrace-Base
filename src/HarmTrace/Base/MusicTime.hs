@@ -5,10 +5,10 @@
 --------------------------------------------------------------------------------
 -- |
 -- Module      :  HarmTrace.Base.MusicTime
--- Copyright   :  (c) 2010-2012 Universiteit Utrecht, 2012 University of Oxford
--- License     :  GPL3
+-- Copyright   :  (c) 2012--2013 W. Bas de Haas and Jose Pedro Magalhaes
+-- License     :  LGPL-3
 --
--- Maintainer  :  bash@cs.uu.nl, jpm@cs.ox.ac.uk
+-- Maintainer  :  bas@chordify.net, dreixel@chordify.net 
 -- Stability   :  experimental
 -- Portability :  non-portable
 --
@@ -86,8 +86,11 @@ type NumData = Double
 -- list with chords and segment boundaries.
 type ChordAnnotation = [TimedData ProbChord]
 
--- | A datatype that wraps around an arbitrary datatype, adding (in this order)
--- a 'Beat', an onset, and an offset.
+-- | A datatype that wraps around an (musical) datatype, adding information 
+-- about the musical time to this datatype. Musical time is stored as 
+-- a list of 'BarTime' time stamps that can optionally be augmented
+-- with information about the 'Beat' position of the particular time stamp 
+-- inside the bar.
 data TimedData a = TimedData { -- | Returns the contained datatype 
                                getData :: a 
                                -- | Returns the list of TimeStamps
@@ -178,7 +181,8 @@ type KeyStrengthData = ChordinoData
 type BeatTrackerData = [NumData]
 
 -- TODO Rename to BeatTime
--- | Combines a 'Beat' and a timestamp
+-- | Represents a musical time stamp, which is a 'NumData' possibly augmented
+-- with a 'Beat' denoting the position of the time stamp within a bar.
 data BarTime = BarTime NumData Beat
              | Time    NumData      deriving Eq
 

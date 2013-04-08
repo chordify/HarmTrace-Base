@@ -61,11 +61,12 @@ module HarmTrace.Base.MusicTime (
   , dropTimed
   , timeStamp
   , beat 
+  , prettyPrint
 
 ) where
              
 import HarmTrace.Base.MusicRep
-
+import Data.List (intercalate)
 
 -- | When reducing and expaninding 'TimedData' types there might be rounding
 -- errors in the floating point time stamps. The 'roundingError' parameter
@@ -132,7 +133,7 @@ instance Eq (ProbChord) where
   a == b = chordLab a == chordLab b
   
 instance Show (ProbChord) where
-  show (ProbChord c _p) = show c -- ++ ':' : printf "%.2f" p
+  show (ProbChord c p) = show c ++ ':' : show p
   
 instance Show Beat where
   show One   = "1"
@@ -295,3 +296,13 @@ dropProb = map (fmap chordLab)
 -- 'Timed' data structure 
 dropTimed :: [TimedData a] -> [a]
 dropTimed = map getData
+
+-- | Pretty prints a list of 'TimedData's, one per line
+prettyPrint :: Show a => [TimedData a] -> String
+prettyPrint = intercalate "\n" . map pprint where
+
+  pprint :: Show a => TimedData a -> String
+  pprint (TimedData d [ ]) = "not set - not set: " ++ show d
+  pprint (TimedData d [x]) = show x ++" - not set: " ++ show d
+  pprint (TimedData d ts ) = show (head ts) ++ " - " ++ show (last ts) 
+                                            ++ ": "  ++ show d

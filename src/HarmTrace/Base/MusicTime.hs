@@ -111,11 +111,11 @@ data ProbChord = ProbChord { chordLab :: ChordLabel
 
 -- | A chord candidate: an intermediate datatype that matches shorthand, 
 -- chord structure and root note (plus inversion)
-data ChordCand = ChordCand { originalRootCC   :: Root
-                           , inversionRootCC  :: Root
-                           , shorthardCC      :: Shorthand
-                           , chordStructCC    :: ChordStruct 
-                           } deriving (Show, Eq)
+data ChordCand a = ChordCand { originalRootCC   :: Root
+                             , inversionRootCC  :: Root
+                             , shorthardCC      :: Shorthand
+                             , chordStructCC    :: a 
+                             } deriving (Show, Eq, Functor)
 
 -- | A chord template is list of 'NumData's
 type ChordStruct = [NumData] 

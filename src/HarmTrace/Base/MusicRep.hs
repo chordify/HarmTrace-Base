@@ -121,13 +121,13 @@ data ClassType = MajClass | MinClass | DomClass | DimClass | NoClass
 data Shorthand = -- | Triadic chords
                  Maj | Min | Dim | Aug
                  -- | Seventh chords
-               | Maj7 | Min7 | Sev | Dim7 | HDim7 | MinMaj7
+               | Maj7 | Min7 | Sev | Dim7 | HDim7 | MinMaj7 | Aug7
                  -- | Sixth chords
                | Maj6 | Min6
                  -- | Extended chords
                | Nin | Maj9 | Min9
                  -- | Suspended chords
-               | Sus4 | Sus2
+               | Sus4 | Sus2 | SevSus4
                  -- | Power chords
                | Five
                  -- In some cases there is no chord a certain position
@@ -225,6 +225,7 @@ instance Show Shorthand where
   show Dim7     = "dim7"
   show HDim7    = "hdim7"
   show MinMaj7  = "minmaj7"
+  show Aug7     = "aug7"
   show Maj6     = "maj6"
   show Min6     = "min6"
   show Maj9     = "maj9"
@@ -234,6 +235,7 @@ instance Show Shorthand where
   show Maj13    = "maj13" 
   show Sus4     = "sus4"
   show Sus2     = "sus2"
+  show SevSus4  = "7sus4"
   show Five     = "5" 
   show Nin      = "9" 
   show Eleven   = "11"
@@ -347,6 +349,7 @@ shToClassType Sev     = DomClass
 shToClassType Dim7    = DimClass
 shToClassType HDim7   = MinClass
 shToClassType MinMaj7 = MinClass
+shToClassType Aug7    = DomClass
 shToClassType Maj6    = MajClass 
 shToClassType Min6    = MinClass
 shToClassType Nin     = DomClass
@@ -355,6 +358,7 @@ shToClassType Min9    = MinClass
 shToClassType Five    = NoClass
 shToClassType Sus2    = NoClass
 shToClassType Sus4    = NoClass
+shToClassType SevSus4 = NoClass
 shToClassType None    = NoClass
 -- additional Billboard shorthands
 shToClassType Min11    = MinClass
@@ -435,6 +439,7 @@ shToTriad Sev     = MajTriad
 shToTriad Dim7    = MinTriad
 shToTriad HDim7   = MinTriad
 shToTriad MinMaj7 = MinTriad
+shToTriad Aug7    = AugTriad
 shToTriad Maj6    = MajTriad 
 shToTriad Min6    = MinTriad
 shToTriad Nin     = MajTriad
@@ -443,6 +448,7 @@ shToTriad Min9    = MinTriad
 shToTriad Five    = NoTriad
 shToTriad Sus2    = NoTriad
 shToTriad Sus4    = NoTriad
+shToTriad SevSus4 = NoTriad
 shToTriad None    = NoTriad
 -- additional Billboard shorthands
 shToTriad Min11    = MinTriad
@@ -484,6 +490,7 @@ shToDeg Sev     = shToDeg Maj     ++ [Note (Just Fl) I7]
 shToDeg Dim7    = shToDeg Dim     ++ [Note (Just FF) I7]
 shToDeg HDim7   = shToDeg Dim     ++ [Note (Just Fl) I7]
 shToDeg MinMaj7 = shToDeg Min     ++ [Note Nothing   I7]
+shToDeg Aug7    = shToDeg Aug     ++ [Note (Just Fl) I7]
 shToDeg Maj6    = shToDeg Maj     ++ [Note Nothing   I6]
 shToDeg Min6    = shToDeg Min     ++ [Note (Just Fl) I6]
 shToDeg Nin     = shToDeg Sev     ++ [Note Nothing   I9]
@@ -492,6 +499,7 @@ shToDeg Min9    = shToDeg Min7    ++ [Note Nothing   I9]
 shToDeg Five    = [Note Nothing   I5]
 shToDeg Sus2    = [Note Nothing   I2, Note Nothing   I5]
 shToDeg Sus4    = [Note Nothing   I4, Note Nothing   I5]
+shToDeg SevSus4 = shToDeg Sus4    ++ [Note (Just Fl) I7]
 shToDeg None    = []
 -- additional Billboard shorthands
 shToDeg Min11    = shToDeg Min9   ++ [Note Nothing   I11]

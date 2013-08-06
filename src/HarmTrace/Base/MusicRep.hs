@@ -156,7 +156,7 @@ data DiatonicNatural =  C | D | E | F | G | A | B
                      |  X -- ^ for representing unknown roots (used in MIREX)
   deriving (Show, Eq, Enum, Ord, Bounded, Generic)
   
--- | Intervals for additonal chord notes    
+-- | Intervals for additional chord notes    
 data Addition = Add   (Note Interval)
               | NoAdd (Note Interval) deriving (Eq, Ord, Generic)
 
@@ -406,6 +406,7 @@ analyseDegTriad degs =
 analyseThird :: [Addition] -> Third
 analyseThird d 
   | (Add (Note (Just Fl) I3)) `elem` d = MinThird
+  | (Add (Note (Just Sh) I2)) `elem` d = MinThird
   | (Add (Note  Nothing  I3)) `elem` d = MajThird
   | otherwise                          = NoThird
       
@@ -413,14 +414,18 @@ analyseThird d
 analyseFifth :: [Addition] -> Fifth
 analyseFifth d  
   | (Add (Note (Just Fl) I5)) `elem` d = DimFifth
+  | (Add (Note (Just Sh) I4)) `elem` d = DimFifth
   | (Add (Note (Just Sh) I5)) `elem` d = AugFifth
+  | (Add (Note (Just Fl) I6)) `elem` d = AugFifth
   | (Add (Note  Nothing  I5)) `elem` d = PerfFifth
   | otherwise                          = NoFifth
 
 -- analyses the fifth in a degree list 
 analyseSevth :: [Addition] -> Sevth
 analyseSevth d  
+  | (Add (Note Nothing   I6)) `elem` d = DimSev
   | (Add (Note (Just FF) I7)) `elem` d = DimSev
+  | (Add (Note (Just Sh) I6)) `elem` d = DimSev
   | (Add (Note (Just Fl) I7)) `elem` d = MinSev
   | (Add (Note  Nothing  I7)) `elem` d = MajSev
   | otherwise                          = NoSev
@@ -436,8 +441,8 @@ shToTriad Aug     = AugTriad
 shToTriad Maj7    = MajTriad
 shToTriad Min7    = MinTriad
 shToTriad Sev     = MajTriad
-shToTriad Dim7    = MinTriad
-shToTriad HDim7   = MinTriad
+shToTriad Dim7    = DimTriad
+shToTriad HDim7   = DimTriad
 shToTriad MinMaj7 = MinTriad
 shToTriad Aug7    = AugTriad
 shToTriad Maj6    = MajTriad 
@@ -584,6 +589,7 @@ simplifyRoot x                  = x
 transposeSem :: ScaleDegree -> Int -> ScaleDegree
 transposeSem deg sem = scaleDegrees!!((sem + (toSemitone deg)) `mod` 12) where
 
+-- TODO : should be renamed to 'toPitchClass'
 -- | Returns the semitone value [0 .. 11] of a 'ScaleDegree' where
 -- 0 = C, e.g. F# = 6. For the constructors 'N' and 'X' an error is thrown.
 toSemitone :: (Show a, Enum a) => Note a -> Int

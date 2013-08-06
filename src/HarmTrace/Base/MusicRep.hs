@@ -405,31 +405,36 @@ analyseDegTriad degs =
 -- analyses the third in a degree list
 analyseThird :: [Addition] -> Third
 analyseThird d 
-  | (Add (Note (Just Fl) I3)) `elem` d = MinThird
-  | (Add (Note (Just Sh) I2)) `elem` d = MinThird
   | (Add (Note  Nothing  I3)) `elem` d = MajThird
+  | (Add (Note (Just Fl) I3)) `elem` d = MinThird
+  | (Add (Note (Just Fl) I4)) `elem` d = MajThird
+  | (Add (Note (Just Sh) I2)) `elem` d = MinThird
   | otherwise                          = NoThird
       
 -- analyses the fifth in a degree list 
 analyseFifth :: [Addition] -> Fifth
 analyseFifth d  
-  | (Add (Note (Just Fl) I5)) `elem` d = DimFifth
-  | (Add (Note (Just Sh) I4)) `elem` d = DimFifth
-  | (Add (Note (Just Sh) I5)) `elem` d = AugFifth
-  | (Add (Note (Just Fl) I6)) `elem` d = AugFifth
   | (Add (Note  Nothing  I5)) `elem` d = PerfFifth
+  | (Add (Note (Just Fl) I5)) `elem` d = DimFifth
+  | (Add (Note (Just Sh) I5)) `elem` d = AugFifth
+  | (Add (Note (Just Sh) I4)) `elem` d = DimFifth
+  | (Add (Note (Just Fl) I6)) `elem` d = AugFifth
   | otherwise                          = NoFifth
 
 -- analyses the fifth in a degree list 
 analyseSevth :: [Addition] -> Sevth
 analyseSevth d  
-  | (Add (Note Nothing   I6)) `elem` d = DimSev
-  | (Add (Note (Just FF) I7)) `elem` d = DimSev
-  | (Add (Note (Just Sh) I6)) `elem` d = DimSev
-  | (Add (Note (Just Fl) I7)) `elem` d = MinSev
   | (Add (Note  Nothing  I7)) `elem` d = MajSev
+  | (Add (Note (Just Fl) I7)) `elem` d = MinSev
+  | (Add (Note (Just FF) I7)) `elem` d = DimSev
+  | (Add (Note Nothing   I6)) `elem` d = DimSev
+  | (Add (Note (Just Sh) I6)) `elem` d = MinSev
+  | (Add (Note (Just SS) I6)) `elem` d = MajSev
+  | (Add (Note (Just Fl) I8)) `elem` d = MajSev
+  | (Add (Note (Just FF) I8)) `elem` d = MinSev
   | otherwise                          = NoSev
-  
+ 
+ 
 -- | Converts a 'Shorthand' to a 'Triad' 
 -- N.B. this function should not be exported because the shorthand alone cannot
 -- determine the triad 

@@ -322,17 +322,17 @@ toClassType (Chord  _r  sh []   _loc _d) = shToClassType sh -- no additions
 toClassType c = analyseDegClassType . toDegreeList $ c
 
 -- | Analyses a degree list and returns 'MajTriad', 'MinTriad' or 'NoTriad' if
--- the degrees make a chord a major, minor, or no triad, respectivly.
+-- the degrees make a chord a major, minor, or no triad, respectively.
 analyseDegClassType :: [Addition] -> ClassType
 analyseDegClassType degs = 
     case (analyseThird degs, analyseFifth degs, analyseSevth degs) of
        -- Triads
-       (_       , _        , MinSev) -> DomClass
+       (MinThird, DimFifth , DimSev) -> DimClass
+       (MajThird, _        , MinSev) -> DomClass
        (_       , AugFifth , _     ) -> DomClass
        (MajThird, DimFifth , _     ) -> DomClass
        (MajThird, _        , _     ) -> MajClass
        (MinThird, PerfFifth, _     ) -> MinClass
-       (MinThird, DimFifth , DimSev) -> DimClass
        (MinThird, _        , _     ) -> MinClass
        (NoThird,  _        , _     ) -> NoClass
 

@@ -54,6 +54,7 @@ module HarmTrace.Base.MusicTime (
   -- ** Type conversion and other utilities
   , getBeatTrack
   , concatTimedData
+  , splitTimed
   , nextBeat
   , prevBeat 
   , updateTPChord
@@ -222,7 +223,24 @@ concatTimedData dat (TimedData _ ta) (TimedData _ tb) =
                  "cannot merge BeatTimes "  ++ show a ++ " and " ++ show b)
     EQ -> a ++ tail b -- do not include the same timestamp twice
     LT -> a ++ b  
- 
+
+-- | Splits a 'TimedData' in two 'TimedData's at the specified position. If
+-- the position is out of range, an error is thrown.
+--
+-- >>> splitTimed (TimedData "x" [Time 2, Time 5]) 4
+-- >>> ( TimedData {getData = "x", getTimeStamps = [(2.0),(4.0)]}
+-- >>> , TimedData {getData = "x", getTimeStamps = [(4.0),(5.0)]} )
+splitTimed :: Show a => TimedData a -> NumData -> (TimedData a, TimedData a)
+splitTimed td@(TimedData d t) s 
+  | s > onset td = case span ((< s) . timeStamp) t of
+                    (_, []) -> e
+                    (x, y ) -> ( TimedData d (x ++ [Time s])
+                               , TimedData d (Time s : y   ))
+  | otherwise    = e
+      where e = error ( "HarmTrace.Base.MusicTime.splitTimed: Timestamp " 
+                      ++ show s ++ " not in range of TimedData: " ++ show td) 
+  
+    
 -- | compares to 'NumData' timestamps taking a rounding error 'roundingError'
 -- into account.
 timeComp :: NumData -> NumData -> Ordering

@@ -65,6 +65,7 @@ module HarmTrace.Base.MusicRep (
   , toScaleDegree
   , transposeSem
   , toSemitone
+  , toIntervalClss
   , toRoot
   ) where
   
@@ -606,6 +607,17 @@ toSemitone (Note m p)
             noNegatives s | s < 0     = 12 + s
                           | otherwise = s
 
+-- | Similar to 'toPitchClss', this function calculates an enharmonic 
+-- interval class for each 'Note Interval' in the range of [0 .. 23]
+-- ( == ['Note Nothing I1' .. 'Note (Just SS) I13']
+toIntervalClss :: Note Interval -> Int
+toIntervalClss n@(Note m i) =
+  --         1 2 3 4 5 6 7  8  9  10 11 12 13
+  let ic = ([0,2,4,5,7,9,11,12,14,16,17,19,21] !! (fromEnum i)) + modToSemi m 
+  in  if ic >= 0 then ic
+                 else error ("HarmTrace.Base.MusicRep.toIntervalClss: no "
+                          ++ "interval class for " ++ show n)
+                          
 -- | The reverse of 'toSemitone' returning the 'Note DiatonicNatural' given a 
 -- Integer [0..11] semitone, where 0 represents C. When the integer is out 
 -- of the range [0..11] an error is thrown.

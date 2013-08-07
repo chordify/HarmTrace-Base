@@ -166,7 +166,7 @@ data Interval = I1  | I2  | I3  | I4 | I5 | I6 | I7 | I8 | I9 | I10
               | I11 | I12 | I13 
   deriving (Eq, Enum, Ord, Bounded, Generic)     
 
--- | A musical note is a pitch (either absolute or relative) posibly modified
+-- | A musical note is a pitch (either absolute or relative) possibly modified
 -- by an 'Accidental'
 data Note a = Note (Maybe Accidental) a   deriving (Eq, Ord, Generic) 
   
@@ -177,11 +177,15 @@ data Accidental = Sh -- ^ sharp
                 | FF -- ^ double flat
   deriving (Eq, Ord, Generic)
 
--- | A 'Triad' comes in four flavours: major, minor, augmented, dimished, and 
+-- | A 'Triad' comes in four flavours: major, minor, augmented, diminished, and 
 -- sometimes a chord does not have a triad (e.g. suspended chords, etc.)
 data Triad = MajTriad | MinTriad | AugTriad | DimTriad | NoTriad 
                deriving (Ord, Eq, Generic)
   
+class (Show a, Enum a, Bounded a) => Diatonic a
+
+instance Diatonic DiatonicNatural
+instance Diatonic DiatonicDegree
 --------------------------------------------------------------------------------
 -- Instances for the general music datatypes
 --------------------------------------------------------------------------------   
@@ -468,6 +472,9 @@ shToTriad Min13    = MinTriad
 shToTriad Maj13    = MajTriad
 shToTriad Thirteen = MajTriad
 
+toPitchClasses :: Chord Root -> [Int]
+toPitchClasses = undefined
+
 -- | Transforms a Chord into a list of relative degrees (i.e. 'Addition's,
 -- without the root note).
 -- 
@@ -488,6 +495,8 @@ toDegreeList (Chord  _r sh deg _loc _d) = adds  \\ (toAdds remv) where
 
   toAdds :: [Addition] -> [Addition]
   toAdds = map (\(NoAdd x) -> (Add x))
+
+
   
 -- | Expands a 'Shorthand' to its list of degrees
 shToDeg :: Shorthand -> [Note Interval]     
@@ -598,7 +607,7 @@ transposeSem deg sem = scaleDegrees!!((sem + (toSemitone deg)) `mod` 12) where
 -- TODO : should be renamed to 'toPitchClass'
 -- | Returns the semitone value [0 .. 11] of a 'ScaleDegree' where
 -- 0 = C, e.g. F# = 6. For the constructors 'N' and 'X' an error is thrown.
-toSemitone :: (Show a, Enum a) => Note a -> Int
+toSemitone :: (Diatonic a) => Note a -> Int
 toSemitone (Note m p) 
   | ix <= 6   = noNegatives (([0,2,4,5,7,9,11] !! ix) + modToSemi m) `mod` 12
   | otherwise = error ("HarmTrace.Base.MusicRep.toSemitone: no semitone for "

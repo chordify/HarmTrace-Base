@@ -29,6 +29,7 @@ module HarmTrace.Base.MusicRep (
   , DiatonicNatural (..)
   , ScaleDegree 
   , DiatonicDegree (..)
+  , Diatonic
   -- ** Keys
   , Key (..)
   , Mode (..)
@@ -476,12 +477,13 @@ shToTriad Min13    = MinTriad
 shToTriad Maj13    = MajTriad
 shToTriad Thirteen = MajTriad
 
-toPitchClasses :: Chord Root -> [Int]
-toPitchClasses c = map (intValToPitchClss (chordRoot c)) (toIntValList c)
+-- | Similar to 'toIntValList' but returns 'Int' pitch classes and includes the
+-- 'Root' note of the the 'Chord'.
+toPitchClasses :: ChordLabel -> [Int]
+toPitchClasses c = let r = chordRoot c
+                   in  toSemitone r : map (intValToPitchClss r) (toIntValList c)
 
-
-
--- | Transforms a Chord into a list of relative degrees (i.e. 'Addition's,
+-- | Transforms a Chord into a list of relative 'Interval's (i.e. 'Addition's,
 -- without the root note).
 -- 
 -- >>> toIntValList (Chord (Note Nothing C) HDim7 [Add (Note (Just Sh) I11)] 0 0)

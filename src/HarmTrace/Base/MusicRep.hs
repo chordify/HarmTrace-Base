@@ -51,11 +51,13 @@ module HarmTrace.Base.MusicRep (
   , isUnknown
   , isRoot
   , isAddition
+  -- ** Transformation
   -- * Transformation and analysis of chords
   , toClassType
   , toTriad
   , analyseDegTriad
-  , toDegreeList
+  , toIntValList
+  , addToIntValList
   , toMode
   , toMajMin
   , toMajMinChord
@@ -63,6 +65,8 @@ module HarmTrace.Base.MusicRep (
   -- * Scale degree transposition
   , toChordDegree
   , toScaleDegree
+  , intValToPitch
+  , toPitchClasses
   , transposeSem
   , toSemitone
   , toIntervalClss
@@ -324,11 +328,11 @@ isAddition (NoAdd _) = False
 toClassType :: Chord a -> ClassType
 toClassType (Chord  _r  sh []   _loc _d) = shToClassType sh -- no additions
 -- combine the degrees and analyse them. N.B., also NoAdd degrees are resolved
-toClassType c = analyseDegClassType . toDegreeList $ c
+toClassType c = analyseDegClassType . toIntValList $ c
 
 -- | Analyses a degree list and returns 'MajTriad', 'MinTriad' or 'NoTriad' if
 -- the degrees make a chord a major, minor, or no triad, respectively.
-analyseDegClassType :: [Addition] -> ClassType
+analyseDegClassType :: [Note Interval] -> ClassType
 analyseDegClassType degs = 
     case (analyseThird degs, analyseFifth degs, analyseSevth degs) of
        -- Triads
@@ -391,11 +395,11 @@ data Sevth = DimSev   | MinSev    | MajSev   | NoSev   deriving (Eq, Show)
 toTriad :: Chord a -> Triad
 toTriad (Chord  _r  sh []   _loc _d) = shToTriad sh -- there are no additions
 -- combine the degrees and analyse them. N.B., also NoAdd degrees are resolved
-toTriad c = analyseDegTriad . toDegreeList $ c
+toTriad c = analyseDegTriad . toIntValList $ c
 
 -- | Analyses a degree list and returns 'MajTriad', 'MinTriad' or 'NoTriad' if
 -- the degrees make a chord a major, minor, or no triad, respectivly.
-analyseDegTriad :: [Addition] -> Triad
+analyseDegTriad :: [Note Interval] -> Triad
 analyseDegTriad degs =  
     case (analyseThird degs, analyseFifth degs) of
        (MajThird, PerfFifth) -> MajTriad
@@ -408,36 +412,36 @@ analyseDegTriad degs =
        (_      ,  NoFifth  ) -> NoTriad
       
 -- analyses the third in a degree list
-analyseThird :: [Addition] -> Third
+analyseThird :: [Note Interval] -> Third
 analyseThird d 
-  | (Add (Note  Nothing  I3)) `elem` d = MajThird
-  | (Add (Note (Just Fl) I3)) `elem` d = MinThird
-  | (Add (Note (Just Fl) I4)) `elem` d = MajThird
-  | (Add (Note (Just Sh) I2)) `elem` d = MinThird
-  | otherwise                          = NoThird
+  | (Note  Nothing  I3) `elem` d = MajThird
+  | (Note (Just Fl) I3) `elem` d = MinThird
+  | (Note (Just Fl) I4) `elem` d = MajThird
+  | (Note (Just Sh) I2) `elem` d = MinThird
+  | otherwise                    = NoThird
       
 -- analyses the fifth in a degree list 
-analyseFifth :: [Addition] -> Fifth
+analyseFifth :: [Note Interval] -> Fifth
 analyseFifth d  
-  | (Add (Note  Nothing  I5)) `elem` d = PerfFifth
-  | (Add (Note (Just Fl) I5)) `elem` d = DimFifth
-  | (Add (Note (Just Sh) I5)) `elem` d = AugFifth
-  | (Add (Note (Just Sh) I4)) `elem` d = DimFifth
-  | (Add (Note (Just Fl) I6)) `elem` d = AugFifth
-  | otherwise                          = NoFifth
+  | (Note  Nothing  I5) `elem` d = PerfFifth
+  | (Note (Just Fl) I5) `elem` d = DimFifth
+  | (Note (Just Sh) I5) `elem` d = AugFifth
+  | (Note (Just Sh) I4) `elem` d = DimFifth
+  | (Note (Just Fl) I6) `elem` d = AugFifth
+  | otherwise                    = NoFifth
 
 -- analyses the fifth in a degree list 
-analyseSevth :: [Addition] -> Sevth
+analyseSevth :: [Note Interval] -> Sevth
 analyseSevth d  
-  | (Add (Note  Nothing  I7)) `elem` d = MajSev
-  | (Add (Note (Just Fl) I7)) `elem` d = MinSev
-  | (Add (Note (Just FF) I7)) `elem` d = DimSev
-  | (Add (Note Nothing   I6)) `elem` d = DimSev
-  | (Add (Note (Just Sh) I6)) `elem` d = MinSev
-  | (Add (Note (Just SS) I6)) `elem` d = MajSev
-  | (Add (Note (Just Fl) I8)) `elem` d = MajSev
-  | (Add (Note (Just FF) I8)) `elem` d = MinSev
-  | otherwise                          = NoSev
+  | (Note  Nothing  I7) `elem` d = MajSev
+  | (Note (Just Fl) I7) `elem` d = MinSev
+  | (Note (Just FF) I7) `elem` d = DimSev
+  | (Note Nothing   I6) `elem` d = DimSev
+  | (Note (Just Sh) I6) `elem` d = MinSev
+  | (Note (Just SS) I6) `elem` d = MajSev
+  | (Note (Just Fl) I8) `elem` d = MajSev
+  | (Note (Just FF) I8) `elem` d = MinSev
+  | otherwise                    = NoSev
  
  
 -- | Converts a 'Shorthand' to a 'Triad' 
@@ -473,28 +477,38 @@ shToTriad Maj13    = MajTriad
 shToTriad Thirteen = MajTriad
 
 toPitchClasses :: Chord Root -> [Int]
-toPitchClasses = undefined
+toPitchClasses c = map (intValToPitchClss (chordRoot c)) (toIntValList c)
+
+
 
 -- | Transforms a Chord into a list of relative degrees (i.e. 'Addition's,
 -- without the root note).
 -- 
--- >>> toDegreeList (Chord (Note Nothing C) HDim7 [Add (Note (Just Sh) I11)] 0 0)
+-- >>> toIntValList (Chord (Note Nothing C) HDim7 [Add (Note (Just Sh) I11)] 0 0)
 -- [3b,5b,7b,11#]
 --
--- >>> toDegreeList (Chord (Note Nothing C) Min13 [NoAdd (Note Nothing I11)] 0 0)
+-- >>> toIntValList (Chord (Note Nothing C) Min13 [NoAdd (Note Nothing I11)] 0 0)
 -- [3b,5,7b,9,13]
 --
--- >>> toDegreeList (parseData pChord "D:7(b9)")
+-- >>> toIntValList (parseData pChord "D:7(b9)")
 -- [3,5,7b,9b]
 --
-toDegreeList :: Chord a -> [Addition]
-toDegreeList (Chord  _r sh []  _loc _d) = map Add (shToDeg sh)
-toDegreeList (Chord  _r sh deg _loc _d) = adds  \\ (toAdds remv) where
+toIntValList :: Chord a -> [Note Interval]
+toIntValList (Chord  _r sh []  _loc _d) = shToDeg sh
+toIntValList (Chord  _r sh deg _loc _d) = 
+  addToIntValList (deg ++ map Add (shToDeg sh))
+  
+addToIntValList :: [Addition] -> [Note Interval]  
+addToIntValList add =  map toIntVal (adds \\ (toAdds remv))
+  
+  where (adds, remv) = partition isAddition add
 
-  (adds, remv) = partition isAddition ((map Add . shToDeg $ sh) ++ deg)
-
-  toAdds :: [Addition] -> [Addition]
-  toAdds = map (\(NoAdd x) -> (Add x))
+        toAdds :: [Addition] -> [Addition]
+        toAdds = map (\(NoAdd x) -> (Add x))
+        
+        toIntVal :: Addition -> Note Interval
+        toIntVal (Add i) = i
+        toIntVal _ = error "Cannot transform NoAdd to Interval" -- cannot happen
 
 
   
@@ -616,6 +630,22 @@ toSemitone (Note m p)
             noNegatives s | s < 0     = 12 + s
                           | otherwise = s
 
+-- | Similar to 'toScaleDegree', an interval is transformed into an absolute
+-- 'Root' pitch, given another 'Root' that serves as a basis. 
+--  
+-- >>> intValToPitch (Note (Just Sh) G) (Note (Just Fl) I13)
+-- >>> E
+--  
+-- >>> intValToPitch (Note Nothing C) (Note (Just Sh) I11)
+-- >>> F#
+--
+intValToPitch :: Root -> Note Interval -> Root
+intValToPitch r = toRoot . intValToPitchClss r
+ 
+-- | As 'intValToPitch', but returns the 'Int' pitch class. 
+intValToPitchClss :: Root -> Note Interval -> Int
+intValToPitchClss r i = (toSemitone r + toIntervalClss i) `mod` 12
+                          
 -- | Similar to 'toPitchClss', this function calculates an enharmonic 
 -- interval class for each 'Note Interval' in the range of [0 .. 23]
 -- ( == ['Note Nothing I1' .. 'Note (Just SS) I13']

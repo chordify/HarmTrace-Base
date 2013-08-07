@@ -86,7 +86,7 @@ pChordLabel = toChord <$> pRoot <* (pSym ':' `opt` ':') <*> pMaybe pShorthand
         -- if there are no degrees and no shorthand, following Harte it 
         -- should be labelled a Maj chord
         toChord r Nothing  [] = Chord r Maj [] 0 1
-        toChord r Nothing  d  = case analyseDegTriad d of
+        toChord r Nothing  d  = case analyseDegTriad (addToIntValList d) of
                                   MajTriad -> Chord r Maj (remTriadDeg d) 0 1
                                   MinTriad -> Chord r Min (remTriadDeg d) 0 1
                                   AugTriad -> Chord r Aug (remTriadDeg d) 0 1

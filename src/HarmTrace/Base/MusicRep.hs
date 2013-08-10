@@ -62,7 +62,6 @@ module HarmTrace.Base.MusicRep (
   , toMode
   , toMajMin
   , toMajMinChord
-  , simplifyRoot
   -- * Scale degree transposition
   , toChordDegree
   , toScaleDegree
@@ -563,7 +562,7 @@ toMajMin NoTriad  = NoClass
 
 -- | applies 'toMajMin' to a 'Chord'
 toMajMinChord :: ChordLabel -> ChordLabel
-toMajMinChord c = c {chordShorthand = majMinSh}
+toMajMinChord c = c {chordShorthand = majMinSh, chordAdditions = []}
   where majMinSh = case toMajMin (toTriad c) of
                      MajClass -> Maj
                      MinClass -> Min
@@ -590,7 +589,7 @@ toScaleDegree _ n@(Note _ N) =
   error ("HarmTrace.Base.MusicRep.toScaleDegree: cannot transpose " ++ show n)
 toScaleDegree (Key kr _) cr  = -- Note Nothing I
   scaleDegrees!!(((toSemitone cr) - (toSemitone kr)) `mod` 12)
-
+{-
 -- | Simplify note roots to a single enharmonic representation.
 -- For instance, D♭ becomes C♯, E♯ becomes F, and G𝄫 becomes F.
 simplifyRoot :: Root -> Root
@@ -615,7 +614,7 @@ simplifyRoot (Note (Just Fl) F) = Note Nothing   E
 simplifyRoot (Note (Just Fl) G) = Note (Just Sh) F
 -- Everything else must be simple already
 simplifyRoot x                  = x
-  
+  -}
 -- | Transposes a scale degree with @sem@ semitones up
 transposeSem :: ScaleDegree -> Int -> ScaleDegree
 transposeSem deg sem = scaleDegrees!!((sem + (toSemitone deg)) `mod` 12) where

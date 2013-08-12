@@ -50,6 +50,7 @@ module HarmTrace.Base.MusicTime (
   , getBeat 
   , onset
   , offset
+  , duration
   , setData
   -- ** Type conversion and other utilities
   , getBeatTrack
@@ -66,8 +67,8 @@ module HarmTrace.Base.MusicTime (
 
 ) where
              
-import HarmTrace.Base.MusicRep
-import Data.List (intercalate)
+import HarmTrace.Base.MusicRep hiding ( duration )
+import Data.List                      ( intercalate )
 
 -- | When reducing and expaninding 'TimedData' types there might be rounding
 -- errors in the floating point time stamps. The 'roundingError' parameter
@@ -286,6 +287,10 @@ offset :: TimedData a -> NumData
 offset td = case getTimeStamps td of
   []  -> error "HarmTrace.Base.MusicTime.offset: no timestamps are stored"
   l   -> timeStamp . last $ l
+
+-- | Returns the duration of 'TimedData'
+duration :: TimedData a -> NumData
+duration td = offset td - onset td
 
 -- TODO: replace by ad-hoc enum instance?
 -- | returns the next beat, e.g. @ nextBeat Two = Three @. 

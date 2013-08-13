@@ -63,6 +63,7 @@ module HarmTrace.Base.MusicTime (
   , dropTimed
   , timeStamp
   , beat 
+  , pprint
   , prettyPrint
 
 ) where
@@ -324,8 +325,9 @@ dropTimed = map getData
 prettyPrint :: Show a => [TimedData a] -> String
 prettyPrint = intercalate "\n" . map pprint where
 
-  pprint :: Show a => TimedData a -> String
-  pprint (TimedData d [ ]) = "not set - not set: " ++ show d
-  pprint (TimedData d [x]) = show x ++" - not set: " ++ show d
-  pprint (TimedData d ts ) = show (head ts) ++ " - " ++ show (last ts) 
-                                            ++ ": "  ++ show d
+-- | Pretty prints a single 'TimedData'
+pprint :: Show a => TimedData a -> String
+pprint (TimedData d [ ]) = "not set - not set: " ++ show d
+pprint (TimedData d [x]) = show x ++" - not set: " ++ show d
+pprint (TimedData d ts ) = show (head ts) ++ " - " ++ show (last ts) 
+                                          ++ ": "  ++ show d

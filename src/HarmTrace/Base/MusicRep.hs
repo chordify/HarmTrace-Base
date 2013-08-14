@@ -213,6 +213,10 @@ instance Show ChordLabel where
   show (Chord r None []  _loc _d) = show r ++ (if isRoot r then ":1" else "")
   show (Chord r None add _loc _d) = show r ++ ':' : showAdd add
   show (Chord r sh   add _loc _d) = show r ++ ':' : show sh ++ showAdd add
+  -- show c = case chordRoot c of
+     -- n@(Note Nothing N) -> show n
+     -- n@(Note Nothing X) -> show n
+     -- r                  -> show r ++ ':' : show (chordShorthand c) ++ ' ' : show ( toPitchClasses  c)
   
   
 instance Show ChordDegree where
@@ -399,7 +403,7 @@ toTriad (Chord  _r  sh []   _loc _d) = shToTriad sh -- there are no additions
 toTriad c = analyseDegTriad . toIntValList $ c
 
 -- | Analyses a degree list and returns 'MajTriad', 'MinTriad' or 'NoTriad' if
--- the degrees make a chord a major, minor, or no triad, respectivly.
+-- the degrees make a chord a major, minor, or no triad, respectively.
 analyseDegTriad :: [Note Interval] -> Triad
 analyseDegTriad degs =  
     case (analyseThird degs, analyseFifth degs) of
@@ -528,7 +532,8 @@ shToDeg HDim7   = shToDeg Dim     ++ [Note (Just Fl) I7]
 shToDeg MinMaj7 = shToDeg Min     ++ [Note Nothing   I7]
 shToDeg Aug7    = shToDeg Aug     ++ [Note (Just Fl) I7]
 shToDeg Maj6    = shToDeg Maj     ++ [Note Nothing   I6]
-shToDeg Min6    = shToDeg Min     ++ [Note (Just Fl) I6]
+-- Harte uses a 6 instead of b6
+shToDeg Min6    = shToDeg Min     ++ [Note (Just Fl) I6] 
 shToDeg Nin     = shToDeg Sev     ++ [Note Nothing   I9]
 shToDeg Maj9    = shToDeg Maj7    ++ [Note Nothing   I9]
 shToDeg Min9    = shToDeg Min7    ++ [Note Nothing   I9]

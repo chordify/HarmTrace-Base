@@ -209,8 +209,7 @@ instance Show ChordLabel where
   show NoChord    = "N"
   show UndefChord = "X"
   show (Chord r None []  b) = show r ++ ":1/" ++ show b
-  show (Chord r sh   add b) = show r ++ ':' : show sh 
-                                     ++ showAdd add ++ '/' : show b
+  show (Chord r sh   add b) = show r ++ ':' : show sh ++ showAdd add ++ showIv b
   -- show (Chord r None []  _loc _d) = show r ++ (if isRoot r then ":1" else "")
   -- show (Chord r None add _loc _d) = show r ++ ':' : showAdd add
   -- show (Chord r sh   add _loc _d) = show r ++ ':' : show sh ++ showAdd add
@@ -218,6 +217,11 @@ instance Show ChordLabel where
      -- n@(Note Nat N) -> show n
      -- n@(Note Nat X) -> show n
      -- r                  -> show r ++ ':' : show (chordShorthand c) ++ ' ' : show ( toPitchClasses  c)   
+    
+showIv :: Note Interval -> String
+showIv (Note Nat I1) = ""
+showIv i             = '/' : show i 
+
     
 showAdd :: [Addition] -> String
 showAdd [] = ""

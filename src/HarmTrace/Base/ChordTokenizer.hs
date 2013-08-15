@@ -189,24 +189,28 @@ pInterval =  ((!!) [minBound..] ) . pred <$> pNaturalRaw <?> "Interval"
 -- | Parses a 'Root' 'Note', e.g. @A@, @Bb@, or @F#@.
 pRoot :: Parser Root
 {-# INLINE pRoot #-}
-pRoot =     Note Nat   A  <$ pSym 'A'
-        <|> Note Nat   B  <$ pSym 'B'
-        <|> Note Nat   C  <$ pSym 'C'
-        <|> Note Nat   D  <$ pSym 'D'
-        <|> Note Nat   E  <$ pSym 'E'
-        <|> Note Nat   F  <$ pSym 'F'
-        <|> Note Nat   G  <$ pSym 'G'
-        <|> Note Fl A <$ pString "Ab"
+pRoot = (flip Note) <$> pDiaNat <*> pAccidental
+
+pDiaNat :: Parser DiatonicNatural
+pDiaNat =    A  <$ pSym 'A'
+         <|> B  <$ pSym 'B'
+         <|> C  <$ pSym 'C'
+         <|> D  <$ pSym 'D'
+         <|> E  <$ pSym 'E'
+         <|> F  <$ pSym 'F'
+         <|> G  <$ pSym 'G'
+{-        <|> Note Fl A <$ pString "Ab"
         <|> Note Fl B <$ pString "Bb"
         <|> Note Fl C <$ pString "Cb"
         <|> Note Fl D <$ pString "Db"
         <|> Note Fl E <$ pString "Eb"
         <|> Note Fl F <$ pString "Fb"
         <|> Note Fl G <$ pString "Gb"
-        <|> Note Fl A <$ pString "A#"
-        <|> Note Fl B <$ pString "B#"
-        <|> Note Fl C <$ pString "C#"
-        <|> Note Fl D <$ pString "D#"
-        <|> Note Fl E <$ pString "E#"
-        <|> Note Fl F <$ pString "F#"
-        <|> Note Fl G <$ pString "G#" <?> "Chord root"
+        <|> Note Sh A <$ pString "A#"
+        <|> Note Sh B <$ pString "B#"
+        <|> Note Sh C <$ pString "C#"
+        <|> Note Sh D <$ pString "D#"
+        <|> Note Sh E <$ pString "E#"
+        <|> Note Sh F <$ pString "F#"
+        <|> Note Sh G <$ pString "G#" <?> "Chord root"
+-}

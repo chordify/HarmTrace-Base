@@ -41,16 +41,11 @@ module HarmTrace.Base.MusicRep (
   , Interval (..)
   , ChordLabel
   , ChordDegree
-  , noneLabel
-  , unknownLabel
   -- * Derived types for classification of chords
   , ClassType (..)
   , Triad (..)
   -- * Tests
-  , isNone
   , isNoneChord
-  , isUnknown
-  , isRoot
   , isAddition
   -- ** Transformation
   -- * Transformation and analysis of chords
@@ -95,31 +90,38 @@ data PieceLabel = PieceLabel Key [ChordLabel] deriving Generic
 
 -- | A chord based on absolute 'Root' notes
 type ChordLabel   = Chord Root
-
+{-
 -- rename to noLabel?
 -- | No Chord label
 noneLabel :: ChordLabel
-noneLabel = (Chord (Note Nothing N) None [] 0 1)
+noneLabel = (Chord (Note Nat N) None [] (Note Nat I1))
 
 -- | Unknown Chord label
 unknownLabel :: ChordLabel
-unknownLabel = (Chord (Note Nothing X) None [] 0 1)
+unknownLabel = (Chord (Note Nat X) None [] (Note Nat I1))
+-}
 
 -- | A chord based on relative 'ScaleDegree's
 type ChordDegree  = Chord ScaleDegree
 
 -- | The representation for a single chord 
 data Chord a = Chord { chordRoot        :: a
+                       -- ^ the 'Root' note of a chord
                      , chordShorthand   :: Shorthand
+                       -- ^ a 'Shorthand' representing the interval
+                       -- structure of a chord
                      , chordAdditions   :: [Addition]
-                     -- | the index of the chord in the list of tokens
-                     , getLoc           :: Int 
-                     -- | the duration of the chord 
-                     , duration         :: Int 
-                     } deriving Generic
+                       -- ^ the (additional) interval structure
+                     , chordBass        :: Note Interval
+                       -- ^ the sounding bass note, denoting an inversion when
+                       -- it is not a 'Note Nat I1'
+                     } 
+              | NoChord     -- ^ No sounding chord (silence, noise, etc.)
+              | UndefChord  -- ^ An undefined chord
+                deriving (Eq, Generic)
 
 -- | We introduce four chord categories: major chords, minor chords, dominant
--- seventh chords, and diminshed seventh chords
+-- seventh chords, and diminished seventh chords
 data ClassType = MajClass | MinClass | DomClass | DimClass | NoClass
   deriving (Eq, Enum, Ord, Bounded, Generic)
 
@@ -136,8 +138,7 @@ data Shorthand = -- | Triadic chords
                | Sus4 | Sus2 | SevSus4
                  -- | Power chords
                | Five
-                 -- In some cases there is no chord a certain position
-                 -- This is especially important for the chroma processing
+                 -- Only a root note
                | None
                  -- Additional shorthands in billboard collection
                | Eleven | Thirteen | Min11 | Maj13 | Min13
@@ -158,8 +159,8 @@ type Root = Note DiatonicNatural
 
 -- | The seven diatonic naturals
 data DiatonicNatural =  C | D | E | F | G | A | B 
-                     |  N -- ^ for no root
-                     |  X -- ^ for representing unknown roots (used in MIREX)
+                     -- |  N -- ^ for no root
+                     -- |  X -- ^ for representing unknown roots (used in MIREX)
   deriving (Show, Eq, Enum, Ord, Bounded, Generic)
   
 -- | Intervals for additional chord notes    
@@ -173,13 +174,14 @@ data Interval = I1  | I2  | I3  | I4 | I5 | I6 | I7 | I8 | I9 | I10
 
 -- | A musical note is a pitch (either absolute or relative) possibly modified
 -- by an 'Accidental'
-data Note a = Note (Maybe Accidental) a   deriving (Eq, Ord, Generic) 
+data Note a = Note Accidental a   deriving (Eq, Ord, Generic) 
   
 -- | A musical 'Accidental'
-data Accidental = Sh -- ^ sharp 
-                | Fl -- ^ flat
-                | SS -- ^ double sharp
-                | FF -- ^ double flat
+data Accidental = Nat -- ^ natural
+                | Sh  -- ^ sharp 
+                | Fl  -- ^ flat
+                | SS  -- ^ double sharp
+                | FF  -- ^ double flat
   deriving (Eq, Ord, Generic)
 
 -- | A 'Triad' comes in four flavours: major, minor, augmented, diminished, and 
@@ -202,27 +204,20 @@ instance Show Mode where
   show MajMode = ""
   show MinMode = "m"  
 
--- TODO: it is probably best to derive eq for Chord and define other eq's 
--- for specific tasks if needed.  
-instance Eq a => Eq (Chord a) where
-  (Chord ra sha dega _loc _d) == (Chord rb shb degb _locb _db) 
-     = ra == rb && sha == shb && dega == degb 
-
 -- In showing chords, we obey Harte et al.'s syntax as much as possible
 instance Show ChordLabel where
-  show (Chord r None []  _loc _d) = show r ++ (if isRoot r then ":1" else "")
-  show (Chord r None add _loc _d) = show r ++ ':' : showAdd add
-  show (Chord r sh   add _loc _d) = show r ++ ':' : show sh ++ showAdd add
+  show NoChord    = "N"
+  show UndefChord = "X"
+  show (Chord r None []  b) = show r ++ ":1/" ++ show b
+  show (Chord r sh   add b) = show r ++ ':' : show sh 
+                                     ++ showAdd add ++ '/' : show b
+  -- show (Chord r None []  _loc _d) = show r ++ (if isRoot r then ":1" else "")
+  -- show (Chord r None add _loc _d) = show r ++ ':' : showAdd add
+  -- show (Chord r sh   add _loc _d) = show r ++ ':' : show sh ++ showAdd add
   -- show c = case chordRoot c of
-     -- n@(Note Nothing N) -> show n
-     -- n@(Note Nothing X) -> show n
-     -- r                  -> show r ++ ':' : show (chordShorthand c) ++ ' ' : show ( toPitchClasses  c)
-  
-  
-instance Show ChordDegree where
-  show (Chord r None []  _loc _d) = show r ++ ":1"
-  show (Chord r None add _loc _d) = show r ++ ':' : showAdd add
-  show (Chord r sh   add _loc _d) = show r ++ ':' : show sh ++ showAdd add  
+     -- n@(Note Nat N) -> show n
+     -- n@(Note Nat X) -> show n
+     -- r                  -> show r ++ ':' : show (chordShorthand c) ++ ' ' : show ( toPitchClasses  c)   
     
 showAdd :: [Addition] -> String
 showAdd [] = ""
@@ -265,13 +260,13 @@ instance Show ClassType where
 
 
 instance Show (Note Interval) where
-  show (Note m i) = maybe "" show m ++ show i
+  show (Note m i) = show m ++ show i
 
 instance Show (Note DiatonicNatural) where
-  show (Note m r) = show r ++ maybe "" show m  
+  show (Note m r) = show r ++ show m  
   
 instance Show (Note DiatonicDegree) where
-  show (Note m r) = show r ++ maybe "" show m  
+  show (Note m r) = show m ++ show r
   
 instance Show Interval where
   show a = show . ((!!) ([1..13]::[Integer])) 
@@ -279,10 +274,11 @@ instance Show Interval where
    
   
 instance Show Accidental where 
-  show Sh = "#"
-  show Fl = "b"
-  show SS = "##"
-  show FF = "bb"     
+  show Nat = ""
+  show Sh  = "#"
+  show Fl  = "b"
+  show SS  = "##"
+  show FF  = "bb"     
 
 instance Show Addition where
   show (Add   n) = show n
@@ -298,6 +294,7 @@ instance Show Triad where
 --------------------------------------------------------------------------------
 -- Tests     
 --------------------------------------------------------------------------------
+{-
 -- | Returns True if the 'Root' is not unknown or none
 isRoot :: Root -> Bool
 isRoot r | isNone r    = False
@@ -308,15 +305,19 @@ isRoot r | isNone r    = False
 isNone :: Root -> Bool
 isNone (Note _ N) = True
 isNone  _         = False
+-}
 
 -- | Returns True if the 'ChordLabel' is not a chord, and False otherwise 
 isNoneChord :: ChordLabel -> Bool
-isNoneChord = isNone . chordRoot
+isNoneChord NoChord = True
+isNoneChord _       = False
 
+{-
 -- | Returns True if the 'Root' is unknown, and False otherwise 
 isUnknown :: Root -> Bool
 isUnknown (Note _ X) = True
 isUnknown _          = False
+-}
 
 -- | Returns true if the 'Chord' 'Addition' represents an addition and not 
 -- a degree that has to be removed (*).
@@ -331,7 +332,7 @@ isAddition (NoAdd _) = False
 -- | Returns the 'ClassType' given a 'Chord'. This function uses 
 -- 'analyseDegClassType' to analyse a chord and derive the 'ClassType'
 toClassType :: Chord a -> ClassType
-toClassType (Chord  _r  sh []   _loc _d) = shToClassType sh -- no additions
+toClassType (Chord  _r  sh []   _b) = shToClassType sh -- no additions
 -- combine the degrees and analyse them. N.B., also NoAdd degrees are resolved
 toClassType c = analyseDegClassType . toIntValList $ c
 
@@ -388,17 +389,17 @@ data Sevth = DimSev   | MinSev    | MajSev   | NoSev   deriving (Eq, Show)
       
 -- | Takes a 'Chord' and determines the 'Triad'
 --
--- >>> toTriad (Chord (Note Nothing C) Min [NoAdd (Note (Just Fl) I3),Add (Note Nothing I3)] 0 0)
+-- >>> toTriad (Chord (Note Nat C) Min [NoAdd (Note Fl I3),Add (Note Nat I3)] 0 0)
 -- maj 
 --
--- >>> toTriad (Chord (Note Nothing C) HDim7 [Add (Note (Just Sh) I11)] 0 0)
+-- >>> toTriad (Chord (Note Nat C) HDim7 [Add (Note Sh I11)] 0 0)
 -- dim
 --
--- >>> toTriad (Chord (Note Nothing C) Min [NoAdd (Note (Just Fl) I3)] 0 0)
+-- >>> toTriad (Chord (Note Nat C) Min [NoAdd (Note Fl I3)] 0 0)
 -- NoTriad
 --
 toTriad :: Chord a -> Triad
-toTriad (Chord  _r  sh []   _loc _d) = shToTriad sh -- there are no additions
+toTriad (Chord  _r  sh [] _b) = shToTriad sh -- there are no additions
 -- combine the degrees and analyse them. N.B., also NoAdd degrees are resolved
 toTriad c = analyseDegTriad . toIntValList $ c
 
@@ -419,33 +420,33 @@ analyseDegTriad degs =
 -- analyses the third in a degree list
 analyseThird :: [Note Interval] -> Third
 analyseThird d 
-  | (Note  Nothing  I3) `elem` d = MajThird
-  | (Note (Just Fl) I3) `elem` d = MinThird
-  | (Note (Just Fl) I4) `elem` d = MajThird
-  | (Note (Just Sh) I2) `elem` d = MinThird
+  | (Note  Nat I3) `elem` d = MajThird
+  | (Note  Fl  I3) `elem` d = MinThird
+  | (Note  Fl  I4) `elem` d = MajThird
+  | (Note  Sh  I2) `elem` d = MinThird
   | otherwise                    = NoThird
       
 -- analyses the fifth in a degree list 
 analyseFifth :: [Note Interval] -> Fifth
 analyseFifth d  
-  | (Note  Nothing  I5) `elem` d = PerfFifth
-  | (Note (Just Fl) I5) `elem` d = DimFifth
-  | (Note (Just Sh) I5) `elem` d = AugFifth
-  | (Note (Just Sh) I4) `elem` d = DimFifth
-  | (Note (Just Fl) I6) `elem` d = AugFifth
+  | (Note Nat  I5) `elem` d = PerfFifth
+  | (Note Fl I5) `elem` d = DimFifth
+  | (Note Sh I5) `elem` d = AugFifth
+  | (Note Sh I4) `elem` d = DimFifth
+  | (Note Fl I6) `elem` d = AugFifth
   | otherwise                    = NoFifth
 
 -- analyses the fifth in a degree list 
 analyseSevth :: [Note Interval] -> Sevth
 analyseSevth d  
-  | (Note  Nothing  I7) `elem` d = MajSev
-  | (Note (Just Fl) I7) `elem` d = MinSev
-  | (Note (Just FF) I7) `elem` d = DimSev
-  | (Note Nothing   I6) `elem` d = DimSev
-  | (Note (Just Sh) I6) `elem` d = MinSev
-  | (Note (Just SS) I6) `elem` d = MajSev
-  | (Note (Just Fl) I8) `elem` d = MajSev
-  | (Note (Just FF) I8) `elem` d = MinSev
+  | (Note Nat I7) `elem` d = MajSev
+  | (Note Fl I7) `elem` d = MinSev
+  | (Note FF I7) `elem` d = DimSev
+  | (Note Nat I6) `elem` d = DimSev
+  | (Note Sh I6) `elem` d = MinSev
+  | (Note SS I6) `elem` d = MajSev
+  | (Note Fl I8) `elem` d = MajSev
+  | (Note FF I8) `elem` d = MinSev
   | otherwise                    = NoSev
  
  
@@ -490,20 +491,21 @@ toPitchClasses c = let r = chordRoot c
 -- | Transforms a Chord into a list of relative 'Interval's (i.e. 'Addition's,
 -- without the root note).
 -- 
--- >>> toIntValList (Chord (Note Nothing C) HDim7 [Add (Note (Just Sh) I11)] 0 0)
+-- >>> toIntValList (Chord (Note Nat C) HDim7 [Add (Note Sh I11)] 0 0)
 -- [3b,5b,7b,11#]
 --
--- >>> toIntValList (Chord (Note Nothing C) Min13 [NoAdd (Note Nothing I11)] 0 0)
+-- >>> toIntValList (Chord (Note Nat C) Min13 [NoAdd (Note Nat I11)] 0 0)
 -- [3b,5,7b,9,13]
 --
 -- >>> toIntValList (parseData pChord "D:7(b9)")
 -- [3,5,7b,9b]
 --
 toIntValList :: Chord a -> [Note Interval]
-toIntValList (Chord  _r sh []  _loc _d) = shToDeg sh
-toIntValList (Chord  _r sh deg _loc _d) = 
-  addToIntValList (deg ++ map Add (shToDeg sh))
-  
+toIntValList (Chord  _r sh [] _b) = shToDeg sh
+toIntValList (Chord  _r sh a  _b) = addToIntValList (a ++ map Add (shToDeg sh))
+toIntValList _ = error ("HarmTrace.Base.MusicRep.toIntValList: cannot create" ++
+                        "interval list for N or X")
+
 addToIntValList :: [Addition] -> [Note Interval]  
 addToIntValList add =  map toIntVal (adds \\ (toAdds remv))
   
@@ -520,34 +522,34 @@ addToIntValList add =  map toIntVal (adds \\ (toAdds remv))
   
 -- | Expands a 'Shorthand' to its list of degrees
 shToDeg :: Shorthand -> [Note Interval]     
-shToDeg Maj     = [Note Nothing   I3, Note Nothing   I5]
-shToDeg Min     = [Note (Just Fl) I3, Note Nothing   I5]
-shToDeg Dim     = [Note (Just Fl) I3, Note (Just Fl) I5]
-shToDeg Aug     = [Note Nothing   I3, Note (Just Sh) I5]
-shToDeg Maj7    = shToDeg Maj     ++ [Note Nothing   I7]
-shToDeg Min7    = shToDeg Min     ++ [Note (Just Fl) I7]
-shToDeg Sev     = shToDeg Maj     ++ [Note (Just Fl) I7]
-shToDeg Dim7    = shToDeg Dim     ++ [Note (Just FF) I7]
-shToDeg HDim7   = shToDeg Dim     ++ [Note (Just Fl) I7]
-shToDeg MinMaj7 = shToDeg Min     ++ [Note Nothing   I7]
-shToDeg Aug7    = shToDeg Aug     ++ [Note (Just Fl) I7]
-shToDeg Maj6    = shToDeg Maj     ++ [Note Nothing   I6]
+shToDeg Maj     = [Note Nat   I3, Note Nat   I5]
+shToDeg Min     = [Note Fl I3, Note Nat   I5]
+shToDeg Dim     = [Note Fl I3, Note Fl I5]
+shToDeg Aug     = [Note Nat   I3, Note Sh I5]
+shToDeg Maj7    = shToDeg Maj     ++ [Note Nat   I7]
+shToDeg Min7    = shToDeg Min     ++ [Note Fl I7]
+shToDeg Sev     = shToDeg Maj     ++ [Note Fl I7]
+shToDeg Dim7    = shToDeg Dim     ++ [Note FF I7]
+shToDeg HDim7   = shToDeg Dim     ++ [Note Fl I7]
+shToDeg MinMaj7 = shToDeg Min     ++ [Note Nat   I7]
+shToDeg Aug7    = shToDeg Aug     ++ [Note Fl I7]
+shToDeg Maj6    = shToDeg Maj     ++ [Note Nat   I6]
 -- Harte uses a 6 instead of b6
-shToDeg Min6    = shToDeg Min     ++ [Note (Just Fl) I6] 
-shToDeg Nin     = shToDeg Sev     ++ [Note Nothing   I9]
-shToDeg Maj9    = shToDeg Maj7    ++ [Note Nothing   I9]
-shToDeg Min9    = shToDeg Min7    ++ [Note Nothing   I9]
-shToDeg Five    = [Note Nothing   I5]
-shToDeg Sus2    = [Note Nothing   I2, Note Nothing   I5]
-shToDeg Sus4    = [Note Nothing   I4, Note Nothing   I5]
-shToDeg SevSus4 = shToDeg Sus4    ++ [Note (Just Fl) I7]
+shToDeg Min6    = shToDeg Min     ++ [Note Fl I6] 
+shToDeg Nin     = shToDeg Sev     ++ [Note Nat   I9]
+shToDeg Maj9    = shToDeg Maj7    ++ [Note Nat   I9]
+shToDeg Min9    = shToDeg Min7    ++ [Note Nat   I9]
+shToDeg Five    = [Note Nat   I5]
+shToDeg Sus2    = [Note Nat   I2, Note Nat   I5]
+shToDeg Sus4    = [Note Nat   I4, Note Nat   I5]
+shToDeg SevSus4 = shToDeg Sus4    ++ [Note Fl I7]
 shToDeg None    = []
 -- additional Billboard shorthands
-shToDeg Min11    = shToDeg Min9   ++ [Note Nothing   I11]
-shToDeg Eleven   = shToDeg Nin    ++ [Note Nothing   I11]
-shToDeg Min13    = shToDeg Min11  ++ [Note Nothing   I13]
-shToDeg Maj13    = shToDeg Maj9   ++ [Note Nothing   I13]
-shToDeg Thirteen = shToDeg Eleven ++ [Note Nothing   I13]
+shToDeg Min11    = shToDeg Min9   ++ [Note Nat   I11]
+shToDeg Eleven   = shToDeg Nin    ++ [Note Nat   I11]
+shToDeg Min13    = shToDeg Min11  ++ [Note Nat   I13]
+shToDeg Maj13    = shToDeg Maj9   ++ [Note Nat   I13]
+shToDeg Thirteen = shToDeg Eleven ++ [Note Nat   I13]
      
       
 -- | Converts a 'Shorthand' to a 'Mode'
@@ -585,39 +587,40 @@ toMajMinChord c = c {chordShorthand = majMinSh, chordAdditions = []}
 -- 'ScaleDegree' based 'Chord') for an absolute 'ChordLabel' using 
 -- 'toScaleDegree'.
 toChordDegree :: Key -> ChordLabel -> ChordDegree
-toChordDegree k (Chord r sh degs loc d) = 
-                 Chord (toScaleDegree k r) sh degs loc d    
+toChordDegree k (Chord r sh a b) = Chord (toScaleDegree k r) sh a b
+toChordDegree _ c = 
+  error("HarmTrace.Base.MusicRep: cannot create scale degree for " ++ show c)
     
 -- | Transformes a absolute 'Root' 'Note' into a relative 'ScaleDegree', given
 -- a 'Key'.
 toScaleDegree :: Key -> Root -> ScaleDegree
-toScaleDegree _ n@(Note _ N) = 
-  error ("HarmTrace.Base.MusicRep.toScaleDegree: cannot transpose " ++ show n)
-toScaleDegree (Key kr _) cr  = -- Note Nothing I
+-- toScaleDegree _ n@(Note _ N) = 
+  -- error ("HarmTrace.Base.MusicRep.toScaleDegree: cannot transpose " ++ show n)
+toScaleDegree (Key kr _) cr  = -- Note Nat I
   scaleDegrees!!(((toSemitone cr) - (toSemitone kr)) `mod` 12)
 {-
 -- | Simplify note roots to a single enharmonic representation.
 -- For instance, D♭ becomes C♯, E♯ becomes F, and G𝄫 becomes F.
 simplifyRoot :: Root -> Root
 -- Simplify double sharps
-simplifyRoot (Note (Just SS) x) | x == E    = Note (Just Sh) F
-                                | x == B    = Note (Just Sh) C
-                                | otherwise = Note Nothing   (succ x)
+simplifyRoot (Note SS x) | x == E    = Note Sh F
+                                | x == B    = Note Sh C
+                                | otherwise = Note Nat   (succ x)
 -- Simplify double flats
-simplifyRoot (Note (Just FF) x) | x == F    = Note (Just Fl) E
-                                | x == C    = Note (Just Fl) B
-                                | otherwise = Note Nothing   (pred x)
+simplifyRoot (Note FF x) | x == F    = Note Fl E
+                                | x == C    = Note Fl B
+                                | otherwise = Note Nat   (pred x)
 -- Simplify sharps
-simplifyRoot (Note (Just Sh) D) = Note (Just Fl) E
-simplifyRoot (Note (Just Sh) E) = Note Nothing   F
-simplifyRoot (Note (Just Sh) G) = Note (Just Fl) A
-simplifyRoot (Note (Just Sh) A) = Note (Just Fl) B
-simplifyRoot (Note (Just Sh) B) = Note Nothing   C
+simplifyRoot (Note Sh D) = Note Fl E
+simplifyRoot (Note Sh E) = Note Nat   F
+simplifyRoot (Note Sh G) = Note Fl A
+simplifyRoot (Note Sh A) = Note Fl B
+simplifyRoot (Note Sh B) = Note Nat   C
 -- Simplify flats
-simplifyRoot (Note (Just Fl) C) = Note Nothing   B
-simplifyRoot (Note (Just Fl) D) = Note (Just Sh) C
-simplifyRoot (Note (Just Fl) F) = Note Nothing   E
-simplifyRoot (Note (Just Fl) G) = Note (Just Sh) F
+simplifyRoot (Note Fl C) = Note Nat   B
+simplifyRoot (Note Fl D) = Note Sh C
+simplifyRoot (Note Fl F) = Note Nat   E
+simplifyRoot (Note Fl G) = Note Sh F
 -- Everything else must be simple already
 simplifyRoot x                  = x
   -}
@@ -641,7 +644,7 @@ toSemitone :: (Diatonic a) => Note a -> Int
 toSemitone (Note m p) 
   | ix <= 6   = noNegatives (([0,2,4,5,7,9,11] !! ix) + modToSemi m) `mod` 12
   | otherwise = error ("HarmTrace.Base.MusicRep.toSemitone: no semitone for "
-                        ++ show p ++ maybe "" show m )
+                        ++ show p ++ show m )
       where ix = fromEnum p
             noNegatives s | s < 0     = 12 + s
                           | otherwise = s
@@ -649,10 +652,10 @@ toSemitone (Note m p)
 -- | Similar to 'toScaleDegree', an interval is transformed into an absolute
 -- 'Root' pitch, given another 'Root' that serves as a basis. 
 --  
--- >>> intValToPitch (Note (Just Sh) G) (Note (Just Fl) I13)
+-- >>> intValToPitch (Note Sh G) (Note Fl I13)
 -- >>> E
 --  
--- >>> intValToPitch (Note Nothing C) (Note (Just Sh) I11)
+-- >>> intValToPitch (Note Nat C) (Note Sh I11)
 -- >>> F#
 --
 intValToPitch :: Root -> Note Interval -> Root
@@ -664,7 +667,7 @@ intValToPitchClss r i = (toSemitone r + toIntervalClss i) `mod` 12
                           
 -- | Similar to 'toPitchClss', this function calculates an enharmonic 
 -- interval class for each 'Note Interval' in the range of [0 .. 23]
--- ( == ['Note Nothing I1' .. 'Note (Just SS) I13']
+-- ( == ['Note Nat I1' .. 'Note SS I13']
 toIntervalClss :: Note Interval -> Int
 toIntervalClss n@(Note m i) =
   --         1 2 3 4 5 6 7  8  9  10 11 12 13
@@ -683,44 +686,44 @@ toRoot i
                                "invalid semitone: " ++ show i)
     
 -- | Transforms type-level Accidentals to semitones (Int values)
-modToSemi :: Maybe Accidental -> Int
-modToSemi  Nothing  =  0
-modToSemi (Just Sh) =  1
-modToSemi (Just Fl) = -1
-modToSemi (Just SS) =  2
-modToSemi (Just FF) = -2
+modToSemi :: Accidental -> Int
+modToSemi Nat =  0
+modToSemi Sh  =  1
+modToSemi Fl  = -1
+modToSemi SS  =  2
+modToSemi FF  = -2
 
 -- | A list of 12 'ScaleDegree's, ignoring pitch spelling.
 scaleDegrees ::[ ScaleDegree ]  
-scaleDegrees = [ Note  Nothing   I
-               , Note  (Just Sh) I
-               , Note  Nothing   II
-               , Note  (Just Fl) III
-               , Note  Nothing   III
-               , Note  Nothing   IV
-               , Note  (Just Sh) IV
-               , Note  Nothing   V
-               , Note  (Just Fl) VI
-               , Note  Nothing   VI
-               , Note  (Just Fl) VII
-               , Note  Nothing   VII
+scaleDegrees = [ Note  Nat I
+               , Note  Sh  I
+               , Note  Nat II
+               , Note  Fl  III
+               , Note  Nat III
+               , Note  Nat IV
+               , Note  Sh  IV
+               , Note  Nat V
+               , Note  Fl  VI
+               , Note  Nat VI
+               , Note  Fl  VII
+               , Note  Nat VII
                ]
                
 
 -- | A list of 12 'Note DiatonicNatural's, ignoring pitch spelling.
 roots :: [ Root ]  
-roots =  [ Note Nothing   C
-         , Note (Just Sh) C
-         , Note Nothing   D
-         , Note (Just Fl) E
-         , Note Nothing   E
-         , Note Nothing   F
-         , Note (Just Sh) F
-         , Note Nothing   G
-         , Note (Just Fl) A
-         , Note Nothing   A
-         , Note (Just Fl) B
-         , Note Nothing   B
+roots =  [ Note Nat C
+         , Note Sh  C
+         , Note Nat D
+         , Note Fl  E
+         , Note Nat E
+         , Note Nat F
+         , Note Sh  F
+         , Note Nat G
+         , Note Fl  A
+         , Note Nat A
+         , Note Fl  B
+         , Note Nat B
          ]
 
 --------------------------------------------------------------------------------

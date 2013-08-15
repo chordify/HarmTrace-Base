@@ -27,7 +27,7 @@ module HarmTrace.Base.MusicTime (
   , ChordCand (..)
   
   -- ** Representing musical time
-  , TimedData (..)
+  , Timed (..)
   , Beat (..)
   , BarTime (..)
   , BarTimeTrackData 
@@ -52,9 +52,11 @@ module HarmTrace.Base.MusicTime (
   , offset
   , duration
   , setData
+  
   -- ** Type conversion and other utilities
+  -- , fromDurations
   , getBeatTrack
-  , concatTimedData
+  , concatTimed
   , splitTimed
   , nextBeat
   , prevBeat 
@@ -68,10 +70,10 @@ module HarmTrace.Base.MusicTime (
 
 ) where
              
-import HarmTrace.Base.MusicRep hiding ( duration )
+import HarmTrace.Base.MusicRep
 import Data.List                      ( intercalate )
 
--- | When reducing and expaninding 'TimedData' types there might be rounding
+-- | When reducing and expanding 'Timed' types there might be rounding
 -- errors in the floating point time stamps. The 'roundingError' parameter
 -- sets the acceptable rounding error that is used in the comparison of 
 -- time stamps (e.g. see 'timeComp')
@@ -88,14 +90,14 @@ type NumData = Double
 
 -- | A chord annotation consists of a
 -- list with chords and segment boundaries.
-type ChordAnnotation = [TimedData ProbChord]
+type ChordAnnotation = [Timed ProbChord]
 
 -- | A datatype that wraps around an (musical) datatype, adding information 
 -- about the musical time to this datatype. Musical time is stored as 
 -- a list of 'BarTime' time stamps that can optionally be augmented
 -- with information about the 'Beat' position of the particular time stamp 
 -- inside the bar.
-data TimedData a = TimedData { -- | Returns the contained datatype 
+data Timed a = Timed { -- | Returns the contained datatype 
                                getData :: a 
                                -- | Returns the list of TimeStamps
                              , getTimeStamps :: [BarTime]
@@ -103,7 +105,7 @@ data TimedData a = TimedData { -- | Returns the contained datatype
 
 -- | Clustering 'ProbChord's in a collection of chords that share a key
 data ProbChordSeg = Segment { segKey    :: Key 
-                            , segChords :: [TimedData [ProbChord]] 
+                            , segChords :: [Timed [ProbChord]] 
                             } deriving (Show, Eq)
                             
   
@@ -192,7 +194,7 @@ data BarTime = BarTime NumData Beat
 
 type BarTimeTrackData = [BarTime]
 
-type BeatChroma = TimedData [ChordinoLine] -- one list per beat
+type BeatChroma = Timed [ChordinoLine] -- one list per beat
 
 -- we compare based on the timestamp only
 instance Ord BarTime where
@@ -201,20 +203,28 @@ instance Ord BarTime where
 --------------------------------------------------------------------------------
 -- Some type conversion utilities
 --------------------------------------------------------------------------------
+{-
+fromDurations :: NumData -> [(a,NumData)] -> [Timed a]
+fromDurations z td = foldl' step [] td where
 
--- | alternative 'TimedData' constructor
-timedData :: a -> NumData -> NumData -> TimedData a
-timedData d x y = TimedData d [Time x, Time y]
+  step :: [Timed a] -> (a, NumData) ->  [Timed a]
+  step []                         (a, x) = [TimedData x [Time z, Time x]]
+  step [Timed _ [Time _, Time o]] (a, x) = [TimedData x [Time o, Time x]]
+-}
 
--- | alternative 'TimedData' constructor
-timedDataBT :: a -> BarTime -> BarTime -> TimedData a
-timedDataBT d x y = TimedData d [x, y]
+-- | alternative 'Timed' constructor
+timedData :: a -> NumData -> NumData -> Timed a
+timedData d x y = Timed d [Time x, Time y]
 
--- | concatenates the 'BarTime' timestamps of two 'TimedData's and 
--- creates a new 'TimedData' that stores the first argument. 
-concatTimedData :: a -> TimedData a -> TimedData a -> TimedData a
-concatTimedData dat (TimedData _ ta) (TimedData _ tb) = 
-  TimedData dat (mergeBeatTime ta tb) where
+-- | alternative 'Timed' constructor
+timedDataBT :: a -> BarTime -> BarTime -> Timed a
+timedDataBT d x y = Timed d [x, y]
+
+-- | concatenates the 'BarTime' timestamps of two 'Timed's and 
+-- creates a new 'Timed' that stores the first argument. 
+concatTimed :: a -> Timed a -> Timed a -> Timed a
+concatTimed dat (Timed _ ta) (Timed _ tb) = 
+  Timed dat (mergeBeatTime ta tb) where
 
   mergeBeatTime :: [BarTime] -> [BarTime] -> [BarTime]
   mergeBeatTime [] b = b
@@ -226,21 +236,21 @@ concatTimedData dat (TimedData _ ta) (TimedData _ tb) =
     EQ -> a ++ tail b -- do not include the same timestamp twice
     LT -> a ++ b  
 
--- | Splits a 'TimedData' in two 'TimedData's at the specified position. If
+-- | Splits a 'Timed' in two 'Timed's at the specified position. If
 -- the position is out of range, an error is thrown.
 --
--- >>> splitTimed (TimedData "x" [Time 2, Time 5]) 4
--- >>> ( TimedData {getData = "x", getTimeStamps = [(2.0),(4.0)]}
--- >>> , TimedData {getData = "x", getTimeStamps = [(4.0),(5.0)]} )
-splitTimed :: Show a => TimedData a -> NumData -> (TimedData a, TimedData a)
-splitTimed td@(TimedData d t) s 
+-- >>> splitTimed (Timed "x" [Time 2, Time 5]) 4
+-- >>> ( Timed {getData = "x", getTimeStamps = [(2.0),(4.0)]}
+-- >>> , Timed {getData = "x", getTimeStamps = [(4.0),(5.0)]} )
+splitTimed :: Show a => Timed a -> NumData -> (Timed a, Timed a)
+splitTimed td@(Timed d t) s 
   | s > onset td = case span ((< s) . timeStamp) t of
                     (_, []) -> e
-                    (x, y ) -> ( TimedData d (x ++ [Time s])
-                               , TimedData d (Time s : y   ))
+                    (x, y ) -> ( Timed d (x ++ [Time s])
+                               , Timed d (Time s : y   ))
   | otherwise    = e
       where e = error ( "HarmTrace.Base.MusicTime.splitTimed: Timestamp " 
-                      ++ show s ++ " not in range of TimedData: " ++ show td) 
+                      ++ show s ++ " not in range of Timed: " ++ show td) 
   
     
 -- | compares to 'NumData' timestamps taking a rounding error 'roundingError'
@@ -255,18 +265,18 @@ timeComp a b
 getBeatTrack :: BarTimeTrackData -> BeatTrackerData
 getBeatTrack = map timeStamp
 
--- | wraps a datatype in 'TimedData'
-setData :: TimedData a -> b -> TimedData b
+-- | wraps a datatype in 'Timed'
+setData :: Timed a -> b -> Timed b
 setData td d = td {getData = d}
 
 -- | Returns the start time stamp
-getBarTime :: TimedData a -> BarTime
+getBarTime :: Timed a -> BarTime
 getBarTime td = case getTimeStamps td of
   []    -> error "HarmTrace.Base.MusicTime.getBarTime: no timestamps are stored"
   (h:_) -> h
 
 -- | Returns the start 'Beat'
-getBeat :: TimedData a -> Beat
+getBeat :: Timed a -> Beat
 getBeat = beat . getBarTime 
 
 -- | Returns the 'NumData' timestamp, given a 'BarTime'
@@ -280,17 +290,17 @@ beat (BarTime _t bt) = bt
 beat (Time    _t   ) = NoBeat
 
 -- | Returns the onset time stamp
-onset :: TimedData a -> NumData
+onset :: Timed a -> NumData
 onset = timeStamp . getBarTime 
 
 -- | Returns the offset time stamp
-offset :: TimedData a -> NumData
+offset :: Timed a -> NumData
 offset td = case getTimeStamps td of
   []  -> error "HarmTrace.Base.MusicTime.offset: no timestamps are stored"
   l   -> timeStamp . last $ l
 
--- | Returns the duration of 'TimedData'
-duration :: TimedData a -> NumData
+-- | Returns the duration of 'Timed'
+duration :: Timed a -> NumData
 duration td = offset td - onset td
 
 -- TODO: replace by ad-hoc enum instance?
@@ -305,29 +315,29 @@ nextBeat b    = succ b
 prevBeat One  = Four
 prevBeat b    = pred b
 
--- | Updates transforms ChordLabel wrapped in a 'ProbChord' and 'TimedData'
-updateTPChord :: (ChordLabel -> ChordLabel) -> TimedData ProbChord 
-              -> TimedData ProbChord
+-- | Updates transforms ChordLabel wrapped in a 'ProbChord' and 'Timed'
+updateTPChord :: (ChordLabel -> ChordLabel) -> Timed ProbChord 
+              -> Timed ProbChord
 updateTPChord f = fmap (update f) where
   update g (ProbChord c p) = (ProbChord (g c) p)
 
 -- | drops the probabilties paired with chordlabels (in a list of 'ProbChord's)
 -- and returns a list of 'ChordLabel's
-dropProb :: [TimedData ProbChord] -> [TimedData ChordLabel]
+dropProb :: [Timed ProbChord] -> [Timed ChordLabel]
 dropProb = map (fmap chordLab)
 
 -- | drops the time (with or without 'Beat') information of a list 
 -- 'Timed' data structure 
-dropTimed :: [TimedData a] -> [a]
+dropTimed :: [Timed a] -> [a]
 dropTimed = map getData
 
--- | Pretty prints a list of 'TimedData's, one per line
-prettyPrint :: Show a => [TimedData a] -> String
+-- | Pretty prints a list of 'Timed's, one per line
+prettyPrint :: Show a => [Timed a] -> String
 prettyPrint = intercalate "\n" . map pprint where
 
--- | Pretty prints a single 'TimedData'
-pprint :: Show a => TimedData a -> String
-pprint (TimedData d [ ]) = "not set - not set: " ++ show d
-pprint (TimedData d [x]) = show x ++" - not set: " ++ show d
-pprint (TimedData d ts ) = show (head ts) ++ " - " ++ show (last ts) 
+-- | Pretty prints a single 'Timed'
+pprint :: Show a => Timed a -> String
+pprint (Timed d [ ]) = "not set - not set: " ++ show d
+pprint (Timed d [x]) = show x ++" - not set: " ++ show d
+pprint (Timed d ts ) = show (head ts) ++ " - " ++ show (last ts) 
                                           ++ ": "  ++ show d

@@ -16,11 +16,10 @@
 --------------------------------------------------------------------------------
 
 module HarmTrace.Base.ChordTokenizer ( -- * Top level parser
-                                       parseChordSeq 
+                                       -- parseChordSeq 
                                        -- * Parsing (elements of) chords
-                                     , pChord
+                                       pChord
                                      , pShorthand
-                                     , pSongAbs
                                      , pRoot
                                      , pAdditions
                                      , pAddition
@@ -36,6 +35,7 @@ import HarmTrace.Base.MusicRep
 
 -- | Top level parser that parsers a string into a 'PieceLabel' and a posibly
 -- empty list of errors
+{-
 parseChordSeq :: String -> (PieceLabel, [Error LineColPos])
 parseChordSeq = parseDataWithErrors pSongAbs
 
@@ -58,50 +58,61 @@ pSongAbs = PieceLabel <$> pKey <* pLineEnd
 
 -- parses chords with a duration (separated by a ';')
 pChordDur :: Parser ChordLabel
-pChordDur = setDur <$> pChord <*> (pSym ';' *> pNaturalRaw) <?> "Chord;Int"
-  where setDur c d = c {duration = d}
+pChordDur = (,) <$> pChord <*> (pSym ';' *> pNaturalRaw) <?> "Chord;Int"
+-}
 
 -- | Parses a 'ChordLabel' in Harte et al. syntax including possible additions, 
 -- and removal of chord additions. If a chord has no 'Shorthand', the 'Degree' 
 -- list (if any) is analysed and depending on the 'Triad' (if any) a 
 -- 'Maj', 'Min','Aug', or 'Dim' 'Shorthand' is stored. By default all the 
 -- duration stored in every 'Chord' is 1 (where the unit is application 
--- dependend, often these are beats, but they can also be eightnotes)
+-- depended, often these are beats, but they can also be eighth notes)
 pChord :: Parser ChordLabel 
 {-# INLINE pChord #-}
 pChord =     pChordLabel 
-         <|> (noneLabel    <$ (pString "N"  <|> pString "&pause"))
-         <|> (unknownLabel <$ (pSym '*'     <|> pSym 'X'))
+         <|> (NoChord    <$ (pString "N"  <|> pString "&pause"))
+         <|> (UndefChord <$ (pSym '*'     <|> pSym 'X'))
          <?> "Chord"
                     
 -- Parses a chord label
 -- TODO add support for inversion
 pChordLabel :: Parser ChordLabel
 {-# INLINE pChordLabel #-}
-pChordLabel = toChord <$> pRoot <* (pSym ':' `opt` ':') <*> pMaybe pShorthand
-                      -- we ignore optional inversions for now
-                      <*> ((pAdditions `opt` []) <* pInversion)
+pChordLabel = toChord <$> pRoot <* (pSym ':' `opt` ':') 
+                      <*> pMaybe pShorthand
+                      <*> (pAdditions `opt` []) 
+                      <*> pInversion where
   
-  where toChord :: Root -> Maybe Shorthand -> [Addition] -> ChordLabel
-        -- if there are no degrees and no shorthand, following Harte it 
-        -- should be labelled a Maj chord
-        toChord r Nothing  [] = Chord r Maj [] 0 1
-        toChord r Nothing  d  = case analyseDegTriad (addToIntValList d) of
-                                  MajTriad -> Chord r Maj (remTriadDeg d) 0 1
-                                  MinTriad -> Chord r Min (remTriadDeg d) 0 1
-                                  AugTriad -> Chord r Aug (remTriadDeg d) 0 1
-                                  DimTriad -> Chord r Dim (remTriadDeg d) 0 1
-                                  NoTriad  -> Chord r None d 0 1
-        toChord r (Just s) d  = Chord r s d 0 1
-        
-        -- removes the third and the fifth from a Addtion list
-        remTriadDeg :: [Addition] -> [Addition]
-        remTriadDeg = filter (\(Add (Note _ i)) -> i /= I3 || i /= I5)
+  toChord :: Root -> Maybe Shorthand -> [Addition] -> Maybe (Note Interval)
+          -> ChordLabel
+  -- if there are no degrees and no shorthand, following Harte it 
+  -- should be labelled a Maj chord
+  toChord r Nothing [] b = Chord r Maj      []              (inversion b)
+  toChord r Nothing  a b = Chord r (toSh a) (remTriadDeg a) (inversion b)
+  toChord r (Just s) a b = Chord r s        a               (inversion b) 
+  
+  -- prepares an inversion, if any
+  inversion :: Maybe (Note Interval) -> (Note Interval)
+  inversion = maybe (Note Nat I1) id
+  
+  -- removes the third and the fifth from an interval list
+  remTriadDeg :: [Addition] -> [Addition]
+  remTriadDeg = filter (\(Add (Note _ i)) -> i /= I3 || i /= I5)
+
+  -- Calculates a shorthand if none has been given, but we have a list of 
+  -- intervals
+  toSh :: [Addition] -> Shorthand
+  toSh d = case analyseDegTriad (addToIntValList d) of
+             MajTriad -> Maj 
+             MinTriad -> Min 
+             AugTriad -> Aug 
+             DimTriad -> Dim 
+             NoTriad  -> None
+
 
 -- Parses an inversion, but inversionsion are ignored for now.
 pInversion :: Parser (Maybe (Note Interval))
-pInversion = (Just <$> (pSym '/' *> (Note <$> pMaybe pAccidental <*> pInterval))
-                   <?> "/Inversion") `opt` Nothing 
+pInversion = pMaybe (pSym '/' *> pIntNote) <?> "/Inversion"
              
 -- | parses a musical key description, e.g. @C:maj@, or @D:min@
 pKey :: Parser Key        
@@ -154,17 +165,22 @@ pAdditions = pPacked (pSym '(') (pSym ')') ( pListSep (pSym ',') pAddition )
 -- | Parses the a 'Chord' 'Addition' (or the removal of a chord addition, 
 -- prefixed by  a @*@)
 pAddition :: Parser Addition
-pAddition = (Add   <$>             (Note <$> pMaybe pAccidental <*> pInterval))
-        <|> (NoAdd <$> (pSym '*'*> (Note <$> pMaybe pAccidental <*> pInterval)))
+pAddition = (Add   <$>             pIntNote)
+        <|> (NoAdd <$> (pSym '*'*> pIntNote))
         <?> "Addition"
 
+pIntNote :: Parser (Note Interval)
+pIntNote = Note <$> pAccidental <*> pInterval
+        
 -- | Parses in 'Accidental'       
 pAccidental :: Parser Accidental
 pAccidental =    Sh <$ pSym    's'
              <|> Sh <$ pSym    '#'
              <|> Fl <$ pSym    'b'
              <|> SS <$ pString "ss"
-             <|> FF <$ pString "bb" <?> "Accidental"
+             <|> SS <$ pString "##"
+             <|> FF <$ pString "bb"
+             <|> pure Nat <?> "Accidental"
 
 -- | Parses an 'Interval'
 pInterval :: Parser Interval
@@ -173,24 +189,24 @@ pInterval =  ((!!) [minBound..] ) . pred <$> pNaturalRaw <?> "Interval"
 -- | Parses a 'Root' 'Note', e.g. @A@, @Bb@, or @F#@.
 pRoot :: Parser Root
 {-# INLINE pRoot #-}
-pRoot =     Note Nothing   A  <$ pSym 'A'
-        <|> Note Nothing   B  <$ pSym 'B'
-        <|> Note Nothing   C  <$ pSym 'C'
-        <|> Note Nothing   D  <$ pSym 'D'
-        <|> Note Nothing   E  <$ pSym 'E'
-        <|> Note Nothing   F  <$ pSym 'F'
-        <|> Note Nothing   G  <$ pSym 'G'
-        <|> Note (Just Fl) A <$ pString "Ab"
-        <|> Note (Just Fl) B <$ pString "Bb"
-        <|> Note (Just Fl) C <$ pString "Cb"
-        <|> Note (Just Fl) D <$ pString "Db"
-        <|> Note (Just Fl) E <$ pString "Eb"
-        <|> Note (Just Fl) F <$ pString "Fb"
-        <|> Note (Just Fl) G <$ pString "Gb"
-        <|> Note (Just Sh) A <$ pString "A#"
-        <|> Note (Just Sh) B <$ pString "B#"
-        <|> Note (Just Sh) C <$ pString "C#"
-        <|> Note (Just Sh) D <$ pString "D#"
-        <|> Note (Just Sh) E <$ pString "E#"
-        <|> Note (Just Sh) F <$ pString "F#"
-        <|> Note (Just Sh) G <$ pString "G#" <?> "Chord root"
+pRoot =     Note Nat   A  <$ pSym 'A'
+        <|> Note Nat   B  <$ pSym 'B'
+        <|> Note Nat   C  <$ pSym 'C'
+        <|> Note Nat   D  <$ pSym 'D'
+        <|> Note Nat   E  <$ pSym 'E'
+        <|> Note Nat   F  <$ pSym 'F'
+        <|> Note Nat   G  <$ pSym 'G'
+        <|> Note Fl A <$ pString "Ab"
+        <|> Note Fl B <$ pString "Bb"
+        <|> Note Fl C <$ pString "Cb"
+        <|> Note Fl D <$ pString "Db"
+        <|> Note Fl E <$ pString "Eb"
+        <|> Note Fl F <$ pString "Fb"
+        <|> Note Fl G <$ pString "Gb"
+        <|> Note Fl A <$ pString "A#"
+        <|> Note Fl B <$ pString "B#"
+        <|> Note Fl C <$ pString "C#"
+        <|> Note Fl D <$ pString "D#"
+        <|> Note Fl E <$ pString "E#"
+        <|> Note Fl F <$ pString "F#"
+        <|> Note Fl G <$ pString "G#" <?> "Chord root"

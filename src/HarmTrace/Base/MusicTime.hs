@@ -44,8 +44,8 @@ module HarmTrace.Base.MusicTime (
 
   -- * Functions
   -- ** Data access
-  , timedData
-  , timedDataBT
+  , timed
+  , timedBT
   , getBarTime 
   , getBeat 
   , onset
@@ -213,12 +213,12 @@ fromDurations z td = foldl' step [] td where
 -}
 
 -- | alternative 'Timed' constructor
-timedData :: a -> NumData -> NumData -> Timed a
-timedData d x y = Timed d [Time x, Time y]
+timed :: a -> NumData -> NumData -> Timed a
+timed d x y = Timed d [Time x, Time y]
 
 -- | alternative 'Timed' constructor
-timedDataBT :: a -> BarTime -> BarTime -> Timed a
-timedDataBT d x y = Timed d [x, y]
+timedBT :: a -> BarTime -> BarTime -> Timed a
+timedBT d x y = Timed d [x, y]
 
 -- | concatenates the 'BarTime' timestamps of two 'Timed's and 
 -- creates a new 'Timed' that stores the first argument. 

@@ -54,7 +54,7 @@ module HarmTrace.Base.MusicRep (
   , toTriad
   , analyseDegTriad
   , toIntValList
-  , addToIntValList
+  , addToIntSet
   , toMode
   , toMajMin
   , toMajMinChord
@@ -75,7 +75,7 @@ import Data.Maybe            ( fromJust )
 import Data.List             ( elemIndex, intercalate, (\\), partition )
 import Data.Binary           ( Binary )
 import Data.IntSet           ( IntSet, fromList, union, insert, singleton
-                             , empty, toAscList )
+                             , empty, toAscList, member )
 import qualified Data.IntSet as S ( (\\), map )
 import GHC.Generics          ( Generic )
  
@@ -316,11 +316,11 @@ isAddition (NoAdd _) = False
 toClassType :: Chord a -> ClassType
 toClassType (Chord  _r  sh []   _b) = shToClassType sh -- no additions
 -- combine the degrees and analyse them. N.B., also NoAdd degrees are resolved
-toClassType c = undefined --analyseDegClassType . toIntValList $ c
+toClassType c = analyseDegClassType . toIntValList $ c
 
 -- | Analyses a degree list and returns 'MajTriad', 'MinTriad' or 'NoTriad' if
 -- the degrees make a chord a major, minor, or no triad, respectively.
-analyseDegClassType :: [Interval] -> ClassType
+analyseDegClassType :: IntSet -> ClassType
 analyseDegClassType degs = 
     case (analyseThird degs, analyseFifth degs, analyseSevth degs) of
        -- Triads
@@ -383,13 +383,13 @@ data Sevth = DimSev   | MinSev    | MajSev   | NoSev   deriving (Eq, Show)
 toTriad :: Chord a -> Triad
 toTriad (Chord  _r  sh [] _b) = shToTriad sh -- there are no additions
 -- combine the degrees and analyse them. N.B., also NoAdd degrees are resolved
-toTriad c = undefined -- analyseDegTriad . toIntValList $ c
+toTriad c = analyseDegTriad . toIntValList $ c
 
 -- | Analyses a degree list and returns 'MajTriad', 'MinTriad' or 'NoTriad' if
 -- the degrees make a chord a major, minor, or no triad, respectively.
-analyseDegTriad :: [Interval] -> Triad
-analyseDegTriad degs =  
-    case (analyseThird degs, analyseFifth degs) of
+analyseDegTriad :: IntSet -> Triad
+analyseDegTriad is =  
+    case (analyseThird is, analyseFifth is) of
        (MajThird, PerfFifth) -> MajTriad
        (MajThird, AugFifth ) -> AugTriad
        (MajThird, DimFifth ) -> NoTriad
@@ -400,36 +400,48 @@ analyseDegTriad degs =
        (_      ,  NoFifth  ) -> NoTriad
       
 -- analyses the third in a degree list
-analyseThird :: [Interval] -> Third
-analyseThird d 
-  | (Note  Nat I3) `elem` d = MajThird
-  | (Note  Fl  I3) `elem` d = MinThird
-  | (Note  Fl  I4) `elem` d = MajThird
-  | (Note  Sh  I2) `elem` d = MinThird
-  | otherwise                    = NoThird
+analyseThird :: IntSet -> Third
+analyseThird is
+  | member 4 is = MajThird
+  | member 3 is = MinThird
+  | otherwise   = NoThird
+  -- | (Note  Nat I3) `elem` d = MajThird
+  -- | (Note  Fl  I3) `elem` d = MinThird
+  -- | (Note  Fl  I4) `elem` d = MajThird
+  -- | (Note  Sh  I2) `elem` d = MinThird
+  -- | otherwise               = NoThird
       
 -- analyses the fifth in a degree list 
-analyseFifth :: [Interval] -> Fifth
-analyseFifth d  
-  | (Note Nat  I5) `elem` d = PerfFifth
-  | (Note Fl I5) `elem` d = DimFifth
-  | (Note Sh I5) `elem` d = AugFifth
-  | (Note Sh I4) `elem` d = DimFifth
-  | (Note Fl I6) `elem` d = AugFifth
-  | otherwise                    = NoFifth
+analyseFifth :: IntSet -> Fifth
+analyseFifth is 
+  | member 7 is = PerfFifth
+  | member 6 is = DimFifth
+  | member 8 is = AugFifth
+  | otherwise   = NoFifth
+  -- | (Note Nat  I5) `elem` d = PerfFifth
+  -- | (Note Fl I5) `elem` d = DimFifth
+  -- | (Note Sh I5) `elem` d = AugFifth
+  -- | (Note Sh I4) `elem` d = DimFifth
+  -- | (Note Fl I6) `elem` d = AugFifth
+  -- | otherwise                    = NoFifth
 
 -- analyses the fifth in a degree list 
-analyseSevth :: [Interval] -> Sevth
-analyseSevth d  
-  | (Note Nat I7) `elem` d = MajSev
-  | (Note Fl I7) `elem` d = MinSev
-  | (Note FF I7) `elem` d = DimSev
-  | (Note Nat I6) `elem` d = DimSev
-  | (Note Sh I6) `elem` d = MinSev
-  | (Note SS I6) `elem` d = MajSev
-  | (Note Fl I8) `elem` d = MajSev
-  | (Note FF I8) `elem` d = MinSev
-  | otherwise                    = NoSev
+analyseSevth :: IntSet -> Sevth
+analyseSevth is
+  | member 10 is = MinSev
+  | member 11 is = MajSev
+  | member 9  is = DimSev
+  | otherwise    = NoSev
+
+  -- | (Note Nat I7) `elem` d = MajSev
+  -- | (Note Fl I7) `elem` d = MinSev
+  -- | (Note FF I7) `elem` d = DimSev
+  -- | (Note Nat I6) `elem` d = DimSev
+  -- | (Note Sh I6) `elem` d = MinSev
+  -- | (Note SS I6) `elem` d = MajSev
+  -- | (Note Fl I8) `elem` d = MajSev
+  -- | (Note FF I8) `elem` d = MinSev
+  -- | otherwise                    = NoSev
  
  
 -- | Converts a 'Shorthand' to a 'Triad' 
@@ -505,18 +517,6 @@ addToIntSet add = toSet adds S.\\ toSet remv
         getInt (NoAdd i) = i
         getInt (Add   i) = i
         
-        
-addToIntValList :: [Addition] -> [Interval]  
-addToIntValList add =  map toIntVal (adds \\ (toAdds remv))
-  
-  where (adds, remv) = partition isAddition add
-
-        toAdds :: [Addition] -> [Addition]
-        toAdds = map (\(NoAdd x) -> (Add x))
-        
-        toIntVal :: Addition -> Interval
-        toIntVal (Add i) = i
-        toIntVal _ = error "Cannot transform NoAdd to Interval" -- cannot happen
   
 -- | Expands a 'Shorthand' to its list of degrees
 shToIntSet :: Shorthand -> IntSet 

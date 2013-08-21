@@ -102,7 +102,7 @@ pChordLabel = toChord <$> pRoot <* (pSym ':' `opt` ':')
   -- Calculates a shorthand if none has been given, but we have a list of 
   -- intervals
   toSh :: [Addition] -> Shorthand
-  toSh d = case analyseDegTriad (addToIntValList d) of
+  toSh d = case analyseDegTriad (addToIntSet d) of
              MajTriad -> Maj 
              MinTriad -> Min 
              AugTriad -> Aug 

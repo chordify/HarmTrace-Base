@@ -38,7 +38,8 @@ module HarmTrace.Base.MusicRep (
   -- , Class
   , Shorthand (..)
   , Addition (..)
-  , Interval (..)
+  , IntNat (..)
+  , Interval 
   , ChordLabel
   , ChordDegree
   -- * Derived types for classification of chords
@@ -69,11 +70,13 @@ module HarmTrace.Base.MusicRep (
   , toRoot
   ) where
   
-import Data.Maybe   ( fromJust )
-import Data.List    ( elemIndex, intercalate, (\\), partition )
-import Data.Binary  ( Binary )   
-import GHC.Generics ( Generic )
-
+import Data.Maybe            ( fromJust )
+import Data.List             ( elemIndex, intercalate, (\\), partition )
+import Data.Binary           ( Binary )
+import Data.IntSet           ( empty )
+import qualified Data.IntSet as S ( )
+import GHC.Generics          ( Generic )
+ 
 --------------------------------------------------------------------------------
 -- Representing musical information at the value level
 --------------------------------------------------------------------------------
@@ -102,7 +105,7 @@ data Chord a = Chord { chordRoot        :: a
                        -- structure of a chord
                      , chordAdditions   :: [Addition]
                        -- ^ the (additional) interval structure
-                     , chordBass        :: Note Interval
+                     , chordBass        :: Interval
                        -- ^ the sounding bass note, denoting an inversion when
                        -- it is not a 'Note Nat I1'
                      } 
@@ -154,14 +157,16 @@ data DiatonicNatural =  C | D | E | F | G | A | B
   deriving (Show, Eq, Enum, Ord, Bounded, Generic)
   
 -- | Intervals for additional chord notes    
-data Addition = Add   (Note Interval)
-              | NoAdd (Note Interval) deriving (Eq, Ord, Generic)
+data Addition = Add   Interval
+              | NoAdd Interval deriving (Eq, Ord, Generic)
 
 -- | Diatonic major intervals used to denote 'Chord' 'Addition's
-data Interval = I1  | I2  | I3  | I4 | I5 | I6 | I7 | I8 | I9 | I10 
-              | I11 | I12 | I13 
+data IntNat = I1  | I2  | I3  | I4 | I5 | I6 | I7 | I8 | I9 | I10 
+            | I11 | I12 | I13 
   deriving (Eq, Enum, Ord, Bounded, Generic)     
 
+type Interval = Note IntNat
+  
 -- | A musical note is a pitch (either absolute or relative) possibly modified
 -- by an 'Accidental'
 data Note a = Note Accidental a   deriving (Eq, Ord, Generic) 
@@ -208,7 +213,7 @@ instance Show ChordLabel where
      -- n@(Note Nat X) -> show n
      -- r                  -> show r ++ ':' : show (chordShorthand c) ++ ' ' : show ( toPitchClasses  c)   
     
-showIv :: Note Interval -> String
+showIv :: Interval -> String
 showIv (Note Nat I1) = ""
 showIv i             = '/' : show i 
 
@@ -253,7 +258,7 @@ instance Show ClassType where
   show NoClass  = "N"
 
 
-instance Show (Note Interval) where
+instance Show (Note IntNat) where
   show (Note m i) = show m ++ show i
 
 instance Show (Note DiatonicNatural) where
@@ -262,7 +267,7 @@ instance Show (Note DiatonicNatural) where
 instance Show (Note DiatonicDegree) where
   show (Note m r) = show m ++ show r
   
-instance Show Interval where
+instance Show IntNat where
   show a = show . ((!!) ([1..13]::[Integer])) 
                 . fromJust $ elemIndex a [minBound..]
    
@@ -313,7 +318,7 @@ toClassType c = analyseDegClassType . toIntValList $ c
 
 -- | Analyses a degree list and returns 'MajTriad', 'MinTriad' or 'NoTriad' if
 -- the degrees make a chord a major, minor, or no triad, respectively.
-analyseDegClassType :: [Note Interval] -> ClassType
+analyseDegClassType :: [Interval] -> ClassType
 analyseDegClassType degs = 
     case (analyseThird degs, analyseFifth degs, analyseSevth degs) of
        -- Triads
@@ -380,7 +385,7 @@ toTriad c = analyseDegTriad . toIntValList $ c
 
 -- | Analyses a degree list and returns 'MajTriad', 'MinTriad' or 'NoTriad' if
 -- the degrees make a chord a major, minor, or no triad, respectively.
-analyseDegTriad :: [Note Interval] -> Triad
+analyseDegTriad :: [Interval] -> Triad
 analyseDegTriad degs =  
     case (analyseThird degs, analyseFifth degs) of
        (MajThird, PerfFifth) -> MajTriad
@@ -393,7 +398,7 @@ analyseDegTriad degs =
        (_      ,  NoFifth  ) -> NoTriad
       
 -- analyses the third in a degree list
-analyseThird :: [Note Interval] -> Third
+analyseThird :: [Interval] -> Third
 analyseThird d 
   | (Note  Nat I3) `elem` d = MajThird
   | (Note  Fl  I3) `elem` d = MinThird
@@ -402,7 +407,7 @@ analyseThird d
   | otherwise                    = NoThird
       
 -- analyses the fifth in a degree list 
-analyseFifth :: [Note Interval] -> Fifth
+analyseFifth :: [Interval] -> Fifth
 analyseFifth d  
   | (Note Nat  I5) `elem` d = PerfFifth
   | (Note Fl I5) `elem` d = DimFifth
@@ -412,7 +417,7 @@ analyseFifth d
   | otherwise                    = NoFifth
 
 -- analyses the fifth in a degree list 
-analyseSevth :: [Note Interval] -> Sevth
+analyseSevth :: [Interval] -> Sevth
 analyseSevth d  
   | (Note Nat I7) `elem` d = MajSev
   | (Note Fl I7) `elem` d = MinSev
@@ -475,13 +480,24 @@ toPitchClasses c = let r = chordRoot c
 -- >>> toIntValList (parseData pChord "D:7(b9)")
 -- [3,5,7b,9b]
 --
-toIntValList :: Chord a -> [Note Interval]
+toIntValList :: Chord a -> [Interval]
 toIntValList (Chord  _r sh [] _b) = shToDeg sh
 toIntValList (Chord  _r sh a  _b) = addToIntValList (a ++ map Add (shToDeg sh))
 toIntValList _ = error ("HarmTrace.Base.MusicRep.toIntValList: cannot create" ++
                         "interval list for N or X")
+{-
+addToIntSet :: [Addition] -> IntSet 
+addToIntSet add = 
 
-addToIntValList :: [Addition] -> [Note Interval]  
+  where (adds, remv) = partition isAddition add
+
+        toAdds :: [Addition] -> [Addition]
+        toAdds = map (\(NoAdd x) -> (Add x))
+        
+        toSet :: [Addition] -> IntSet
+        toSet 
+        -}
+addToIntValList :: [Addition] -> [Interval]  
 addToIntValList add =  map toIntVal (adds \\ (toAdds remv))
   
   where (adds, remv) = partition isAddition add
@@ -489,14 +505,12 @@ addToIntValList add =  map toIntVal (adds \\ (toAdds remv))
         toAdds :: [Addition] -> [Addition]
         toAdds = map (\(NoAdd x) -> (Add x))
         
-        toIntVal :: Addition -> Note Interval
+        toIntVal :: Addition -> Interval
         toIntVal (Add i) = i
         toIntVal _ = error "Cannot transform NoAdd to Interval" -- cannot happen
-
-
   
 -- | Expands a 'Shorthand' to its list of degrees
-shToDeg :: Shorthand -> [Note Interval]     
+shToDeg :: Shorthand -> [Interval]     
 shToDeg Maj     = [Note Nat   I3, Note Nat   I5]
 shToDeg Min     = [Note Fl I3, Note Nat   I5]
 shToDeg Dim     = [Note Fl I3, Note Fl I5]
@@ -607,17 +621,17 @@ toSemitone (Note m p)
 -- >>> intValToPitch (Note Nat C) (Note Sh I11)
 -- >>> F#
 --
-intValToPitch :: Root -> Note Interval -> Root
+intValToPitch :: Root -> Interval -> Root
 intValToPitch r = toRoot . intValToPitchClss r
  
 -- | As 'intValToPitch', but returns the 'Int' pitch class. 
-intValToPitchClss :: Root -> Note Interval -> Int
+intValToPitchClss :: Root -> Interval -> Int
 intValToPitchClss r i = (toSemitone r + toIntervalClss i) `mod` 12
                           
 -- | Similar to 'toPitchClss', this function calculates an enharmonic 
 -- interval class for each 'Note Interval' in the range of [0 .. 23]
 -- ( == ['Note Nat I1' .. 'Note SS I13']
-toIntervalClss :: Note Interval -> Int
+toIntervalClss :: Interval -> Int
 toIntervalClss n@(Note m i) =
   --         1 2 3 4 5 6 7  8  9  10 11 12 13
   let ic = ([0,2,4,5,7,9,11,12,14,16,17,19,21] !! (fromEnum i)) + modToSemi m 
@@ -675,6 +689,7 @@ roots =  [ Note Nat C
          , Note Nat B
          ]
 
+-- intervals :: []
 --------------------------------------------------------------------------------
 -- Binary instances
 --------------------------------------------------------------------------------
@@ -688,7 +703,7 @@ instance Binary Shorthand
 instance Binary DiatonicDegree
 instance Binary DiatonicNatural
 instance Binary Addition
-instance Binary Interval
+instance Binary IntNat
 instance Binary a => Binary (Note a)
 instance Binary Accidental
 instance Binary Triad

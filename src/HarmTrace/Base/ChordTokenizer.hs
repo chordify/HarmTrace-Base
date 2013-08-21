@@ -83,7 +83,7 @@ pChordLabel = toChord <$> pRoot <* (pSym ':' `opt` ':')
                       <*> (pAdditions `opt` []) 
                       <*> pInversion where
   
-  toChord :: Root -> Maybe Shorthand -> [Addition] -> Maybe (Note Interval)
+  toChord :: Root -> Maybe Shorthand -> [Addition] -> Maybe Interval
           -> ChordLabel
   -- if there are no degrees and no shorthand, following Harte it 
   -- should be labelled a Maj chord
@@ -92,7 +92,7 @@ pChordLabel = toChord <$> pRoot <* (pSym ':' `opt` ':')
   toChord r (Just s) a b = Chord r s        a               (inversion b) 
   
   -- prepares an inversion, if any
-  inversion :: Maybe (Note Interval) -> (Note Interval)
+  inversion :: Maybe Interval -> Interval
   inversion = maybe (Note Nat I1) id
   
   -- removes the third and the fifth from an interval list
@@ -110,8 +110,8 @@ pChordLabel = toChord <$> pRoot <* (pSym ':' `opt` ':')
              NoTriad  -> None
 
 
--- Parses an inversion, but inversionsion are ignored for now.
-pInversion :: Parser (Maybe (Note Interval))
+-- Parses an inversion, but inversions are ignored for now.
+pInversion :: Parser (Maybe Interval)
 pInversion = pMaybe (pSym '/' *> pIntNote) <?> "/Inversion"
              
 -- | parses a musical key description, e.g. @C:maj@, or @D:min@
@@ -169,7 +169,7 @@ pAddition = (Add   <$>             pIntNote)
         <|> (NoAdd <$> (pSym '*'*> pIntNote))
         <?> "Addition"
 
-pIntNote :: Parser (Note Interval)
+pIntNote :: Parser Interval
 pIntNote = Note <$> pAccidental <*> pInterval
         
 -- | Parses in 'Accidental'       
@@ -183,7 +183,7 @@ pAccidental =    Sh <$ pSym    's'
              <|> pure Nat <?> "Accidental"
 
 -- | Parses an 'Interval'
-pInterval :: Parser Interval
+pInterval :: Parser IntNat
 pInterval =  ((!!) [minBound..] ) . pred <$> pNaturalRaw <?> "Interval"
 
 -- | Parses a 'Root' 'Note', e.g. @A@, @Bb@, or @F#@.
@@ -199,18 +199,3 @@ pDiaNat =    A  <$ pSym 'A'
          <|> E  <$ pSym 'E'
          <|> F  <$ pSym 'F'
          <|> G  <$ pSym 'G'
-{-        <|> Note Fl A <$ pString "Ab"
-        <|> Note Fl B <$ pString "Bb"
-        <|> Note Fl C <$ pString "Cb"
-        <|> Note Fl D <$ pString "Db"
-        <|> Note Fl E <$ pString "Eb"
-        <|> Note Fl F <$ pString "Fb"
-        <|> Note Fl G <$ pString "Gb"
-        <|> Note Sh A <$ pString "A#"
-        <|> Note Sh B <$ pString "B#"
-        <|> Note Sh C <$ pString "C#"
-        <|> Note Sh D <$ pString "D#"
-        <|> Note Sh E <$ pString "E#"
-        <|> Note Sh F <$ pString "F#"
-        <|> Note Sh G <$ pString "G#" <?> "Chord root"
--}

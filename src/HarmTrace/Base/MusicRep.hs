@@ -369,7 +369,7 @@ shToClassType Thirteen = DomClass
 data Third = MajThird | MinThird             | NoThird deriving (Eq, Show)
 data Fifth = DimFifth | PerfFifth | AugFifth | NoFifth deriving (Eq, Show)
 data Sevth = DimSev   | MinSev    | MajSev   | NoSev   deriving (Eq, Show)
-      
+    
 -- | Takes a 'Chord' and determines the 'Triad'
 --
 -- >>> toTriad (Chord (Note Nat C) Min [NoAdd (Note Fl I3),Add (Note Nat I3)] 0 0)
@@ -637,8 +637,15 @@ intSetToPC is r = PCSet . S.map (transp (toPitchClass r)) $ is where
 
   
 toChord :: IntSet -> Root -> Chord Root
-toChord is r = Chord r None add (Note Nat I1)
-  where add = map (Add . toInterval) . toAscList . pc $ intSetToPC is r
+toChord is r = Chord r triad add (Note Nat I1)
+ 
+ where add   = map (Add . toInterval) $ toAscList (is \\ shToIntSet triad)
+       triad = case analyseDegTriad is of
+                 MajTriad -> Maj 
+                 MinTriad -> Min 
+                 AugTriad -> Aug 
+                 DimTriad -> Dim 
+                 NoTriad  -> None
 
 toInterval :: Int -> Interval
 toInterval i

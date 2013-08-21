@@ -37,10 +37,10 @@ instance Arbitrary Addition where
 
 instance Arbitrary a => Arbitrary (Chord a) where
   arbitrary = do r   <- arbitrary
-                 sh  <- arbitrary
+                 sh  <- elements [Maj, Min, Aug, Dim]
                  add <- listOf arbitrary
-                 b   <- arbitrary
-                 return (Chord r sh add b)
+                 -- b   <- arbitrary
+                 return (Chord r sh add (Note Nat I1))
                  
 pcProp :: Root -> Bool
 pcProp r = (toPitchClass r) == toPitchClass (toRoot (toPitchClass r))
@@ -49,7 +49,13 @@ pcSetProp :: Chord Root -> Bool
 pcSetProp c = c == toChord (toIntValList c) (chordRoot c)
 
 c :: Chord Root
-c = Chord r Maj9 [] (Note Sh I13)
+c = Chord rc Sev [] (Note Sh I1)
 
-r :: Root
-r = Note Nat D
+cs :: Chord Root
+cs = Chord rd Maj9 [] (Note Sh I13)
+
+rd :: Root
+rd = Note Nat D
+
+rc :: Root
+rc = Note Sh C

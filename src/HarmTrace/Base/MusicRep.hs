@@ -68,6 +68,7 @@ module HarmTrace.Base.MusicRep (
   , toPitchClass
   , toIntervalClss
   , toRoot
+  , toChord
   ) where
   
 import Data.Maybe            ( fromJust )
@@ -471,7 +472,7 @@ newtype PCSet = PCSet {pc :: IntSet} deriving (Show, Eq)
 -- | Similar to 'toIntValList' but returns 'Int' pitch classes and includes the
 -- 'Root' note of the the 'Chord'.
 toPitchClasses :: ChordLabel -> PCSet
-toPitchClasses c = PCSet . intSetToPC ivs . chordRoot $ c
+toPitchClasses c = intSetToPC ivs . chordRoot $ c
   where ivs = toIntValList c `union` fromList [0, toIntervalClss (chordBass c)]
 
 -- | Transforms a Chord into a list of relative 'Interval's (i.e. 'Addition's,
@@ -646,15 +647,16 @@ toIntervalClss n@(Note m i) =
                  else error ("HarmTrace.Base.MusicRep.toIntervalClss: no "
                           ++ "interval class for " ++ show n)
 
-intSetToPC :: IntSet -> Root -> IntSet
-intSetToPC is r = S.map (transp (toPitchClass r)) is
+intSetToPC :: IntSet -> Root -> PCSet
+intSetToPC is r = PCSet . S.map (transp (toPitchClass r)) $ is where
 
-transp :: Int -> Int -> Int
-transp t i = (i + t) `mod` 12
+  transp :: Int -> Int -> Int
+  transp t i = (i + t) `mod` 12
 
+  
 toChord :: IntSet -> Root -> Chord Root
 toChord is r = Chord r None add (Note Nat I1)
-  where add = map (Add . toInterval) . toAscList $ intSetToPC is r
+  where add = map (Add . toInterval) . toAscList . pc $ intSetToPC is r
 
 toInterval :: Int -> Interval
 toInterval i

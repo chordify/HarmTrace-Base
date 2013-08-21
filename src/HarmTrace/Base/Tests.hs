@@ -13,7 +13,7 @@ instance Arbitrary IntNat where
 instance Arbitrary Accidental where
   arbitrary = elements [Nat,Sh,Fl,SS,FF]
 
-{-  
+
 instance Arbitrary Root where
   arbitrary = elements . map toRoot $ [0..11]
   
@@ -21,13 +21,13 @@ instance Arbitrary Interval where
   arbitrary = do nat <- arbitrary
                  acc <- arbitrary
                  return (Note acc nat)
--}
+{-  
 
 instance Arbitrary a => Arbitrary (Note a) where
   arbitrary = do nat <- arbitrary
                  acc <- arbitrary
                  return (Note acc nat)
-                 
+-}                 
 instance Arbitrary Shorthand where
   arbitrary = elements . enumFrom $ Maj
   
@@ -45,4 +45,11 @@ instance Arbitrary a => Arbitrary (Chord a) where
 pcProp :: Root -> Bool
 pcProp r = (toPitchClass r) == toPitchClass (toRoot (toPitchClass r))
 
+pcSetProp :: Chord Root -> Bool
+pcSetProp c = c == toChord (toIntValList c) (chordRoot c)
 
+c :: Chord Root
+c = Chord r Maj9 [] (Note Sh I13)
+
+r :: Root
+r = Note Nat D

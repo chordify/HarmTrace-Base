@@ -78,7 +78,7 @@ import Data.Binary                ( Binary )
 import Data.IntSet                ( IntSet, fromList, union, insert, singleton
                                   , empty, toAscList, member, (\\) )
 import qualified Data.IntSet as S ( map )
-import GHC.Generics              ( Generic )
+import GHC.Generics               ( Generic )
  
 --------------------------------------------------------------------------------
 -- Representing musical information at the value level
@@ -406,11 +406,6 @@ analyseThird is
   | member 4 is = MajThird
   | member 3 is = MinThird
   | otherwise   = NoThird
-  -- | (Note  Nat I3) `elem` d = MajThird
-  -- | (Note  Fl  I3) `elem` d = MinThird
-  -- | (Note  Fl  I4) `elem` d = MajThird
-  -- | (Note  Sh  I2) `elem` d = MinThird
-  -- | otherwise               = NoThird
       
 -- analyses the fifth in a degree list 
 analyseFifth :: IntSet -> Fifth
@@ -419,12 +414,6 @@ analyseFifth is
   | member 6 is = DimFifth
   | member 8 is = AugFifth
   | otherwise   = NoFifth
-  -- | (Note Nat  I5) `elem` d = PerfFifth
-  -- | (Note Fl I5) `elem` d = DimFifth
-  -- | (Note Sh I5) `elem` d = AugFifth
-  -- | (Note Sh I4) `elem` d = DimFifth
-  -- | (Note Fl I6) `elem` d = AugFifth
-  -- | otherwise                    = NoFifth
 
 -- analyses the fifth in a degree list 
 analyseSevth :: IntSet -> Sevth
@@ -434,16 +423,6 @@ analyseSevth is
   | member 9  is = DimSev
   | otherwise    = NoSev
 
-  -- | (Note Nat I7) `elem` d = MajSev
-  -- | (Note Fl I7) `elem` d = MinSev
-  -- | (Note FF I7) `elem` d = DimSev
-  -- | (Note Nat I6) `elem` d = DimSev
-  -- | (Note Sh I6) `elem` d = MinSev
-  -- | (Note SS I6) `elem` d = MajSev
-  -- | (Note Fl I8) `elem` d = MajSev
-  -- | (Note FF I8) `elem` d = MinSev
-  -- | otherwise                    = NoSev
- 
  
 -- | Converts a 'Shorthand' to a 'Triad' 
 -- N.B. this function should not be exported because the shorthand alone cannot
@@ -506,6 +485,8 @@ toIntValList (Chord  _r sh a  _b) = shToIntSet sh `union` addToIntSet a
 toIntValList _ = error ("HarmTrace.Base.MusicRep.toIntValList: cannot create" ++
                         "interval list for N or X")
 
+-- | Converts a list of addition to an 'IntSet' containing the relative 
+-- structure of the ('Addition' list of the) 'Chord'
 addToIntSet :: [Addition] -> IntSet 
 addToIntSet add = toSet adds \\ toSet remv
 

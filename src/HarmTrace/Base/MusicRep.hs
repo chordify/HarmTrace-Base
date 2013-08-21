@@ -35,7 +35,6 @@ module HarmTrace.Base.MusicRep (
   , Mode (..)
   -- ** Chords
   , Chord (..)
-  -- , Class
   , Shorthand (..)
   , Addition (..)
   , IntNat (..)
@@ -58,6 +57,8 @@ module HarmTrace.Base.MusicRep (
   , toMode
   , toMajMin
   , toMajMinChord
+  , PCSet
+  , pc
   -- * Scale degree transposition
   , toChordDegree
   , toScaleDegree
@@ -71,13 +72,13 @@ module HarmTrace.Base.MusicRep (
   , toChord
   ) where
   
-import Data.Maybe            ( fromJust )
-import Data.List             ( elemIndex, intercalate, (\\), partition )
-import Data.Binary           ( Binary )
-import Data.IntSet           ( IntSet, fromList, union, insert, singleton
-                             , empty, toAscList, member )
-import qualified Data.IntSet as S ( (\\), map )
-import GHC.Generics          ( Generic )
+import Data.Maybe                 ( fromJust )
+import Data.List                  ( elemIndex, intercalate, partition )
+import Data.Binary                ( Binary )
+import Data.IntSet                ( IntSet, fromList, union, insert, singleton
+                                  , empty, toAscList, member, (\\) )
+import qualified Data.IntSet as S ( map )
+import GHC.Generics              ( Generic )
  
 --------------------------------------------------------------------------------
 -- Representing musical information at the value level
@@ -506,7 +507,7 @@ toIntValList _ = error ("HarmTrace.Base.MusicRep.toIntValList: cannot create" ++
                         "interval list for N or X")
 
 addToIntSet :: [Addition] -> IntSet 
-addToIntSet add = toSet adds S.\\ toSet remv
+addToIntSet add = toSet adds \\ toSet remv
 
   where (adds, remv) = partition isAddition add
 

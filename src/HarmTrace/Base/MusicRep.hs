@@ -74,7 +74,7 @@ import Data.Maybe            ( fromJust )
 import Data.List             ( elemIndex, intercalate, (\\), partition )
 import Data.Binary           ( Binary )
 import Data.IntSet           ( IntSet, fromList, union, insert, singleton
-                             , empty )
+                             , empty, toAscList )
 import qualified Data.IntSet as S ( (\\), map )
 import GHC.Generics          ( Generic )
  
@@ -463,12 +463,16 @@ shToTriad Min13    = MinTriad
 shToTriad Maj13    = MajTriad
 shToTriad Thirteen = MajTriad
 
+-- | We hide the constructors, such that a PCSet can only be constructed with
+-- 'toPitchClasses', this to overcome confusion between interval sets and
+-- pitch class sets, which are both 'IntSet's
+newtype PCSet = PCSet {pc :: IntSet} deriving (Show, Eq)
+
 -- | Similar to 'toIntValList' but returns 'Int' pitch classes and includes the
 -- 'Root' note of the the 'Chord'.
-toPitchClasses :: ChordLabel -> IntSet
-toPitchClasses c = 
-  intSetToPC (toIntValList c `union` fromList [0, toIntervalClss (chordBass c)])
-             (chordRoot c)
+toPitchClasses :: ChordLabel -> PCSet
+toPitchClasses c = PCSet . intSetToPC ivs . chordRoot $ c
+  where ivs = toIntValList c `union` fromList [0, toIntervalClss (chordBass c)]
 
 -- | Transforms a Chord into a list of relative 'Interval's (i.e. 'Addition's,
 -- without the root note).
@@ -648,6 +652,16 @@ intSetToPC is r = S.map (transp (toPitchClass r)) is
 transp :: Int -> Int -> Int
 transp t i = (i + t) `mod` 12
 
+toChord :: IntSet -> Root -> Chord Root
+toChord is r = Chord r None add (Note Nat I1)
+  where add = map (Add . toInterval) . toAscList $ intSetToPC is r
+
+toInterval :: Int -> Interval
+toInterval i
+  | 0 <= i && i <= 21 = intervals !! i
+  | otherwise         = error ("HarmTrace.Base.MusicRep.toInterval " ++
+                               "invalid pitch class: " ++ show i)
+
 -- | The reverse of 'toPitchClass' returning the 'Note DiatonicNatural' given a 
 -- Integer [0..11] semitone, where 0 represents C. When the integer is out 
 -- of the range [0..11] an error is thrown.
@@ -655,7 +669,7 @@ toRoot :: Int -> Root
 toRoot i 
   | 0 <= i && i <= 11 = roots !! i
   | otherwise         = error ("HarmTrace.Base.MusicRep.toRoot " ++
-                               "invalid semitone: " ++ show i)
+                               "invalid pitch class: " ++ show i)
     
 -- | Transforms type-level Accidentals to semitones (Int values)
 modToSemi :: Accidental -> Int

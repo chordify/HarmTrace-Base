@@ -69,10 +69,10 @@ module HarmTrace.Base.MusicRep (
   , toRoot
   ) where
   
-import Data.Maybe (fromJust)
-import Data.List (elemIndex, intercalate, (\\), partition)
-import Data.Binary (Binary)
-import GHC.Generics (Generic)
+import Data.Maybe   ( fromJust )
+import Data.List    ( elemIndex, intercalate, (\\), partition )
+import Data.Binary  ( Binary )   
+import GHC.Generics ( Generic )
 
 --------------------------------------------------------------------------------
 -- Representing musical information at the value level
@@ -90,16 +90,6 @@ data PieceLabel = PieceLabel Key [ChordLabel] deriving Generic
 
 -- | A chord based on absolute 'Root' notes
 type ChordLabel   = Chord Root
-{-
--- rename to noLabel?
--- | No Chord label
-noneLabel :: ChordLabel
-noneLabel = (Chord (Note Nat N) None [] (Note Nat I1))
-
--- | Unknown Chord label
-unknownLabel :: ChordLabel
-unknownLabel = (Chord (Note Nat X) None [] (Note Nat I1))
--}
 
 -- | A chord based on relative 'ScaleDegree's
 type ChordDegree  = Chord ScaleDegree
@@ -298,30 +288,11 @@ instance Show Triad where
 --------------------------------------------------------------------------------
 -- Tests     
 --------------------------------------------------------------------------------
-{-
--- | Returns True if the 'Root' is not unknown or none
-isRoot :: Root -> Bool
-isRoot r | isNone r    = False
-         | isUnknown r = False
-         | otherwise   = True
-
--- | Returns True if the 'Root' is 'N', and False otherwise 
-isNone :: Root -> Bool
-isNone (Note _ N) = True
-isNone  _         = False
--}
 
 -- | Returns True if the 'ChordLabel' is not a chord, and False otherwise 
 isNoneChord :: ChordLabel -> Bool
 isNoneChord NoChord = True
 isNoneChord _       = False
-
-{-
--- | Returns True if the 'Root' is unknown, and False otherwise 
-isUnknown :: Root -> Bool
-isUnknown (Note _ X) = True
-isUnknown _          = False
--}
 
 -- | Returns true if the 'Chord' 'Addition' represents an addition and not 
 -- a degree that has to be removed (*).
@@ -602,32 +573,6 @@ toScaleDegree :: Key -> Root -> ScaleDegree
   -- error ("HarmTrace.Base.MusicRep.toScaleDegree: cannot transpose " ++ show n)
 toScaleDegree (Key kr _) cr  = -- Note Nat I
   scaleDegrees!!(((toSemitone cr) - (toSemitone kr)) `mod` 12)
-{-
--- | Simplify note roots to a single enharmonic representation.
--- For instance, D♭ becomes C♯, E♯ becomes F, and G𝄫 becomes F.
-simplifyRoot :: Root -> Root
--- Simplify double sharps
-simplifyRoot (Note SS x) | x == E    = Note Sh F
-                                | x == B    = Note Sh C
-                                | otherwise = Note Nat   (succ x)
--- Simplify double flats
-simplifyRoot (Note FF x) | x == F    = Note Fl E
-                                | x == C    = Note Fl B
-                                | otherwise = Note Nat   (pred x)
--- Simplify sharps
-simplifyRoot (Note Sh D) = Note Fl E
-simplifyRoot (Note Sh E) = Note Nat   F
-simplifyRoot (Note Sh G) = Note Fl A
-simplifyRoot (Note Sh A) = Note Fl B
-simplifyRoot (Note Sh B) = Note Nat   C
--- Simplify flats
-simplifyRoot (Note Fl C) = Note Nat   B
-simplifyRoot (Note Fl D) = Note Sh C
-simplifyRoot (Note Fl F) = Note Nat   E
-simplifyRoot (Note Fl G) = Note Sh F
--- Everything else must be simple already
-simplifyRoot x                  = x
-  -}
 
 -- | Transposes a Root with a 'Int' semitones up
 transposeRoot :: Root -> Int -> Root

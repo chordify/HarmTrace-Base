@@ -69,6 +69,7 @@ module HarmTrace.Base.MusicRep (
   , toPitchClass
   , toIntervalClss
   , toRoot
+  , toInterval
   , toChord
   ) where
   

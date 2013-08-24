@@ -30,8 +30,8 @@ library
                        ListLike ==3.1.*, 
                        binary >= 0.6.4, 
                        ghc-prim >= 0.2,
-                       containers >= 0.5.2.1
-  
+                       containers >= 0.5.0.0,
+                       QuickCheck >= 2.6
   
   ghc-options:         -Wall
 --                       -O2

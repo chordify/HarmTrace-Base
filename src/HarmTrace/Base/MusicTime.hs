@@ -319,7 +319,7 @@ prevBeat b    = pred b
 updateTPChord :: (ChordLabel -> ChordLabel) -> Timed ProbChord 
               -> Timed ProbChord
 updateTPChord f = fmap (update f) where
-  update g (ProbChord c p) = (ProbChord (g c) p)
+  update g (ProbChord c p) = ProbChord (g c) p
 
 -- | drops the probabilties paired with chordlabels (in a list of 'ProbChord's)
 -- and returns a list of 'ChordLabel's

@@ -30,6 +30,7 @@ module HarmTrace.Base.MusicRep (
   , ScaleDegree 
   , DiatonicDegree (..)
   , Diatonic
+  , EnHarEq (..)
   -- ** Keys
   , Key (..)
   , Mode (..)
@@ -192,6 +193,20 @@ class (Generic a, Show a, Enum a, Bounded a) => Diatonic a
 
 instance Diatonic DiatonicNatural
 instance Diatonic DiatonicDegree
+
+class EnHarEq a where
+  (&==) :: a -> a -> Bool
+  (&/=) :: a -> a -> Bool
+
+  a &== b = not (a &/= b)
+  a &/= b = not (a &== b)
+
+instance Diatonic a => EnHarEq (Note a) where
+  a &== b = toPitchClass a == toPitchClass b
+  
+instance EnHarEq ChordLabel where
+  a &== b = toPitchClasses a == toPitchClasses b
+  
 --------------------------------------------------------------------------------
 -- Instances for the general music datatypes
 --------------------------------------------------------------------------------   

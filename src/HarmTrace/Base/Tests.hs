@@ -39,10 +39,11 @@ instance Arbitrary Addition where
 
 instance Arbitrary a => Arbitrary (Chord a) where
   arbitrary = do r   <- arbitrary
-                 sh  <- elements [Maj, Min, Aug, Dim]
+                 -- sh  <- elements [Maj, Min, Aug, Dim]
+                 sh  <- arbitrary
                  add <- arbitrary >>= listOf . return . Add 
-                 -- b   <- arbitrary
-                 return (Chord r sh (nub add) (Note Nat I1))
+                 b   <- arbitrary
+                 return (Chord r sh (nub add) b ) -- (Note Nat I1))
                  
 pcProp :: Root -> Bool
 pcProp r = (toPitchClass r) == toPitchClass (toRoot (toPitchClass r))
@@ -56,11 +57,14 @@ intervalProp i = i == toInterval (toIntervalClss i)
 intervalProp2 :: Int -> Bool
 intervalProp2 i = i == toIntervalClss (toInterval i)
 
+enHarEqProp :: Root -> Bool
+enHarEqProp a = a &== a
+
 c :: Chord Root
 c = Chord rb Min [Add (Note Sh I6)] (Note Nat I1)
 
 cs :: Chord Root
-cs = Chord rd Maj9 [] (Note Sh I13)
+cs = Chord rd Aug [Add (Note Nat I5)] (Note Nat I1)
 
 rd :: Root
 rd = Note Nat D

@@ -51,7 +51,8 @@ module HarmTrace.Base.MusicRep (
   -- * Transformation and analysis of chords
   , toClassType
   , toTriad
-  , analyseDegTriad
+  , analyseTriad
+  , analyseTetra
   , toIntValList
   , addToIntSet
   , toMode
@@ -347,6 +348,8 @@ analyseDegClassType degs =
        (NoThird,  _        , _     ) -> NoClass
 
 
+       
+       
 -- | Categorises a 'Shorthand' into a 'ClassType'.
 shToClassType :: Shorthand -> ClassType
 shToClassType Maj     = MajClass
@@ -381,7 +384,27 @@ shToClassType Thirteen = DomClass
 data Third = MajThird | MinThird             | NoThird deriving (Eq, Show)
 data Fifth = DimFifth | PerfFifth | AugFifth | NoFifth deriving (Eq, Show)
 data Sevth = DimSev   | MinSev    | MajSev   | NoSev   deriving (Eq, Show)
-    
+
+triadToSh :: Triad -> Shorthand
+triadToSh t = case t of
+                 MajTriad -> Maj 
+                 MinTriad -> Min 
+                 AugTriad -> Aug 
+                 DimTriad -> Dim 
+                 NoTriad  -> None
+
+analyseTetra :: IntSet -> Shorthand
+analyseTetra is = case (analyseTriad is, analyseSevth is) of
+                    (MajTriad, MinSev) -> Sev
+                    (MajTriad, MajSev) -> Maj7
+                    (MinTriad, MinSev) -> Min7
+                    (MinTriad, MajSev) -> MinMaj7
+                    (DimTriad, MinSev) -> HDim7
+                    (DimTriad, DimSev) -> Dim7
+                    (AugTriad, MinSev) -> Aug7
+                    (t       , NoSev ) -> triadToSh t
+                    _                  -> None                 
+
 -- | Takes a 'Chord' and determines the 'Triad'
 --
 -- >>> toTriad (Chord (Note Nat C) Min [NoAdd (Note Fl I3),Add (Note Nat I3)] 0 0)
@@ -396,12 +419,12 @@ data Sevth = DimSev   | MinSev    | MajSev   | NoSev   deriving (Eq, Show)
 toTriad :: Chord a -> Triad
 toTriad (Chord  _r  sh [] _b) = shToTriad sh -- there are no additions
 -- combine the degrees and analyse them. N.B., also NoAdd degrees are resolved
-toTriad c = analyseDegTriad . toIntValList $ c
-
+toTriad c = analyseTriad . toIntValList $ c
+   
 -- | Analyses a degree list and returns 'MajTriad', 'MinTriad' or 'NoTriad' if
 -- the degrees make a chord a major, minor, or no triad, respectively.
-analyseDegTriad :: IntSet -> Triad
-analyseDegTriad is =  
+analyseTriad :: IntSet -> Triad
+analyseTriad is =  
     case (analyseThird is, analyseFifth is) of
        (MajThird, PerfFifth) -> MajTriad
        (MajThird, AugFifth ) -> AugTriad
@@ -652,12 +675,8 @@ toChord :: Root -> IntSet -> Maybe Interval -> Chord Root
 toChord r is mi = Chord r triad add (maybe (Note Nat I1) id mi)
  
  where add   = map (Add . toInterval) $ toAscList (is \\ shToIntSet triad)
-       triad = case analyseDegTriad is of
-                 MajTriad -> Maj 
-                 MinTriad -> Min 
-                 AugTriad -> Aug 
-                 DimTriad -> Dim 
-                 NoTriad  -> None
+       triad = triadToSh (analyseTriad is) 
+
 
 toInterval :: Int -> Interval
 toInterval i

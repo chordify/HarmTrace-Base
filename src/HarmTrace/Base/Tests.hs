@@ -2,6 +2,8 @@
 module HarmTrace.Base.Tests where
 
 import HarmTrace.Base.MusicRep
+import HarmTrace.Base.Parsing
+import HarmTrace.Base.ChordTokenizer
 import Test.QuickCheck
 import Data.List (nub)
 
@@ -19,17 +21,14 @@ instance Arbitrary Root where
   arbitrary = elements . map toRoot $ [0..11]
   
 instance Arbitrary Interval where
-  arbitrary = choose (0,21) >>= return . toInterval
-{-  
-  arbitrary = do nat <- arbitrary
-                 acc <- arbitrary
-                 return (Note acc nat)
+  arbitrary = choose (0,21) >>= return . toInterval  
+  
+-- instance Arbitrary a => Arbitrary (Note a) where
+  -- arbitrary = do nat <- arbitrary
+                 -- acc <- arbitrary
+                 -- return (Note acc nat)
 
-instance Arbitrary a => Arbitrary (Note a) where
-  arbitrary = do nat <- arbitrary
-                 acc <- arbitrary
-                 return (Note acc nat)
--}                 
+               
 instance Arbitrary Shorthand where
   arbitrary = elements . enumFrom $ Maj
   
@@ -49,7 +48,7 @@ pcProp :: Root -> Bool
 pcProp r = (toPitchClass r) == toPitchClass (toRoot (toPitchClass r))
 
 pcSetProp :: Chord Root -> Bool
-pcSetProp c = c == toChord (toIntValList c) (chordRoot c)
+pcSetProp c = c == toChord (chordRoot c) (toIntValList c) Nothing
 
 intervalProp :: Interval -> Bool
 intervalProp i = i == toInterval (toIntervalClss i)
@@ -59,6 +58,9 @@ intervalProp2 i = i == toIntervalClss (toInterval i)
 
 enHarEqProp :: Root -> Bool
 enHarEqProp a = a &== a
+
+parseProp :: Chord Root -> Bool
+parseProp c = parseDataSafe pChord (show c) == c
 
 c :: Chord Root
 c = Chord rb Min [Add (Note Sh I6)] (Note Nat I1)

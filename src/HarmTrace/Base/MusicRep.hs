@@ -22,8 +22,7 @@
 
 module HarmTrace.Base.MusicRep (
   -- * Representing musical chords and keys
-    PieceLabel (..)
-  , Note (..)
+    Note (..)
   , Accidental (..)
   , Root 
   , DiatonicNatural (..)
@@ -93,9 +92,6 @@ data Key  = Key { keyRoot :: Root, keyMode :: Mode } deriving (Eq, Ord, Generic)
 -- | The 'Mode' of a key, which can be major or minor
 data Mode = MajMode | MinMode deriving (Eq, Ord, Generic)
 
--- | A container type combinint a key and a list of 'ChordLabel's
-data PieceLabel = PieceLabel Key [ChordLabel] deriving Generic
-
 -- | A chord based on absolute 'Root' notes
 type ChordLabel   = Chord Root
 
@@ -116,7 +112,7 @@ data Chord a = Chord { chordRoot        :: a
                      } 
               | NoChord     -- ^ No sounding chord (silence, noise, etc.)
               | UndefChord  -- ^ An undefined chord
-                deriving (Eq, Generic)
+                deriving (Eq, Ord, Generic)
 
 -- | We introduce four chord categories: major chords, minor chords, dominant
 -- seventh chords, and diminished seventh chords
@@ -652,8 +648,8 @@ intSetToPC is r = PCSet . S.map (transp (toPitchClass r)) $ is where
   transp t i = (i + t) `mod` 12
 
   
-toChord :: IntSet -> Root -> Chord Root
-toChord is r = Chord r triad add (Note Nat I1)
+toChord :: Root -> IntSet -> Maybe Interval -> Chord Root
+toChord r is mi = Chord r triad add (maybe (Note Nat I1) id mi)
  
  where add   = map (Add . toInterval) $ toAscList (is \\ shToIntSet triad)
        triad = case analyseDegTriad is of
@@ -750,7 +746,6 @@ intervals = [ Note Nat I1  --  0: Prime
 
 instance Binary Key
 instance Binary Mode 
-instance Binary PieceLabel
 instance Binary a => Binary (Chord a)
 instance Binary ClassType
 instance Binary Shorthand

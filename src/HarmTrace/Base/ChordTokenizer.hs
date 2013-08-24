@@ -78,37 +78,22 @@ pChord =     pChordLabel
 -- TODO add support for inversion
 pChordLabel :: Parser ChordLabel
 {-# INLINE pChordLabel #-}
-pChordLabel = toChord <$> pRoot <* (pSym ':' `opt` ':') 
+pChordLabel = mkChord <$> pRoot <* (pSym ':' `opt` ':') 
                       <*> pMaybe pShorthand
                       <*> (pAdditions `opt` []) 
                       <*> pInversion where
   
-  toChord :: Root -> Maybe Shorthand -> [Addition] -> Maybe Interval
+  mkChord :: Root -> Maybe Shorthand -> [Addition] -> Maybe Interval
           -> ChordLabel
   -- if there are no degrees and no shorthand, following Harte it 
   -- should be labelled a Maj chord
-  toChord r Nothing [] b = Chord r Maj      []              (inversion b)
-  toChord r Nothing  a b = Chord r (toSh a) (remTriadDeg a) (inversion b)
-  toChord r (Just s) a b = Chord r s        a               (inversion b) 
+  mkChord r Nothing [] b = Chord   r Maj             [] (inversion b)
+  mkChord r Nothing  a b = toChord r (addToIntSet a)    b
+  mkChord r (Just s) a b = Chord   r s               a  (inversion b) 
   
   -- prepares an inversion, if any
   inversion :: Maybe Interval -> Interval
   inversion = maybe (Note Nat I1) id
-  
-  -- removes the third and the fifth from an interval list
-  remTriadDeg :: [Addition] -> [Addition]
-  remTriadDeg = filter (\(Add (Note _ i)) -> i /= I3 || i /= I5)
-
-  -- Calculates a shorthand if none has been given, but we have a list of 
-  -- intervals
-  toSh :: [Addition] -> Shorthand
-  toSh d = case analyseDegTriad (addToIntSet d) of
-             MajTriad -> Maj 
-             MinTriad -> Min 
-             AugTriad -> Aug 
-             DimTriad -> Dim 
-             NoTriad  -> None
-
 
 -- Parses an inversion, but inversions are ignored for now.
 pInversion :: Parser (Maybe Interval)

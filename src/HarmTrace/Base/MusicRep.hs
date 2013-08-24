@@ -28,8 +28,6 @@ module HarmTrace.Base.MusicRep (
   , DiatonicNatural (..)
   , ScaleDegree 
   , DiatonicDegree (..)
-  , Diatonic
-  , EnHarEq (..)
   -- ** Keys
   , Key (..)
   , Mode (..)
@@ -41,37 +39,48 @@ module HarmTrace.Base.MusicRep (
   , Interval 
   , ChordLabel
   , ChordDegree
-  -- * Derived types for classification of chords
+  -- ** Sets
+  , PCSet  -- ^ Pitch Class Set
+  , pc     -- ^ Unwraps a 'PCSet'
+  , IntSet -- ^ Interval Set
+  -- ** Classes
+  , Diatonic
+  , EnHarEq (..)
+  -- ** Derived types for classification of chords
   , ClassType (..)
   , Triad (..)
   -- * Tests
   , isNoneChord
   , isAddition
-  -- ** Transformation
-  -- * Transformation and analysis of chords
-  , toClassType
-  , toTriad
+  -- * Analysis
+  -- ** Intervals
+  , toIntSet
+  , addToIntSet
+  -- ** Triads and Sevenths
   , analyseTriad
   , analyseTetra
-  , toIntValList
-  , addToIntSet
+  , toTriad
+  , toMajMinChord
+    -- ** Misc
   , toMode
   , toMajMin
-  , toMajMinChord
-  , PCSet
-  , pc
-  -- * Scale degree transposition
-  , toChordDegree
-  , toScaleDegree
-  , intValToPitch
+  , toClassType
+  -- * Pitch classes
+  , toPitchClass
   , toPitchClasses
+  , intValToPitchClss
+  , intSetToPC
+  , pcToRoot
+  -- * Interval classes
+  , toIntervalClss  
+  , intervalToPitch
+  , toChord
+  -- * Scale degree transposition
   , transposeRoot
   , transposeSD
-  , toPitchClass
-  , toIntervalClss
-  , toRoot
-  , toInterval
-  , toChord
+  , toChordDegree
+  , toScaleDegree
+  , icToInterval
   ) where
   
 import Data.Maybe                 ( fromJust )
@@ -330,7 +339,7 @@ isAddition (NoAdd _) = False
 toClassType :: Chord a -> ClassType
 toClassType (Chord  _r  sh []   _b) = shToClassType sh -- no additions
 -- combine the degrees and analyse them. N.B., also NoAdd degrees are resolved
-toClassType c = analyseDegClassType . toIntValList $ c
+toClassType c = analyseDegClassType . toIntSet $ c
 
 -- | Analyses a degree list and returns 'MajTriad', 'MinTriad' or 'NoTriad' if
 -- the degrees make a chord a major, minor, or no triad, respectively.
@@ -419,7 +428,7 @@ analyseTetra is = case (analyseTriad is, analyseSevth is) of
 toTriad :: Chord a -> Triad
 toTriad (Chord  _r  sh [] _b) = shToTriad sh -- there are no additions
 -- combine the degrees and analyse them. N.B., also NoAdd degrees are resolved
-toTriad c = analyseTriad . toIntValList $ c
+toTriad c = analyseTriad . toIntSet $ c
    
 -- | Analyses a degree list and returns 'MajTriad', 'MinTriad' or 'NoTriad' if
 -- the degrees make a chord a major, minor, or no triad, respectively.
@@ -500,7 +509,7 @@ newtype PCSet = PCSet {pc :: IntSet} deriving (Show, Eq)
 -- 'Root' note of the the 'Chord'.
 toPitchClasses :: ChordLabel -> PCSet
 toPitchClasses c = intSetToPC ivs . chordRoot $ c
-  where ivs = toIntValList c `union` fromList [0, toIntervalClss (chordBass c)]
+  where ivs = toIntSet c `union` fromList [0, toIntervalClss (chordBass c)]
 
 -- | Transforms a Chord into a list of relative 'Interval's (i.e. 'Addition's,
 -- without the root note).
@@ -514,10 +523,10 @@ toPitchClasses c = intSetToPC ivs . chordRoot $ c
 -- >>> toIntValList (parseData pChord "D:7(b9)")
 -- [3,5,7b,9b]
 --
-toIntValList :: Chord a -> IntSet
-toIntValList (Chord  _r sh [] _b) = shToIntSet sh
-toIntValList (Chord  _r sh a  _b) = shToIntSet sh `union` addToIntSet a
-toIntValList _ = error ("HarmTrace.Base.MusicRep.toIntValList: cannot create" ++
+toIntSet :: Chord a -> IntSet
+toIntSet (Chord  _r sh [] _b) = shToIntSet sh
+toIntSet (Chord  _r sh a  _b) = shToIntSet sh `union` addToIntSet a
+toIntSet _ = error ("HarmTrace.Base.MusicRep.toIntValList: cannot create" ++
                         "interval list for N or X")
 
 -- | Converts a list of addition to an 'IntSet' containing the relative 
@@ -640,16 +649,16 @@ toPitchClass (Note m p)
 -- | Similar to 'toScaleDegree', an interval is transformed into an absolute
 -- 'Root' pitch, given another 'Root' that serves as a basis. 
 --  
--- >>> intValToPitch (Note Sh G) (Note Fl I13)
+-- >>> intervalToPitch (Note Sh G) (Note Fl I13)
 -- >>> E
 --  
--- >>> intValToPitch (Note Nat C) (Note Sh I11)
+-- >>> intervalToPitch (Note Nat C) (Note Sh I11)
 -- >>> F#
 --
-intValToPitch :: Root -> Interval -> Root
-intValToPitch r = toRoot . intValToPitchClss r
+intervalToPitch :: Root -> Interval -> Root
+intervalToPitch r = pcToRoot . intValToPitchClss r
  
--- | As 'intValToPitch', but returns the 'Int' pitch class. 
+-- | As 'intervalToPitch', but returns the 'Int' pitch class. 
 intValToPitchClss :: Root -> Interval -> Int
 intValToPitchClss r i = (toPitchClass r + toIntervalClss i) `mod` 12
                           
@@ -672,14 +681,14 @@ intSetToPC is r = PCSet . S.map (transp (toPitchClass r)) $ is where
 
   
 toChord :: Root -> IntSet -> Maybe Interval -> Chord Root
-toChord r is mi = Chord r triad add (maybe (Note Nat I1) id mi)
+toChord r is mi = Chord r sh add (maybe (Note Nat I1) id mi)
  
- where add   = map (Add . toInterval) $ toAscList (is \\ shToIntSet triad)
-       triad = triadToSh (analyseTriad is) 
+ where add = map (Add . icToInterval) $ toAscList (is \\ shToIntSet sh)
+       sh  = analyseTetra is
 
-
-toInterval :: Int -> Interval
-toInterval i
+-- | Converts an 'Int'erval class to an 'Interval'
+icToInterval :: Int -> Interval
+icToInterval i
   | 0 <= i && i <= 21 = intervals !! i
   | otherwise         = error ("HarmTrace.Base.MusicRep.toInterval " ++
                                "invalid pitch class: " ++ show i)
@@ -687,8 +696,8 @@ toInterval i
 -- | The reverse of 'toPitchClass' returning the 'Note DiatonicNatural' given a 
 -- Integer [0..11] semitone, where 0 represents C. When the integer is out 
 -- of the range [0..11] an error is thrown.
-toRoot :: Int -> Root
-toRoot i 
+pcToRoot :: Int -> Root
+pcToRoot i 
   | 0 <= i && i <= 11 = roots !! i
   | otherwise         = error ("HarmTrace.Base.MusicRep.toRoot " ++
                                "invalid pitch class: " ++ show i)

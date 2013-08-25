@@ -1,6 +1,4 @@
 {-# OPTIONS_GHC -Wall             #-}
-{-# LANGUAGE FlexibleInstances    #-}
-{-# LANGUAGE DeriveGeneric        #-}
 
 --------------------------------------------------------------------------------
 -- |
@@ -18,9 +16,8 @@
 module HarmTrace.Base.Chord.Analysis (
   -- * Analysis
   -- ** Sets
-    PCSet  -- ^ Pitch Class Set
-  , pc     -- ^ Unwraps a 'PCSet'
-  , IntSet -- ^ Interval Set
+
+    IntSet -- ^ Interval Set
   
   -- ** Intervals
   , toIntSet
@@ -34,12 +31,7 @@ module HarmTrace.Base.Chord.Analysis (
   , toMode
   , toMajMin
   , toClassType
-  -- * Pitch classes
-  , toPitchClass
-  , toPitchClasses
-  , intValToPitchClss
-  , intSetToPC
-  , pcToRoot
+
   -- * Interval classes
   , toIntervalClss  
   , intervalToPitch
@@ -52,47 +44,14 @@ module HarmTrace.Base.Chord.Analysis (
   , icToInterval
   -- ** Classes
   , Diatonic
-  , EnHarEq (..)
   ) where
   
 import HarmTrace.Base.Chord.Datatypes
-import Data.Maybe                 ( fromJust )
-import Data.List                  ( elemIndex, intercalate, partition )
-import Data.Binary                ( Binary )
-import Data.IntSet                ( IntSet, fromList, union, insert, singleton
-                                  , empty, toAscList, member, (\\) )
-import qualified Data.IntSet as S ( map )
-import GHC.Generics               ( Generic )
-  
-  
--- | We hide the constructors, such that a PCSet can only be constructed with
--- 'toPitchClasses', this to overcome confusion between interval sets and
--- pitch class sets, which are both 'IntSet's
-newtype PCSet = PCSet {pc :: IntSet} deriving (Show, Eq)
-    
-  
---------------------------------------------------------------------------------
--- Classes
---------------------------------------------------------------------------------
+import HarmTrace.Base.Chord.PitchClass
+import HarmTrace.Base.Chord.Intervals
+import HarmTrace.Base.Chord.Internal
 
-class (Generic a, Show a, Enum a, Bounded a) => Diatonic a
-
-instance Diatonic DiatonicNatural
-instance Diatonic DiatonicDegree
-
-class EnHarEq a where
-  (&==) :: a -> a -> Bool
-  (&/=) :: a -> a -> Bool
-
-  a &== b = not (a &/= b)
-  a &/= b = not (a &== b)
-
-instance Diatonic a => EnHarEq (Note a) where
-  a &== b = toPitchClass a == toPitchClass b
-  
-instance EnHarEq ChordLabel where
-  a &== b = toPitchClasses a == toPitchClasses b  
-  
+import Data.IntSet                ( IntSet, toAscList, member, (\\) )
   
 --------------------------------------------------------------------------------
 -- Transformation and analysis of chords
@@ -265,76 +224,7 @@ shToTriad Maj13    = MajTriad
 shToTriad Thirteen = MajTriad
 
 
--- | Similar to 'toIntValList' but returns 'Int' pitch classes and includes the
--- 'Root' note of the the 'Chord'.
-toPitchClasses :: ChordLabel -> PCSet
-toPitchClasses c = intSetToPC ivs . chordRoot $ c
-  where ivs = toIntSet c `union` fromList [0, toIntervalClss (chordBass c)]
 
--- | Transforms a Chord into a list of relative 'Interval's (i.e. 'Addition's,
--- without the root note).
--- 
--- >>> toIntValList (Chord (Note Nat C) HDim7 [Add (Note Sh I11)] 0 0)
--- [3b,5b,7b,11#]
---
--- >>> toIntValList (Chord (Note Nat C) Min13 [NoAdd (Note Nat I11)] 0 0)
--- [3b,5,7b,9,13]
---
--- >>> toIntValList (parseData pChord "D:7(b9)")
--- [3,5,7b,9b]
---
-toIntSet :: Chord a -> IntSet
-toIntSet (Chord  _r sh [] _b) = shToIntSet sh
-toIntSet (Chord  _r sh a  _b) = shToIntSet sh `union` addToIntSet a
-toIntSet _ = error ("HarmTrace.Base.MusicRep.toIntValList: cannot create" ++
-                        "interval list for N or X")
-
--- | Converts a list of addition to an 'IntSet' containing the relative 
--- structure of the ('Addition' list of the) 'Chord'
-addToIntSet :: [Addition] -> IntSet 
-addToIntSet add = toSet adds \\ toSet remv
-
-  where (adds, remv) = partition isAddition add
-
-        toSet :: [Addition] -> IntSet
-        toSet = fromList . map (toIntervalClss . getInt)
-        
-        getInt :: Addition -> Interval
-        getInt (NoAdd i) = i
-        getInt (Add   i) = i
-        
-  
--- | Expands a 'Shorthand' to its list of degrees
-shToIntSet :: Shorthand -> IntSet 
-shToIntSet Maj     = fromList [4,7]              --    [Note Nat I3,Note Nat I5]
-shToIntSet Min     = fromList [3,7]              --    [Note Fl  I3,Note Nat I5]
-shToIntSet Dim     = fromList [3,6]              --    [Note Fl  I3,Note Fl  I5]
-shToIntSet Aug     = fromList [4,8]              --    [Note Nat I3,Note Sh  I5]
-shToIntSet Maj7    = insert 11 (shToIntSet Maj)  -- ++ [Note Nat I7]
-shToIntSet Min7    = insert 10 (shToIntSet Min)  -- ++ [Note Fl  I7]
-shToIntSet Sev     = insert 10 (shToIntSet Maj)  -- ++ [Note Fl  I7]
-shToIntSet Dim7    = insert  9 (shToIntSet Dim)  -- ++ [Note FF  I7]
-shToIntSet HDim7   = insert 10 (shToIntSet Dim)  -- ++ [Note Fl  I7]
-shToIntSet MinMaj7 = insert 11 (shToIntSet Min)  -- ++ [Note Nat I7]
-shToIntSet Aug7    = insert 10 (shToIntSet Aug)  -- ++ [Note Fl  I7]
-shToIntSet Maj6    = insert  9 (shToIntSet Maj)  -- ++ [Note Nat I6]
--- Harte uses a 6 instead of b6
-shToIntSet Min6    = insert  8 (shToIntSet Min ) -- ++ [Note Fl  I6] 
-shToIntSet Nin     = insert 14 (shToIntSet Sev ) -- ++ [Note Nat I9]
-shToIntSet Maj9    = insert 14 (shToIntSet Maj7) -- ++ [Note Nat I9]
-shToIntSet Min9    = insert 14 (shToIntSet Min7) -- ++ [Note Nat I9]
-shToIntSet Five    = singleton 7                 --    [Note Nat I5]
-shToIntSet Sus2    = fromList [2,7]              --    [Note Nat I2,Note Nat I5]
-shToIntSet Sus4    = fromList [5,7]              --    [Note Nat I4,Note Nat I5]
-shToIntSet SevSus4 = insert 10 (shToIntSet Sus4) -- ++ [Note Fl  I7]
-shToIntSet None    = empty
--- additional Billboard shorthands
-shToIntSet Min11   = insert 17 (shToIntSet Min9  ) -- ++ [Note Nat I11]
-shToIntSet Eleven  = insert 17 (shToIntSet Nin   ) -- ++ [Note Nat I11]
-shToIntSet Min13   = insert 21 (shToIntSet Min11 ) -- ++ [Note Nat I13]
-shToIntSet Maj13   = insert 21 (shToIntSet Maj9  ) -- ++ [Note Nat I13]
-shToIntSet Thirteen= insert 21 (shToIntSet Eleven) -- ++ [Note Nat I13]
-     
       
 -- | Converts a 'Shorthand' to a 'Mode'
 toMode :: Triad -> Mode     
@@ -394,17 +284,7 @@ transposeSD deg sem = transpose scaleDegrees deg sem
 transpose :: Diatonic a => [Note a] -> Note a -> Int -> Note a
 transpose ns n sem = ns !! ((sem + (toPitchClass n)) `mod` 12)
 
--- TODO : should be renamed to 'toPitchClass'
--- | Returns the semitone value [0 .. 11] of a 'ScaleDegree' where
--- 0 = C, e.g. F# = 6. For the constructors 'N' and 'X' an error is thrown.
-toPitchClass :: (Diatonic a) => Note a -> Int
-toPitchClass (Note m p) 
-  | ix <= 6   = noNegatives (([0,2,4,5,7,9,11] !! ix) + modToSemi m) `mod` 12
-  | otherwise = error ("HarmTrace.Base.MusicRep.toPitchClass: no semitone for "
-                        ++ show p ++ show m )
-      where ix = fromEnum p
-            noNegatives s | s < 0     = 12 + s
-                          | otherwise = s
+
 
 -- | Similar to 'toScaleDegree', an interval is transformed into an absolute
 -- 'Root' pitch, given another 'Root' that serves as a basis. 
@@ -417,27 +297,7 @@ toPitchClass (Note m p)
 --
 intervalToPitch :: Root -> Interval -> Root
 intervalToPitch r = pcToRoot . intValToPitchClss r
- 
--- | As 'intervalToPitch', but returns the 'Int' pitch class. 
-intValToPitchClss :: Root -> Interval -> Int
-intValToPitchClss r i = (toPitchClass r + toIntervalClss i) `mod` 12
-                          
--- | Similar to 'toPitchClss', this function calculates an enharmonic 
--- interval class for each 'Note Interval' in the range of [0 .. 23]
--- ( == ['Note Nat I1' .. 'Note SS I13']
-toIntervalClss :: Interval -> Int
-toIntervalClss n@(Note m i) =
-  --         1 2 3 4 5 6 7  8  9  10 11 12 13
-  let ic = ([0,2,4,5,7,9,11,12,14,16,17,19,21] !! (fromEnum i)) + modToSemi m 
-  in  if ic >= 0 then ic
-                 else error ("HarmTrace.Base.MusicRep.toIntervalClss: no "
-                          ++ "interval class for " ++ show n)
 
-intSetToPC :: IntSet -> Root -> PCSet
-intSetToPC is r = PCSet . S.map (transp (toPitchClass r)) $ is where
-
-  transp :: Int -> Int -> Int
-  transp t i = (i + t) `mod` 12
 
   
 toChord :: Root -> IntSet -> Maybe Interval -> Chord Root
@@ -446,85 +306,6 @@ toChord r is mi = Chord r sh add (maybe (Note Nat I1) id mi)
  where add = map (Add . icToInterval) $ toAscList (is \\ shToIntSet sh)
        sh  = analyseTetra is
 
--- | Converts an 'Int'erval class to an 'Interval'
-icToInterval :: Int -> Interval
-icToInterval i
-  | 0 <= i && i <= 21 = intervals !! i
-  | otherwise         = error ("HarmTrace.Base.MusicRep.toInterval " ++
-                               "invalid pitch class: " ++ show i)
-
--- | The reverse of 'toPitchClass' returning the 'Note DiatonicNatural' given a 
--- Integer [0..11] semitone, where 0 represents C. When the integer is out 
--- of the range [0..11] an error is thrown.
-pcToRoot :: Int -> Root
-pcToRoot i 
-  | 0 <= i && i <= 11 = roots !! i
-  | otherwise         = error ("HarmTrace.Base.MusicRep.toRoot " ++
-                               "invalid pitch class: " ++ show i)
-    
--- | Transforms type-level Accidentals to semitones (Int values)
-modToSemi :: Accidental -> Int
-modToSemi Nat =  0
-modToSemi Sh  =  1
-modToSemi Fl  = -1
-modToSemi SS  =  2
-modToSemi FF  = -2
-
--- | A list of 12 'ScaleDegree's, ignoring pitch spelling.
-scaleDegrees ::[ ScaleDegree ]  
-scaleDegrees = [ Note  Nat I
-               , Note  Sh  I
-               , Note  Nat II
-               , Note  Fl  III
-               , Note  Nat III
-               , Note  Nat IV
-               , Note  Sh  IV
-               , Note  Nat V
-               , Note  Fl  VI
-               , Note  Nat VI
-               , Note  Fl  VII
-               , Note  Nat VII
-               ]
-               
-
--- | A list of 12 'Note DiatonicNatural's, ignoring pitch spelling.
-roots :: [ Root ]  
-roots =  [ Note Nat C
-         , Note Sh  C
-         , Note Nat D
-         , Note Fl  E
-         , Note Nat E
-         , Note Nat F
-         , Note Sh  F
-         , Note Nat G
-         , Note Fl  A
-         , Note Nat A
-         , Note Fl  B
-         , Note Nat B
-         ]
 
 
-intervals :: [ Interval ]
-intervals = [ Note Nat I1  --  0: Prime
-            , Note Fl  I2  --  1: Minor second
-            , Note Nat I2  --  2: Major second
-            , Note Fl  I3  --  3: Minor third
-            , Note Nat I3  --  4: Major third
-            , Note Nat I4  --  5: Perfect fourth
-            , Note Fl  I5  --  6: Diminished fifth (augmented fourth)
-            , Note Nat I5  --  7: Perfect fifth
-            , Note Fl  I6  --  8: Minor sixth
-            , Note Nat I6  --  9: Major sixth
-            , Note Fl  I7  -- 10: Minor seventh
-            , Note Nat I7  -- 11: Major seventh
-            , Note Nat I8  -- 12: Perfect Octave
-            , Note Fl  I9  -- 13: Flat nine   -- in jazz jargon
-            , Note Nat I9  -- 14: Nine
-            , Note Sh  I9  -- 15: Sharp nine
-            , Note Nat I10 -- 16: tenth: is viewed as third
-            , Note Nat I11 -- 17: eleventh
-            , Note Sh  I11 -- 18: sharp eleventh
-            , Note Nat I12 -- 19: twelveth: viewed as fifth
-            , Note Fl  I13 -- 20: Flat thirteen
-            , Note Nat I13 -- 21: Thirteen
-            ]
+

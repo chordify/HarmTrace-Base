@@ -49,11 +49,8 @@ module HarmTrace.Base.Chord.Datatypes (
   ) where
   
 import Data.Maybe                 ( fromJust )
-import Data.List                  ( elemIndex, intercalate, partition )
+import Data.List                  ( elemIndex, intercalate )
 import Data.Binary                ( Binary )
-import Data.IntSet                ( IntSet, fromList, union, insert, singleton
-                                  , empty, toAscList, member, (\\) )
-import qualified Data.IntSet as S ( map )
 import GHC.Generics               ( Generic )
  
 --------------------------------------------------------------------------------

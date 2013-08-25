@@ -22,7 +22,9 @@ module HarmTrace.Base.Chord.PitchClass (
   , intValToPitchClss
   , intSetToPC
   , pcToRoot
+  -- * Enharmonic Equivalence
   , EnHarEq (..)
+  -- * Diatonic Class
   , Diatonic
   ) where
 
@@ -59,7 +61,7 @@ toPitchClasses :: ChordLabel -> PCSet
 toPitchClasses c = intSetToPC ivs . chordRoot $ c
   where ivs = toIntSet c `union` fromList [0, toIntervalClss (chordBass c)]
 
-  
+-- | Transforms an interval set to and a root into a 'PCSet'
 intSetToPC :: IntSet -> Root -> PCSet
 intSetToPC is r = PCSet . S.map (transp (toPitchClass r)) $ is where
 
@@ -86,11 +88,9 @@ pcToRoot i
 -- Classes
 --------------------------------------------------------------------------------
 
-class (Generic a, Show a, Enum a, Bounded a) => Diatonic a
-
-instance Diatonic DiatonicNatural
-instance Diatonic DiatonicDegree
-
+-- | A class to compare datatypes that sound the same (they contain the 
+-- same pitch class content):
+-- http://en.wikipedia.org/wiki/Enharmonic
 class EnHarEq a where
   (&==) :: a -> a -> Bool
   (&/=) :: a -> a -> Bool
@@ -104,4 +104,9 @@ instance Diatonic a => EnHarEq (Note a) where
 instance EnHarEq ChordLabel where
   a &== b = toPitchClasses a == toPitchClasses b  
   
-  
+-- | A class to mark certain datatypes to have a diatonic structure:
+--   http://en.wikipedia.org/wiki/Diatonic_and_chromatic
+class (Generic a, Show a, Enum a, Bounded a) => Diatonic a
+
+instance Diatonic DiatonicNatural
+instance Diatonic DiatonicDegree

@@ -15,9 +15,7 @@
 -- representations.
 --------------------------------------------------------------------------------
 
-module HarmTrace.Base.ChordTokenizer ( -- * Top level parser
-                                       -- parseChordSeq 
-                                       -- * Parsing (elements of) chords
+module HarmTrace.Base.ChordTokenizer ( -- * Parsing (elements of) chords
                                        pChord
                                      , pShorthand
                                      , pRoot
@@ -30,36 +28,8 @@ import HarmTrace.Base.Parsing
 import HarmTrace.Base.Chord
 
 --------------------------------------------------------------------------------
--- Top level Chord sequence parser
+-- Parsing String of Musical Chords
 --------------------------------------------------------------------------------
-
--- | Top level parser that parsers a string into a 'PieceLabel' and a posibly
--- empty list of errors
-{-
-parseChordSeq :: String -> (PieceLabel, [Error LineColPos])
-parseChordSeq = parseDataWithErrors pSongAbs
-
---------------------------------------------------------------------------------
--- Tokenizing: parsing strings into tokens
---------------------------------------------------------------------------------  
-
--- | Parser that parses a string of whitespace-separated 'Chord's, e.g.
--- @C:maj Bb:9(s11);1 E:min7;1 Eb:min7;1 Ab:7;1 D:min7;1 G:7(13);1 C:maj6(9);1@
--- The first 'Chord' must be the key of the piece, and the after each chord
--- the semicolumn and an Integer representing the duration of the chord must 
--- be presented
-pSongAbs :: Parser PieceLabel -- PieceRelToken -- 
-pSongAbs = PieceLabel <$> pKey <* pLineEnd 
-                      <*> (setLoc 0 <$> pListSep_ng pLineEnd pChordDur )
-                      <*  pList pLineEnd where
-  setLoc :: Int -> [Chord a] -> [Chord a]  
-  setLoc _  [] = []
-  setLoc ix (Chord r c d _ l :cs) = (Chord r c d ix l) : setLoc (ix+1) cs                               
-
--- parses chords with a duration (separated by a ';')
-pChordDur :: Parser ChordLabel
-pChordDur = (,) <$> pChord <*> (pSym ';' *> pNaturalRaw) <?> "Chord;Int"
--}
 
 -- | Parses a 'ChordLabel' in Harte et al. syntax including possible additions, 
 -- and removal of chord additions. If a chord has no 'Shorthand', the 'Degree' 
@@ -107,7 +77,7 @@ pKey = f <$> pRoot <* pSym ':' <*> pShorthand <?> "Key"
               | otherwise = error ("Tokenizer: key must be Major or Minor, "
                           ++ "found: " ++ show m)
 
--- | Parses a shorthand following Harte et al. syntax, but also the shorthands
+-- | Parses a shorthand following Harte et al. syntax, but also the 'Shorthand's
 -- added to the Billboard dataset, e.g. @maj@, @min@, or @9@.
 pShorthand :: Parser Shorthand
 {-# INLINE pShorthand #-}
@@ -177,6 +147,7 @@ pRoot :: Parser Root
 pRoot = (flip Note) <$> pDiaNat <*> pAccidental
 
 pDiaNat :: Parser DiatonicNatural
+{-# INLINE pDiaNat #-}
 pDiaNat =    A  <$ pSym 'A'
          <|> B  <$ pSym 'B'
          <|> C  <$ pSym 'C'

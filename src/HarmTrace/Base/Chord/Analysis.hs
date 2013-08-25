@@ -1,5 +1,4 @@
 {-# OPTIONS_GHC -Wall             #-}
-
 --------------------------------------------------------------------------------
 -- |
 -- Module      :  HarmTrace.Base.MusicRep
@@ -10,7 +9,7 @@
 -- Stability   :  experimental
 -- Portability :  non-portable
 --
--- Summary: 
+-- Summary: Analyses and transforms musical chords
 --------------------------------------------------------------------------------
 
 module HarmTrace.Base.Chord.Analysis (
@@ -25,18 +24,14 @@ module HarmTrace.Base.Chord.Analysis (
   , toMajMin
   , toClassType
 
-  -- * Interval classes
-  , toIntervalClss  
-  , intervalToPitch
-  , toChord
   -- * Scale degree transposition
   , transposeRoot
   , transposeSD
   , toChordDegree
   , toScaleDegree
+  , intervalToPitch
   , icToInterval
-  -- ** Classes
-  , Diatonic
+  , toChord
   ) where
   
 import HarmTrace.Base.Chord.Datatypes
@@ -44,7 +39,7 @@ import HarmTrace.Base.Chord.PitchClass
 import HarmTrace.Base.Chord.Intervals
 import HarmTrace.Base.Chord.Internal
 
-import Data.IntSet                ( IntSet, toAscList, member, (\\) )
+import Data.IntSet                     ( toAscList, member, (\\) )
   
 --------------------------------------------------------------------------------
 -- Transformation and analysis of chords
@@ -73,8 +68,6 @@ analyseDegClassType degs =
        (NoThird,  _        , _     ) -> NoClass
 
 
-       
-       
 -- | Categorises a 'Shorthand' into a 'ClassType'.
 shToClassType :: Shorthand -> ClassType
 shToClassType Maj     = MajClass
@@ -118,6 +111,8 @@ triadToSh t = case t of
                  DimTriad -> Dim 
                  NoTriad  -> None
 
+-- | Analyses the structure of an 'IntSet' and returns an appropriate 
+-- 'ShortHand', if possible
 analyseTetra :: IntSet -> Shorthand
 analyseTetra is = case (analyseTriad is, analyseSevth is) of
                     (MajTriad, MinSev) -> Sev
@@ -217,8 +212,6 @@ shToTriad Maj13    = MajTriad
 shToTriad Thirteen = MajTriad
 
 
-
-      
 -- | Converts a 'Shorthand' to a 'Mode'
 toMode :: Triad -> Mode     
 toMode MajTriad = MajMode

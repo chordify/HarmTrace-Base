@@ -30,7 +30,7 @@ library
                        HarmTrace.Base.Parse.ChordParser, 
                        HarmTrace.Base.MusicTime
   
-  other-modules        HarmTrace.Base.Chord.Internal
+  other-modules:       HarmTrace.Base.Chord.Internal
   
   hs-source-dirs:      src  
   

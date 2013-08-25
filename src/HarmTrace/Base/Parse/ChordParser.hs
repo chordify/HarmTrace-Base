@@ -3,7 +3,7 @@
 
 --------------------------------------------------------------------------------
 -- |
--- Module      :  HarmTrace.Base.Parsing
+-- Module      :  HarmTrace.Base.Parse.ChordParser
 -- Copyright   :  (c) 2012--2013 W. Bas de Haas and Jose Pedro Magalhaes
 -- License     :  LGPL-3
 --
@@ -15,16 +15,17 @@
 -- representations.
 --------------------------------------------------------------------------------
 
-module HarmTrace.Base.ChordTokenizer ( -- * Parsing (elements of) chords
-                                       pChord
-                                     , pShorthand
-                                     , pRoot
-                                     , pAdditions
-                                     , pAddition
-                                     , pKey
-                                     ) where
+module HarmTrace.Base.Parse.ChordParser ( 
+  -- * Parsing (elements of) chords
+    pChord
+  , pShorthand
+  , pRoot
+  , pAdditions
+  , pAddition
+  , pKey
+  ) where
 
-import HarmTrace.Base.Parsing
+import HarmTrace.Base.Parse.General
 import HarmTrace.Base.Chord
 
 --------------------------------------------------------------------------------
@@ -124,6 +125,7 @@ pAddition = (Add   <$>             pIntNote)
         <|> (NoAdd <$> (pSym '*'*> pIntNote))
         <?> "Addition"
 
+-- | Parses an 'Interval'
 pIntNote :: Parser Interval
 pIntNote = Note <$> pAccidental <*> pInterval
         

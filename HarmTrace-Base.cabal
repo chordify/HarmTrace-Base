@@ -25,9 +25,10 @@ library
                        HarmTrace.Base.Chord.Analysis,
                        HarmTrace.Base.Chord.PitchClass,
                        HarmTrace.Base.Chord.Intervals,
-                       HarmTrace.Base.Parsing, 
-                       HarmTrace.Base.MusicTime,  
-                       HarmTrace.Base.ChordTokenizer
+                       HarmTrace.Base.Parse, 
+                       HarmTrace.Base.Parse.General, 
+                       HarmTrace.Base.Parse.ChordParser, 
+                       HarmTrace.Base.MusicTime
   
   other-modules        HarmTrace.Base.Chord.Internal
   

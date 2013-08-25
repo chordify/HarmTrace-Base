@@ -3,7 +3,7 @@
 
 --------------------------------------------------------------------------------
 -- |
--- Module      :  HarmTrace.Base.Parsing
+-- Module      :  HarmTrace.Base.Parse.General
 -- Copyright   :  (c) 2012--2013 W. Bas de Haas and Jose Pedro Magalhaes
 -- License     :  LGPL-3
 --
@@ -16,26 +16,26 @@
 --------------------------------------------------------------------------------
 
 
-module HarmTrace.Base.Parsing ( -- * Top level parsers 
-                                parseData
-                              , parseDataWithErrors
-                              , parseDataSafe
-                                -- * Some general parsers
-                              , pString
-                              , pLineEnd
-                              , pManyTill
-                                -- Re-exporting the uu-parsinglib
-                              , module Data.ListLike.Base
-                              , module Text.ParserCombinators.UU 
-                              , module Text.ParserCombinators.UU.Utils
-                              , module Text.ParserCombinators.UU.BasicInstances
-                              ) where
+module HarmTrace.Base.Parse.General ( -- * Top level parsers 
+    parseData
+  , parseDataWithErrors
+  , parseDataSafe
+    -- * Some general parsers
+  , pString
+  , pLineEnd
+  , pManyTill
+    -- Re-exporting the uu-parsinglib
+  , module Data.ListLike.Base
+  , module Text.ParserCombinators.UU 
+  , module Text.ParserCombinators.UU.Utils
+  , module Text.ParserCombinators.UU.BasicInstances
+  ) where
 
 import Text.ParserCombinators.UU
-import Text.ParserCombinators.UU.Utils hiding (pSpaces)
-import Text.ParserCombinators.UU.BasicInstances hiding (IsLocationUpdatedBy)
-import Data.ListLike.Base (ListLike)
-import Data.List (intersperse)
+import Text.ParserCombinators.UU.Utils          hiding ( pSpaces )
+import Text.ParserCombinators.UU.BasicInstances hiding ( IsLocationUpdatedBy )
+import Data.ListLike.Base                              ( ListLike )
+import Data.List                                       ( intersperse )
 
 --------------------------------------------------------------------------------
 -- A collection of parsing functions used by parsers throughout the project
@@ -58,12 +58,12 @@ parseDataSafe p inp = case parseDataWithErrors p inp of
                             ++ (concat . intersperse "\n" . take 50 
                                        . map show $ err))
 
--- | Toplevel parser that ignores error-reporting, regardless of there were
+-- | Top-level parser that ignores error-reporting, regardless of there were
 -- error in the parse
 parseData :: (ListLike s a, Show a) => P (Str a s LineColPos) b -> s -> b
 parseData p inp = fst ( parseDataWithErrors p inp )
 
--- | Toplevel parser that returns both the result as well as a (possibly empty)
+-- | Top-level parser that returns both the result as well as a (possibly empty)
 -- list of error-corrections.
 parseDataWithErrors :: (ListLike s a, Show a) 
                     =>  P (Str a s LineColPos) b -> s -> (b, [Error LineColPos])

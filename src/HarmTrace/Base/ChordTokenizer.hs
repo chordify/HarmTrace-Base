@@ -27,7 +27,7 @@ module HarmTrace.Base.ChordTokenizer ( -- * Top level parser
                                      ) where
 
 import HarmTrace.Base.Parsing
-import HarmTrace.Base.MusicRep
+import HarmTrace.Base.Chord
 
 --------------------------------------------------------------------------------
 -- Top level Chord sequence parser

@@ -20,8 +20,12 @@ tested-with:         GHC == 7.4.1, GHC == 7.6.1
 cabal-version:       >=1.8
 
 library
-  exposed-modules:     HarmTrace.Base.Parsing, HarmTrace.Base.MusicTime, 
-                       HarmTrace.Base.MusicRep, HarmTrace.Base.ChordTokenizer
+  exposed-modules:     HarmTrace.Base.Chord,
+                       HarmTrace.Base.Chord.Datatypes,
+                       HarmTrace.Base.Chord.Analysis,
+                       HarmTrace.Base.Parsing, 
+                       HarmTrace.Base.MusicTime,  
+                       HarmTrace.Base.ChordTokenizer
         
   hs-source-dirs:      src  
   

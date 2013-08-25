@@ -70,7 +70,7 @@ module HarmTrace.Base.MusicTime (
 
 ) where
              
-import HarmTrace.Base.MusicRep
+import HarmTrace.Base.Chord
 import Data.List                      ( intercalate )
 
 -- | When reducing and expanding 'Timed' types there might be rounding

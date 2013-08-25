@@ -1,7 +1,7 @@
 {-# LANGUAGE FlexibleInstances                #-}
 module HarmTrace.Base.Tests where
 
-import HarmTrace.Base.MusicRep
+import HarmTrace.Base.Chord
 import HarmTrace.Base.Parsing
 import HarmTrace.Base.ChordTokenizer
 import Test.QuickCheck

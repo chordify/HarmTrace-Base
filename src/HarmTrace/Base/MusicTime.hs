@@ -18,29 +18,13 @@
 --------------------------------------------------------------------------------
 
 module HarmTrace.Base.MusicTime (
-  
-  -- * Datatypes
-  -- ** Types for representing Chords and their probabilities
-    ChordAnnotation 
-  , ProbChordSeg (..)
-  , ProbChord (..)
-  , ChordCand (..)
-  
+   
+   NumData
   -- ** Representing musical time
   , Timed (..)
   , Beat (..)
   , BarTime (..)
   , BarTimeTrackData 
-  , NumData 
-  
-  -- ** Representing raw audio data 
-  , AudioFeat (..)
-  , ChordinoData 
-  , ChordinoLine (..)
-  , KeyStrengthData 
-  , BeatTrackerData 
-  , BeatChroma 
-  , ChordStruct 
 
   -- * Functions
   -- ** Data access
@@ -55,13 +39,10 @@ module HarmTrace.Base.MusicTime (
   
   -- ** Type conversion and other utilities
   -- , fromDurations
-  , getBeatTrack
   , concatTimed
   , splitTimed
   , nextBeat
   , prevBeat 
-  , updateTPChord
-  , dropProb
   , dropTimed
   , timeStamp
   , beat 
@@ -70,7 +51,6 @@ module HarmTrace.Base.MusicTime (
 
 ) where
              
-import HarmTrace.Base.Chord
 import Data.List                      ( intercalate )
 
 -- | When reducing and expanding 'Timed' types there might be rounding
@@ -80,6 +60,7 @@ import Data.List                      ( intercalate )
 roundingError :: NumData 
 roundingError = 0.0001 -- = one milisecond  
 
+
 -- | A type synonym is defined for our main numerical representation, this 
 -- allows us to easily change the precision.
 type NumData = Double
@@ -88,9 +69,6 @@ type NumData = Double
 -- High-level structure
 --------------------------------------------------------------------------------
 
--- | A chord annotation consists of a
--- list with chords and segment boundaries.
-type ChordAnnotation = [Timed ProbChord]
 
 -- | A datatype that wraps around an (musical) datatype, adding information 
 -- about the musical time to this datatype. Musical time is stored as 
@@ -103,28 +81,6 @@ data Timed a = Timed { -- | Returns the contained datatype
                              , getTimeStamps :: [BarTime]
                              } deriving (Functor, Show, Eq)
 
--- | Clustering 'ProbChord's in a collection of chords that share a key
-data ProbChordSeg = Segment { segKey    :: Key 
-                            , segChords :: [Timed [ProbChord]] 
-                            } deriving (Show, Eq)
-                            
-  
--- | Combines a 'ChordLabel' with a probability.
-data ProbChord = ProbChord { chordLab :: ChordLabel
-                           , prob :: NumData
-                           }
-
--- | A chord candidate: an intermediate datatype that matches shorthand, 
--- chord structure and root note (plus inversion)
-data ChordCand a = ChordCand { originalRootCC   :: Root
-                             , inversionRootCC  :: Root
-                             , shorthardCC      :: Shorthand
-                             , chordStructCC    :: a 
-                             } deriving (Show, Eq, Functor)
-
--- | A chord template is list of 'NumData's
-type ChordStruct = [NumData] 
-
 -- | For now, we fix the number of available beats to four, because this is also
 -- hard-coded into the bar and beat-tracker.
 data Beat = One | Two | Three | Four | NoBeat deriving (Eq, Enum)
@@ -133,12 +89,6 @@ data Beat = One | Two | Three | Four | NoBeat deriving (Eq, Enum)
 -- Instances of high-level data structure
 --------------------------------------------------------------------------------
 
--- TODO to be replaced by a deriving instance
-instance Eq (ProbChord) where
-  a == b = chordLab a == chordLab b
-  
-instance Show (ProbChord) where
-  show (ProbChord c p) = show c ++ ':' : show p
   
 instance Show Beat where
   show One   = "1"
@@ -156,35 +106,6 @@ instance Show BarTime where
 -- numerical data representation
 --------------------------------------------------------------------------------
 
--- | Groups the three types of VAMP plug-in data: 'ChordinoData', 
--- 'BarTimeTrackData', and 'KeyStrengthData'. See for more information:
---
--- * <http://www.vamp-plugins.org>
---
--- * <http://isophonics.net/nnls-chroma>
---
--- * <http://omras2.org/SonicAnnotator>
-data AudioFeat = AudioFeat { getChroma      :: ChordinoData 
-                           , getBeats       :: BarTimeTrackData
-                           , getKeys        :: KeyStrengthData 
-                           , getAudioFeatId :: FilePath}
-
-type ChordinoData = [ChordinoLine]  
-
--- | Represents two chroma features and a time stamp. 
-data ChordinoLine = ChordinoLine -- TODO remove useless type synonym
-  { 
-  -- | Returns the time stamp of the chroma features
-    time ::  NumData 
-  -- | Returns the bass chroma feature
-  , bass :: [NumData]   -- each of the lists has always 12 elements 
-  -- | Returns the treble chroma feature
-  , treb :: [NumData]   -- A, Bb, B, C, Db, D, Eb, E, F, F#, G, Ab 
-  } deriving (Eq, Show) -- and is shifted 3 positions to match C, Db, .., B
-  
-type KeyStrengthData = ChordinoData  
-
-type BeatTrackerData = [NumData]
 
 -- TODO Rename to BeatTime
 -- | Represents a musical time stamp, which is a 'NumData' possibly augmented
@@ -193,8 +114,6 @@ data BarTime = BarTime NumData Beat
              | Time    NumData      deriving Eq
 
 type BarTimeTrackData = [BarTime]
-
-type BeatChroma = Timed [ChordinoLine] -- one list per beat
 
 -- we compare based on the timestamp only
 instance Ord BarTime where
@@ -261,10 +180,6 @@ timeComp a b
  | a < (b - roundingError) = LT
  | otherwise               = EQ
 
--- | Converts  'BarTimeTrackData' into 'BeatTrackerData'
-getBeatTrack :: BarTimeTrackData -> BeatTrackerData
-getBeatTrack = map timeStamp
-
 -- | wraps a datatype in 'Timed'
 setData :: Timed a -> b -> Timed b
 setData td d = td {getData = d}
@@ -314,17 +229,6 @@ nextBeat b    = succ b
 -- | returns the previous 'Beat', similar to 'prevBeat'.
 prevBeat One  = Four
 prevBeat b    = pred b
-
--- | Updates transforms ChordLabel wrapped in a 'ProbChord' and 'Timed'
-updateTPChord :: (ChordLabel -> ChordLabel) -> Timed ProbChord 
-              -> Timed ProbChord
-updateTPChord f = fmap (update f) where
-  update g (ProbChord c p) = ProbChord (g c) p
-
--- | drops the probabilties paired with chordlabels (in a list of 'ProbChord's)
--- and returns a list of 'ChordLabel's
-dropProb :: [Timed ProbChord] -> [Timed ChordLabel]
-dropProb = map (fmap chordLab)
 
 -- | drops the time (with or without 'Beat') information of a list 
 -- 'Timed' data structure 

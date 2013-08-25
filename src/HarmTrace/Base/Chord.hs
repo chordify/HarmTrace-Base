@@ -1,3 +1,17 @@
+{-# OPTIONS_GHC -Wall             #-}
+--------------------------------------------------------------------------------
+-- |
+-- Module      :  HarmTrace.Base.Chord
+-- Copyright   :  (c) 2013 W. Bas de Haas and Jose Pedro Magalhaes
+-- License     :  LGPL-3
+--
+-- Maintainer  :  bas@chordify.net, dreixel@chordify.net 
+-- Stability   :  experimental
+-- Portability :  non-portable
+--
+-- Summary: An interface to all the sub modules of HarmTrace.Base.Chord 
+--------------------------------------------------------------------------------
+
 module HarmTrace.Base.Chord (
     module HarmTrace.Base.Chord.Datatypes  
   , module HarmTrace.Base.Chord.Analysis  

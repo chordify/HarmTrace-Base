@@ -31,7 +31,7 @@ import HarmTrace.Base.Chord.Intervals
 import HarmTrace.Base.Chord.Internal
 
 import Data.Binary                ( Binary )
-import Data.IntSet                ( IntSet, fromList, union )
+import Data.IntSet                ( fromList, union )
 import qualified Data.IntSet as S ( map )
 import GHC.Generics               ( Generic )
 

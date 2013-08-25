@@ -1,5 +1,4 @@
 {-# OPTIONS_GHC -Wall             #-}
-
 --------------------------------------------------------------------------------
 -- |
 -- Module      :  HarmTrace.Base.Chord.Intervals
@@ -10,10 +9,21 @@
 -- Stability   :  experimental
 -- Portability :  non-portable
 --
--- Summary: 
+-- Summary: We can represent a chord as a set of intervals relative to the 
+-- root of the chord.
 --------------------------------------------------------------------------------
 
-module HarmTrace.Base.Chord.Intervals where
+module HarmTrace.Base.Chord.Intervals (
+  -- * Interval Conversion
+    icToInterval
+  , toIntervalClss
+  -- * Creating Interval Sets
+  , IntSet
+  , toIntSet
+  -- * Utilities
+  , addToIntSet
+  , shToIntSet
+  ) where
 
 import HarmTrace.Base.Chord.Datatypes
 import HarmTrace.Base.Chord.Internal
@@ -104,4 +114,6 @@ shToIntSet Eleven  = insert 17 (shToIntSet Nin   ) -- ++ [Note Nat I11]
 shToIntSet Min13   = insert 21 (shToIntSet Min11 ) -- ++ [Note Nat I13]
 shToIntSet Maj13   = insert 21 (shToIntSet Maj9  ) -- ++ [Note Nat I13]
 shToIntSet Thirteen= insert 21 (shToIntSet Eleven) -- ++ [Note Nat I13]
+     
+     
      

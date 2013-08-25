@@ -15,15 +15,8 @@
 
 module HarmTrace.Base.Chord.Analysis (
   -- * Analysis
-  -- ** Sets
-
-    IntSet -- ^ Interval Set
-  
-  -- ** Intervals
-  , toIntSet
-  , addToIntSet
   -- ** Triads and Sevenths
-  , analyseTriad
+    analyseTriad
   , analyseTetra
   , toTriad
   , toMajMinChord
@@ -298,14 +291,11 @@ transpose ns n sem = ns !! ((sem + (toPitchClass n)) `mod` 12)
 intervalToPitch :: Root -> Interval -> Root
 intervalToPitch r = pcToRoot . intValToPitchClss r
 
-
-  
+-- | Given an 'IntSet' (Interval Set), a 'Root' 'Note' and an optional 
+-- bass 'Interval', returns a 'Chord' 
 toChord :: Root -> IntSet -> Maybe Interval -> Chord Root
 toChord r is mi = Chord r sh add (maybe (Note Nat I1) id mi)
  
  where add = map (Add . icToInterval) $ toAscList (is \\ shToIntSet sh)
-       sh  = analyseTetra is
-
-
-
+       sh  = analyseTetra is     
 

@@ -43,7 +43,8 @@ module HarmTrace.Base.Chord.Datatypes (
   -- ** Derived types for classification of chords
   , ClassType (..)
   , Triad (..)
-  -- * Tests
+  -- * Tests & Utilities
+  , shortChord
   , isNoneChord
   , isAddition
   ) where
@@ -262,6 +263,10 @@ instance Show Triad where
 --------------------------------------------------------------------------------
 -- Tests     
 --------------------------------------------------------------------------------
+
+-- | A Constructor for a simple chord based on a 'Root' and 'Shorthand' only
+shortChord :: Root -> Shorthand -> ChordLabel
+shortChord r sh = Chord r sh [] (Note Nat I1)
 
 -- | Returns True if the 'ChordLabel' is not a chord, and False otherwise 
 isNoneChord :: ChordLabel -> Bool

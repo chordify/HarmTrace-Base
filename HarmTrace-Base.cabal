@@ -23,10 +23,14 @@ library
   exposed-modules:     HarmTrace.Base.Chord,
                        HarmTrace.Base.Chord.Datatypes,
                        HarmTrace.Base.Chord.Analysis,
+                       HarmTrace.Base.Chord.PitchClass,
+                       HarmTrace.Base.Chord.Intervals,
                        HarmTrace.Base.Parsing, 
                        HarmTrace.Base.MusicTime,  
                        HarmTrace.Base.ChordTokenizer
-        
+  
+  other-modules        HarmTrace.Base.Chord.Internal
+  
   hs-source-dirs:      src  
   
   build-depends:       base >= 4.4 && < 4.7, 

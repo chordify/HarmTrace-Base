@@ -14,8 +14,8 @@
 -- Summary: 
 --------------------------------------------------------------------------------
 module HarmTrace.Base.Chord.PitchClass (
-    PCSet  -- ^ Pitch Class Set
-  , pc     -- ^ Unwraps a 'PCSet'
+    PCSet  -- Pitch Class Set
+  , pc     -- Unwraps a 'PCSet'
     -- * Pitch classes
   , toPitchClass
   , toPitchClasses

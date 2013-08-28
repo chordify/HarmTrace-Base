@@ -126,8 +126,6 @@ type Root = Note DiatonicNatural
 
 -- | The seven diatonic naturals
 data DiatonicNatural =  C | D | E | F | G | A | B 
-                     -- |  N -- ^ for no root
-                     -- |  X -- ^ for representing unknown roots (used in MIREX)
   deriving (Show, Eq, Enum, Ord, Bounded, Generic)
   
 -- | Intervals for additional chord notes    

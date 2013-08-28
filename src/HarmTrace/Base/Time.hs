@@ -17,7 +17,7 @@
 -- from an arbitrary audio source.
 --------------------------------------------------------------------------------
 
-module HarmTrace.Base.MusicTime (
+module HarmTrace.Base.Time (
    
    NumData
   -- ** Representing musical time

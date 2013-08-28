@@ -28,7 +28,8 @@ library
                        HarmTrace.Base.Parse, 
                        HarmTrace.Base.Parse.General, 
                        HarmTrace.Base.Parse.ChordParser, 
-                       HarmTrace.Base.MusicTime
+                       HarmTrace.Base.Time
+                       HarmTrace.Base.Tests
   
   other-modules:       HarmTrace.Base.Chord.Internal
   

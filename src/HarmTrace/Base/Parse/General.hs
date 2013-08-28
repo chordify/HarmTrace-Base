@@ -25,7 +25,6 @@ module HarmTrace.Base.Parse.General ( -- * Top level parsers
   , pLineEnd
   , pManyTill
     -- Re-exporting the uu-parsinglib
-  , module Data.ListLike.Base
   , module Text.ParserCombinators.UU 
   , module Text.ParserCombinators.UU.Utils
   , module Text.ParserCombinators.UU.BasicInstances

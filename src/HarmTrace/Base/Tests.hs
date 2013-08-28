@@ -1,11 +1,23 @@
 {-# LANGUAGE FlexibleInstances                #-}
+--------------------------------------------------------------------------------
+-- |
+-- Module      :  HarmTrace.Base.Chord.Tests
+-- Copyright   :  (c) 2013 W. Bas de Haas and Jose Pedro Magalhaes
+-- License     :  LGPL-3
+--
+-- Maintainer  :  bas@chordify.net, dreixel@chordify.net 
+-- Stability   :  experimental
+-- Portability :  non-portable
+--
+-- Summary: Defines some property tests for testing the HarmTrace.Base package
+--------------------------------------------------------------------------------
 module HarmTrace.Base.Tests where
 
 import HarmTrace.Base.Chord
-import HarmTrace.Base.Parsing
-import HarmTrace.Base.ChordTokenizer
+import HarmTrace.Base.Parse (parseDataSafe, pChord)
+
 import Test.QuickCheck
-import Data.List (nub)
+-- import Data.List (nub)
 
 instance Arbitrary DiatonicNatural where
   arbitrary = elements . enumFrom $ C
@@ -18,10 +30,10 @@ instance Arbitrary Accidental where
 
 
 instance Arbitrary Root where
-  arbitrary = elements . map toRoot $ [0..11]
+  arbitrary = elements . map pcToRoot $ [0..11]
   
 instance Arbitrary Interval where
-  arbitrary = choose (0,21) >>= return . toInterval  
+  arbitrary = choose (0,21) >>= return . icToInterval  
   
 -- instance Arbitrary a => Arbitrary (Note a) where
   -- arbitrary = do nat <- arbitrary
@@ -46,16 +58,16 @@ instance Arbitrary a => Arbitrary (Chord a) where
                  return (Chord r sh [] b ) -- (Note Nat I1))
                  
 pcProp :: Root -> Bool
-pcProp r = (toPitchClass r) == toPitchClass (toRoot (toPitchClass r))
+pcProp r = (toPitchClass r) == toPitchClass (pcToRoot (toPitchClass r))
 
 pcSetProp :: Chord Root -> Bool
-pcSetProp c = c == toChord (chordRoot c) (toIntValList c) (Just $ chordBass c)
+pcSetProp c = c == toChord (chordRoot c) (toIntSet c) (Just $ chordBass c)
 
 intervalProp :: Interval -> Bool
-intervalProp i = i == toInterval (toIntervalClss i)
+intervalProp i = i == icToInterval (toIntervalClss i)
 
 intervalProp2 :: Int -> Bool
-intervalProp2 i = i == toIntervalClss (toInterval i)
+intervalProp2 i = i == toIntervalClss (icToInterval i)
 
 enHarEqProp :: Root -> Bool
 enHarEqProp a = a &== a
@@ -63,8 +75,9 @@ enHarEqProp a = a &== a
 parseProp :: Chord Root -> Bool
 parseProp c = parseDataSafe pChord (show c) == c
 
-c :: Chord Root
-c = Chord rb Min [Add (Note Sh I6)] (Note Nat I1)
+{-
+cb :: Chord Root
+cb = Chord rb Min [Add (Note Sh I6)] (Note Nat I1)
 
 cs :: Chord Root
 cs = Chord rd HDim7 [] (Note Nat I1)
@@ -77,3 +90,4 @@ rc = Note Nat C
 
 rb :: Root
 rb= Note Nat B
+-}

@@ -18,10 +18,14 @@ module HarmTrace.Base.Chord.PitchClass (
   , pc     -- Unwraps a 'PCSet'
     -- * Pitch classes
   , toPitchClass
-  , toPitchClasses
-  , intValToPitchClss
-  , intSetToPC
   , pcToRoot
+    -- * Pitch classes applied to chords
+  , toPitchClasses
+  , rootPC
+  , bassPC
+    -- * Pitch classes applied to interval sets
+  , intValToPitchClss
+  , intSetToPC  
   -- * Enharmonic Equivalence
   , EnHarEq (..)
   -- * Diatonic Class
@@ -33,7 +37,7 @@ import HarmTrace.Base.Chord.Intervals
 import HarmTrace.Base.Chord.Internal
 
 import Data.Binary                ( Binary )
-import Data.IntSet                ( fromList, union )
+import Data.IntSet                ( IntSet, fromList, union )
 import qualified Data.IntSet as S ( map )
 import GHC.Generics               ( Generic )
 
@@ -54,12 +58,7 @@ toPitchClass (Note m p)
       where ix = fromEnum p
             noNegatives s | s < 0     = 12 + s
                           | otherwise = s
-                          
--- | Similar to 'toIntValList' but returns 'Int' pitch classes and includes the
--- 'Root' note of the the 'Chord'.
-toPitchClasses :: ChordLabel -> PCSet
-toPitchClasses c = intSetToPC ivs . chordRoot $ c
-  where ivs = toIntSet c `union` fromList [0, toIntervalClss (chordBass c)]
+
 
 -- | Transforms an interval set to and a root into a 'PCSet'
 intSetToPC :: IntSet -> Root -> PCSet
@@ -82,8 +81,20 @@ pcToRoot i
   | 0 <= i && i <= 11 = roots !! i
   | otherwise         = error ("HarmTrace.Base.MusicRep.toRoot " ++
                                "invalid pitch class: " ++ show i)
-                               
+                          
+-- | Similar to 'toIntValList' but returns 'Int' pitch classes and includes the
+-- 'Root' and the bass 'Note' of the the 'Chord'.
+toPitchClasses :: ChordLabel -> PCSet
+toPitchClasses c = intSetToPC ivs . chordRoot $ c
+  where ivs = toIntSet c `union` fromList [0, toIntervalClss (chordBass c)] 
   
+-- | A shortcut applying 'intValToPitchClss' to a 'Chord'
+bassPC :: ChordLabel -> Int
+bassPC c = intValToPitchClss (chordRoot c) (chordBass c)
+
+-- | A shortcut applying 'toPitchClass' to a 'Chord'
+rootPC :: ChordLabel -> Int  
+rootPC = toPitchClass . chordRoot
 --------------------------------------------------------------------------------
 -- Classes
 --------------------------------------------------------------------------------

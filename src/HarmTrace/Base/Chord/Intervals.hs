@@ -18,7 +18,7 @@ module HarmTrace.Base.Chord.Intervals (
     icToInterval
   , toIntervalClss
   -- * Creating Interval Sets
-  , IntSet
+  -- , IntSet
   , toIntSet
   -- * Utilities
   , addToIntSet

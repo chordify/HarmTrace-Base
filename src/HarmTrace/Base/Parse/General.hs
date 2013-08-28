@@ -28,6 +28,7 @@ module HarmTrace.Base.Parse.General ( -- * Top level parsers
   , module Text.ParserCombinators.UU 
   , module Text.ParserCombinators.UU.Utils
   , module Text.ParserCombinators.UU.BasicInstances
+  -- , module Data.ListLike.Base 
   ) where
 
 import Text.ParserCombinators.UU

@@ -39,7 +39,7 @@ import HarmTrace.Base.Chord.PitchClass
 import HarmTrace.Base.Chord.Intervals
 import HarmTrace.Base.Chord.Internal
 
-import Data.IntSet                     ( toAscList, member, (\\) )
+import Data.IntSet                     ( IntSet, toAscList, member, (\\) )
   
 --------------------------------------------------------------------------------
 -- Transformation and analysis of chords

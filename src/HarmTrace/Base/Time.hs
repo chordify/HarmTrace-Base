@@ -23,14 +23,13 @@ module HarmTrace.Base.Time (
   -- ** Representing musical time
   , Timed (..)
   , Beat (..)
-  , BarTime (..)
-  , BarTimeTrackData 
+  , BeatTime (..) 
 
   -- * Functions
   -- ** Data access
   , timed
   , timedBT
-  , getBarTime 
+  , getBeatTime 
   , getBeat 
   , onset
   , offset
@@ -72,13 +71,13 @@ type NumData = Double
 
 -- | A datatype that wraps around an (musical) datatype, adding information 
 -- about the musical time to this datatype. Musical time is stored as 
--- a list of 'BarTime' time stamps that can optionally be augmented
+-- a list of 'BeatTime' time stamps that can optionally be augmented
 -- with information about the 'Beat' position of the particular time stamp 
 -- inside the bar.
 data Timed a = Timed { -- | Returns the contained datatype 
                                getData :: a 
                                -- | Returns the list of TimeStamps
-                             , getTimeStamps :: [BarTime]
+                             , getTimeStamps :: [BeatTime]
                              } deriving (Functor, Show, Eq)
 
 -- | For now, we fix the number of available beats to four, because this is also
@@ -97,8 +96,8 @@ instance Show Beat where
   show Four  = "4"
   show NoBeat = "x"
 
-instance Show BarTime where
-  show (BarTime t bt) = '(' : show t ++ ", " ++ show bt ++ ")"
+instance Show BeatTime where
+  show (BeatTime t bt) = '(' : show t ++ ", " ++ show bt ++ ")"
   show (Time t)       = '(' : show t ++ ")"
 
     
@@ -110,13 +109,11 @@ instance Show BarTime where
 -- TODO Rename to BeatTime
 -- | Represents a musical time stamp, which is a 'NumData' possibly augmented
 -- with a 'Beat' denoting the position of the time stamp within a bar.
-data BarTime = BarTime NumData Beat
+data BeatTime = BeatTime NumData Beat
              | Time    NumData      deriving Eq
 
-type BarTimeTrackData = [BarTime]
-
 -- we compare based on the timestamp only
-instance Ord BarTime where
+instance Ord BeatTime where
   compare a b = compare (timeStamp a) (timeStamp b)
 
 --------------------------------------------------------------------------------
@@ -136,16 +133,16 @@ timed :: a -> NumData -> NumData -> Timed a
 timed d x y = Timed d [Time x, Time y]
 
 -- | alternative 'Timed' constructor
-timedBT :: a -> BarTime -> BarTime -> Timed a
+timedBT :: a -> BeatTime -> BeatTime -> Timed a
 timedBT d x y = Timed d [x, y]
 
--- | concatenates the 'BarTime' timestamps of two 'Timed's and 
+-- | concatenates the 'BeatTime' timestamps of two 'Timed's and 
 -- creates a new 'Timed' that stores the first argument. 
 concatTimed :: a -> Timed a -> Timed a -> Timed a
 concatTimed dat (Timed _ ta) (Timed _ tb) = 
   Timed dat (mergeBeatTime ta tb) where
 
-  mergeBeatTime :: [BarTime] -> [BarTime] -> [BarTime]
+  mergeBeatTime :: [BeatTime] -> [BeatTime] -> [BeatTime]
   mergeBeatTime [] b = b
   mergeBeatTime a [] = a
   mergeBeatTime a b = case timeComp (timeStamp . last $ a) 
@@ -185,28 +182,28 @@ setData :: Timed a -> b -> Timed b
 setData td d = td {getData = d}
 
 -- | Returns the start time stamp
-getBarTime :: Timed a -> BarTime
-getBarTime td = case getTimeStamps td of
-  []    -> error "HarmTrace.Base.MusicTime.getBarTime: no timestamps are stored"
+getBeatTime :: Timed a -> BeatTime
+getBeatTime td = case getTimeStamps td of
+  []    -> error "HarmTrace.Base.MusicTime.getBeatTime: no timestamps are stored"
   (h:_) -> h
 
 -- | Returns the start 'Beat'
 getBeat :: Timed a -> Beat
-getBeat = beat . getBarTime 
+getBeat = beat . getBeatTime 
 
--- | Returns the 'NumData' timestamp, given a 'BarTime'
-timeStamp :: BarTime -> NumData
-timeStamp (BarTime t _bt) = t
+-- | Returns the 'NumData' timestamp, given a 'BeatTime'
+timeStamp :: BeatTime -> NumData
+timeStamp (BeatTime t _bt) = t
 timeStamp (Time    t    ) = t  
 
--- | Returns the 'NumData' timestamp, given a 'BarTime'
-beat :: BarTime -> Beat
-beat (BarTime _t bt) = bt
+-- | Returns the 'NumData' timestamp, given a 'BeatTime'
+beat :: BeatTime -> Beat
+beat (BeatTime _t bt) = bt
 beat (Time    _t   ) = NoBeat
 
 -- | Returns the onset time stamp
 onset :: Timed a -> NumData
-onset = timeStamp . getBarTime 
+onset = timeStamp . getBeatTime 
 
 -- | Returns the offset time stamp
 offset :: Timed a -> NumData

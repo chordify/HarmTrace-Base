@@ -51,21 +51,23 @@ toIntervalClss n@(Note m i) =
                           ++ "interval class for " ++ show n)
 
 
--- | Transforms a Chord into a list of relative 'Interval's (i.e. 'Addition's,
--- without the root note).
+-- | Transforms a Chord into a list of relative intervals stored as an 'IntSet'
+-- without the root an bass note represented as the number of semitones above
+-- the root.
 -- 
--- >>> toIntValList (Chord (Note Nat C) HDim7 [Add (Note Sh I11)] 0 0)
--- [3b,5b,7b,11#]
+-- >>> toIntSet (Chord (Note Nat C) HDim7 [Add (Note Sh I11)] (Note Fl I3))
+-- fromList [3,6,10,18]
 --
--- >>> toIntValList (Chord (Note Nat C) Min13 [NoAdd (Note Nat I11)] 0 0)
--- [3b,5,7b,9,13]
+-- >>> toIntSet (Chord (Note Nat C) Min13 [NoAdd (Note Nat I11)] (Note Nat I1))
+-- fromList [3,7,10,14,21]
 --
--- >>> toIntValList (parseData pChord "D:7(b9)")
--- [3,5,7b,9b]
+-- >>> toIntSet (parseData pChord "D:7(b9)")
+-- fromList [4,7,10,13]
 --
 toIntSet :: Chord a -> IntSet
 toIntSet (Chord  _r sh [] _b) = shToIntSet sh
-toIntSet (Chord  _r sh a  _b) = shToIntSet sh `union` addToIntSet a
+toIntSet (Chord  _r sh a  _b) = let (add, rm) = partition isAddition a
+                                in (shToIntSet sh `union` toSet add) \\ toSet rm
 toIntSet _ = error ("HarmTrace.Base.MusicRep.toIntValList: cannot create" ++
                         "interval list for N or X")
 
@@ -73,15 +75,16 @@ toIntSet _ = error ("HarmTrace.Base.MusicRep.toIntValList: cannot create" ++
 -- structure of the ('Addition' list of the) 'Chord'
 addToIntSet :: [Addition] -> IntSet 
 addToIntSet add = toSet adds \\ toSet remv
-
   where (adds, remv) = partition isAddition add
 
-        toSet :: [Addition] -> IntSet
-        toSet = fromList . map (toIntervalClss . getInt)
-        
-        getInt :: Addition -> Interval
-        getInt (NoAdd i) = i
-        getInt (Add   i) = i
+-- not exported: strips the interval from a list of Additions regardless of
+-- it is a Add or NoAdd
+toSet :: [Addition] -> IntSet
+toSet = fromList . map (toIntervalClss . getInt) where
+
+  getInt :: Addition -> Interval
+  getInt (NoAdd i) = i
+  getInt (Add   i) = i
         
   
 -- | Expands a 'Shorthand' to its list of degrees

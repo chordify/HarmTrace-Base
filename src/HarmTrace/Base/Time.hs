@@ -34,6 +34,7 @@ module HarmTrace.Base.Time (
   , onset
   , offset
   , duration
+  , timeComp
   , setData
   
   -- ** Type conversion and other utilities

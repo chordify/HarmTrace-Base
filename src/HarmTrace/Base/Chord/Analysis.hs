@@ -136,7 +136,10 @@ analyseTetra is = case (analyseTriad is, analyseSevth is) of
 -- >>> toTriad (Chord (Note Nat C) Min [NoAdd (Note Fl I3)] 0 0)
 -- NoTriad
 --
+-- N.B. 'toTriad' throws an error when applied to a 'NoChord' or 'UndefChord'.
 toTriad :: Chord a -> Triad
+toTriad NoChord    = error "toTriad: a NoChord has no triad to analyse"
+toTriad UndefChord = error "toTriad: a UndefChord has no triad to analyse"
 toTriad (Chord  _r  sh [] _b) = shToTriad sh -- there are no additions
 -- combine the degrees and analyse them. N.B., also NoAdd degrees are resolved
 toTriad c = analyseTriad . toIntSet $ c
@@ -229,14 +232,15 @@ toMajMin DimTriad = MinClass
 toMajMin NoTriad  = NoClass
 
 -- | applies 'toMajMin' to a 'Chord', in case there is no triad, e.g. 
--- @:sus4@ or @:sus2@, the 'None' 'Shorthand' is chosen. Also, chord
--- additions are removed.
+-- @:sus4@ or @:sus2@, an 'UndefChord' is returned. Also, chord
+-- additions are removed. 'NoChord's and 'UndefChord's are returned untouched.
 toMajMinChord :: ChordLabel -> ChordLabel
-toMajMinChord c = c {chordShorthand = majMinSh, chordAdditions = []}
-  where majMinSh = case toMajMin (toTriad c) of
-                     MajClass -> Maj
-                     MinClass -> Min
-                     NoClass  -> None
+toMajMinChord NoChord    = NoChord
+toMajMinChord UndefChord = UndefChord
+toMajMinChord c = case toMajMin (toTriad c) of
+                     MajClass -> c {chordShorthand = Maj, chordAdditions = []}
+                     MinClass -> c {chordShorthand = Min, chordAdditions = []}
+                     NoClass  -> UndefChord
                      -- catch all: cannot happen, see toMajMin
                      _        -> error ("HarmTrace.Base.MusicRep.toMajMinChord"
                                         ++ " unexpected chord " ++ show c)

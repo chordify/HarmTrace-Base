@@ -1,4 +1,5 @@
-{-# LANGUAGE FlexibleInstances                #-}
+{-# LANGUAGE FlexibleInstances    #-}
+{-# OPTIONS_GHC -fno-warn-orphans #-}
 --------------------------------------------------------------------------------
 -- |
 -- Module      :  HarmTrace.Base.Chord.Tests

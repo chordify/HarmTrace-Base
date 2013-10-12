@@ -41,7 +41,7 @@ library
                        binary >= 0.6.4, 
                        ghc-prim >= 0.2,
                        containers >= 0.5.0.0,
-                       QuickCheck >= 1.0 && < 2.0
+                       QuickCheck >= 1.0 && < 2.1
   
   ghc-options:         -Wall
                        -O2

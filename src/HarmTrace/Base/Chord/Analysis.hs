@@ -228,7 +228,9 @@ toMajMin AugTriad = MajClass
 toMajMin DimTriad = MinClass
 toMajMin NoTriad  = NoClass
 
--- | applies 'toMajMin' to a 'Chord'
+-- | applies 'toMajMin' to a 'Chord', in case there is no triad, e.g. 
+-- @:sus4@ or @:sus2@, the 'None' 'Shorthand' is chosen. Also, chord
+-- additions are removed.
 toMajMinChord :: ChordLabel -> ChordLabel
 toMajMinChord c = c {chordShorthand = majMinSh, chordAdditions = []}
   where majMinSh = case toMajMin (toTriad c) of

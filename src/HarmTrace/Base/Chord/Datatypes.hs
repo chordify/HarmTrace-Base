@@ -171,7 +171,7 @@ instance Show Mode where
 instance Show ChordLabel where
   show NoChord    = "N"
   show UndefChord = "X"
-  show (Chord r None []  b) = show r ++ ":1/" ++ show b
+  show (Chord r None []  b) = show r ++ ":1" ++ showIv b
   show (Chord r sh   add b) = show r ++ ':' : show sh ++ showAdd add ++ showIv b
   -- show (Chord r None []  _loc _d) = show r ++ (if isRoot r then ":1" else "")
   -- show (Chord r None add _loc _d) = show r ++ ':' : showAdd add

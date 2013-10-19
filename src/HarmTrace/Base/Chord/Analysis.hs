@@ -237,9 +237,9 @@ toMajMin NoTriad  = NoClass
 toMajMinChord :: ChordLabel -> ChordLabel
 toMajMinChord NoChord    = NoChord
 toMajMinChord UndefChord = UndefChord
-toMajMinChord c = case toMajMin (toTriad c) of
-                     MajClass -> c {chordShorthand = Maj, chordAdditions = []}
-                     MinClass -> c {chordShorthand = Min, chordAdditions = []}
+toMajMinChord c@(Chord r _ _ b) = case toMajMin (toTriad c) of
+                     MajClass -> Chord r Maj [] b
+                     MinClass -> Chord r Min [] b
                      NoClass  -> UndefChord
                      -- catch all: cannot happen, see toMajMin
                      _        -> error ("HarmTrace.Base.MusicRep.toMajMinChord"
@@ -255,7 +255,7 @@ toMajMinChord c = case toMajMin (toTriad c) of
 toChordDegree :: Key -> ChordLabel -> ChordDegree
 toChordDegree k (Chord r sh a b) = Chord (toScaleDegree k r) sh a b
 toChordDegree _ c = 
-  error("HarmTrace.Base.MusicRep: cannot create scale degree for " ++ show c)
+  error("HarmTrace.Base.Chord.Analysis: cannot create scale degree for " ++ show c)
     
 -- | Transformes a absolute 'Root' 'Note' into a relative 'ScaleDegree', given
 -- a 'Key'.

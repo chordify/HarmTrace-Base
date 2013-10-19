@@ -91,35 +91,30 @@ pcToRoot i
 -- 'Root' and the bass 'Note' of the the 'Chord'. 'toPitchClasses' throws an
 -- error when applied to a 'NoChord' or 'UndefChord'.
 toPitchClasses :: ChordLabel -> PCSet
-toPitchClasses NoChord    = err "toPitchClasses" NoChord
-toPitchClasses UndefChord = err "toPitchClasses" UndefChord
-toPitchClasses c          = intSetToPC ivs . chordRoot $ c
+toPitchClasses c = catchNoChord "Chord.PitchClass.toPitchClasses" 
+                                (intSetToPC ivs . chordRoot) c
+  
   where ivs = toIntSet c `union` fromList [0, toIntervalClss (chordBass c)] 
   
 -- | A short-cut applying 'intValToPitchClss' to a 'Chord'. 'bassPC' throws an
 -- error when applied to a 'NoChord' or 'UndefChord'.
 bassPC :: ChordLabel -> Int
-bassPC NoChord    = err "bassPC" NoChord
-bassPC UndefChord = err "bassPC" UndefChord
-bassPC c = intValToPitchClss (chordRoot c) (chordBass c)
+bassPC = catchNoChord "Chord.PitchClass.rootPC" bassPC' where
+  
+  bassPC' :: ChordLabel -> Int
+  bassPC' c = intValToPitchClss (chordRoot c) (chordBass c)
 
 -- | A short-cut applying 'toPitchClass' to a 'Chord'. 'rootPC'  throws an
 -- error when applied to a 'NoChord' or 'UndefChord'.
 rootPC :: ChordLabel -> Int  
-rootPC NoChord    = err "rootPC" NoChord
-rootPC UndefChord = err "rootPC" UndefChord
-rootPC c          = toPitchClass . chordRoot $ c
-
-err :: String -> ChordLabel -> a
-err s c =  error ( "HarmTrace.Base.PitchClass." ++ s 
-                ++ ": no pitch class for NoChord" ++ show c )
+rootPC = catchNoChord "Chord.PitchClass.rootPC" (toPitchClass . chordRoot)
 
 -- | Ignores the pitch spelling of a chord by applying 'pcToRoot' and 
 -- 'toPitchClass' to the root of a 'ChordLabel'.
 ignorePitchSpelling :: ChordLabel -> ChordLabel
 ignorePitchSpelling NoChord    = NoChord
 ignorePitchSpelling UndefChord = UndefChord
-ignorePitchSpelling c          = c { chordRoot = pcToRoot . rootPC $ c}
+ignorePitchSpelling c          = fmap (pcToRoot . toPitchClass) c
 --------------------------------------------------------------------------------
 -- Classes
 --------------------------------------------------------------------------------

@@ -313,11 +313,9 @@ discardBass (Chord r sh a _b) = Chord r sh a (Note Nat I1)
 -- In case of a 'ChordLabel' the second argument is applied to the third
 -- argument.
 catchNoChord :: Show a => String -> (Chord a -> b) ->  Chord a -> b
-catchNoChord s f c = 
-  let err = error ("HarmTrace.Base."++s++" applied to a NoChord or UndefChord")
-  in case c of
-       NoChord    -> err
-       UndefChord -> err
+catchNoChord s f c = case c of
+       NoChord    -> error ("HarmTrace.Base."++s++" applied to a NoChord")
+       UndefChord -> error ("HarmTrace.Base."++s++" applied to a UndefChord")
        _          -> f c
 
 --------------------------------------------------------------------------------

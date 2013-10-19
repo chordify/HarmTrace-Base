@@ -277,7 +277,6 @@ transpose :: Diatonic a => [Note a] -> Note a -> Int -> Note a
 transpose ns n sem = ns !! ((sem + (toPitchClass n)) `mod` 12)
 
 
-
 -- | Similar to 'toScaleDegree', an interval is transformed into an absolute
 -- 'Root' pitch, given another 'Root' that serves as a basis. 
 --  

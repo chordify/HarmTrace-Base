@@ -45,6 +45,7 @@ module HarmTrace.Base.Chord.Datatypes (
   , Triad (..)
   -- * Tests & Utilities
   , shortChord
+  , discardBass
   , isNoneChord
   , isAddition
   ) where
@@ -132,7 +133,8 @@ data DiatonicNatural =  C | D | E | F | G | A | B
 data Addition = Add   Interval
               | NoAdd Interval deriving (Eq, Ord, Generic)
 
--- | Diatonic major intervals used to denote 'Chord' 'Addition's
+-- | Diatonic major intervals used to denote 'Chord' 'Addition's and bass
+-- 'Interval's
 data IntNat = I1  | I2  | I3  | I4 | I5 | I6 | I7 | I8 | I9 | I10 
             | I11 | I12 | I13 
   deriving (Eq, Enum, Ord, Bounded, Generic)     
@@ -259,7 +261,7 @@ instance Show Triad where
   show NoTriad  = "NoTriad"
   
 --------------------------------------------------------------------------------
--- Tests     
+-- Utitilities     
 --------------------------------------------------------------------------------
 
 -- | A Constructor for a simple chord based on a 'Root' and 'Shorthand' only
@@ -276,6 +278,13 @@ isNoneChord _       = False
 isAddition :: Addition -> Bool
 isAddition (Add   _) = True
 isAddition (NoAdd _) = False
+
+-- | Discards a base note by replacing the bass 'Interval' by a 
+-- 'Note' 'Nat' 'I1'
+discardBass :: Chord a -> Chord a
+discardBass NoChord           = NoChord
+discardBass UndefChord        = UndefChord
+discardBass (Chord r sh a _b) = Chord r sh a (Note Nat I1)
 
 --------------------------------------------------------------------------------
 -- Binary instances

@@ -88,23 +88,38 @@ pcToRoot i
                                "invalid pitch class: " ++ show i)
                           
 -- | Similar to 'toIntSet' but returns 'Int' pitch classes and includes the
--- 'Root' and the bass 'Note' of the the 'Chord'.
+-- 'Root' and the bass 'Note' of the the 'Chord'. 'toPitchClasses' throws an
+-- error when applied to a 'NoChord' or 'UndefChord'.
 toPitchClasses :: ChordLabel -> PCSet
-toPitchClasses c = intSetToPC ivs . chordRoot $ c
+toPitchClasses NoChord    = err "toPitchClasses" NoChord
+toPitchClasses UndefChord = err "toPitchClasses" UndefChord
+toPitchClasses c          = intSetToPC ivs . chordRoot $ c
   where ivs = toIntSet c `union` fromList [0, toIntervalClss (chordBass c)] 
   
--- | A shortcut applying 'intValToPitchClss' to a 'Chord'
+-- | A short-cut applying 'intValToPitchClss' to a 'Chord'. 'bassPC' throws an
+-- error when applied to a 'NoChord' or 'UndefChord'.
 bassPC :: ChordLabel -> Int
+bassPC NoChord    = err "bassPC" NoChord
+bassPC UndefChord = err "bassPC" UndefChord
 bassPC c = intValToPitchClss (chordRoot c) (chordBass c)
 
--- | A shortcut applying 'toPitchClass' to a 'Chord'
+-- | A short-cut applying 'toPitchClass' to a 'Chord'. 'rootPC'  throws an
+-- error when applied to a 'NoChord' or 'UndefChord'.
 rootPC :: ChordLabel -> Int  
-rootPC = toPitchClass . chordRoot
+rootPC NoChord    = err "rootPC" NoChord
+rootPC UndefChord = err "rootPC" UndefChord
+rootPC c          = toPitchClass . chordRoot $ c
+
+err :: String -> ChordLabel -> a
+err s c =  error ( "HarmTrace.Base.PitchClass." ++ s 
+                ++ ": no pitch class for NoChord" ++ show c )
 
 -- | Ignores the pitch spelling of a chord by applying 'pcToRoot' and 
 -- 'toPitchClass' to the root of a 'ChordLabel'.
 ignorePitchSpelling :: ChordLabel -> ChordLabel
-ignorePitchSpelling c = c { chordRoot = pcToRoot . toPitchClass . chordRoot $ c}
+ignorePitchSpelling NoChord    = NoChord
+ignorePitchSpelling UndefChord = UndefChord
+ignorePitchSpelling c          = c { chordRoot = pcToRoot . rootPC $ c}
 --------------------------------------------------------------------------------
 -- Classes
 --------------------------------------------------------------------------------

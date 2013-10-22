@@ -44,6 +44,8 @@ module HarmTrace.Base.Time (
   , prevBeat 
   , dropTimed
   , timeStamp
+  , timeComp
+  , roundingError
   , beat 
   , pprint
   , prettyPrint
@@ -57,7 +59,7 @@ import Data.List                      ( intercalate )
 -- sets the acceptable rounding error that is used in the comparison of 
 -- time stamps (e.g. see 'timeComp')
 roundingError :: NumData 
-roundingError = 0.0001 -- = one milisecond  
+roundingError = 0.0001 -- = one millisecond  
 
 
 -- | A type synonym is defined for our main numerical representation, this 

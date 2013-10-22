@@ -11,7 +11,9 @@
 -- Stability   :  experimental
 -- Portability :  non-portable
 --
--- Summary: 
+-- Summary: this module provides some functions that transform notes and chords
+-- into pitch classes and pitch class sets. See for more info:
+-- <http://en.wikipedia.org/wiki/Pitch_class>
 --------------------------------------------------------------------------------
 module HarmTrace.Base.Chord.PitchClass (
     PCSet  -- Pitch Class Set
@@ -23,6 +25,7 @@ module HarmTrace.Base.Chord.PitchClass (
   , toPitchClasses
   , rootPC
   , bassPC
+  , ignorePitchSpelling
     -- * Pitch classes applied to interval sets
   , intValToPitchClss
   , intSetToPC  
@@ -43,7 +46,7 @@ import GHC.Generics               ( Generic )
 
 -- | We hide the constructors, such that a PCSet can only be constructed with
 -- 'toPitchClasses', this to overcome confusion between interval sets and
--- pitch class sets, which are both 'IntSet's
+-- pitch class sets, which are both 'Data.IntSet.IntSet's
 newtype PCSet = PCSet {pc :: IntSet} deriving (Show, Eq, Generic)
 
 instance Binary PCSet
@@ -68,40 +71,57 @@ intSetToPC is r = PCSet . S.map (transp (toPitchClass r)) $ is where
   transp t i = (i + t) `mod` 12
   
  
--- | As 'intervalToPitch', but returns the 'Int' pitch class. 
+-- | As 'toIntervalClss', but returns the 'Int' pitch class. 
 intValToPitchClss :: Root -> Interval -> Int
 intValToPitchClss r i = (toPitchClass r + toIntervalClss i) `mod` 12
                           
   
 -- | The reverse of 'toPitchClass' returning the 'Note DiatonicNatural' given a 
--- Integer [0..11] semitone, where 0 represents C. When the integer is out 
--- of the range [0..11] an error is thrown.
+-- Integer [0..11] semitone, where 0 represents C. All pitch spelling is ignored
+-- and the the following twelve pitch names will be output: C, C#, D, Eb, E, F
+-- F#, G, Ab, A, Bb, B.  When the integer is out of the range [0..11] an 
+-- error is thrown.
 pcToRoot :: Int -> Root
 pcToRoot i 
   | 0 <= i && i <= 11 = roots !! i
   | otherwise         = error ("HarmTrace.Base.MusicRep.toRoot " ++
                                "invalid pitch class: " ++ show i)
                           
--- | Similar to 'toIntValList' but returns 'Int' pitch classes and includes the
--- 'Root' and the bass 'Note' of the the 'Chord'.
+-- | Similar to 'toIntSet' but returns 'Int' pitch classes and includes the
+-- 'Root' and the bass 'Note' of the the 'Chord'. 'toPitchClasses' throws an
+-- error when applied to a 'NoChord' or 'UndefChord'.
 toPitchClasses :: ChordLabel -> PCSet
-toPitchClasses c = intSetToPC ivs . chordRoot $ c
+toPitchClasses c = catchNoChord "Chord.PitchClass.toPitchClasses" 
+                                (intSetToPC ivs . chordRoot) c
+  
   where ivs = toIntSet c `union` fromList [0, toIntervalClss (chordBass c)] 
   
--- | A shortcut applying 'intValToPitchClss' to a 'Chord'
+-- | A short-cut applying 'intValToPitchClss' to a 'Chord'. 'bassPC' throws an
+-- error when applied to a 'NoChord' or 'UndefChord'.
 bassPC :: ChordLabel -> Int
-bassPC c = intValToPitchClss (chordRoot c) (chordBass c)
+bassPC = catchNoChord "Chord.PitchClass.rootPC" bassPC' where
+  
+  bassPC' :: ChordLabel -> Int
+  bassPC' c = intValToPitchClss (chordRoot c) (chordBass c)
 
--- | A shortcut applying 'toPitchClass' to a 'Chord'
+-- | A short-cut applying 'toPitchClass' to a 'Chord'. 'rootPC'  throws an
+-- error when applied to a 'NoChord' or 'UndefChord'.
 rootPC :: ChordLabel -> Int  
-rootPC = toPitchClass . chordRoot
+rootPC = catchNoChord "Chord.PitchClass.rootPC" (toPitchClass . chordRoot)
+
+-- | Ignores the pitch spelling of a chord by applying 'pcToRoot' and 
+-- 'toPitchClass' to the root of a 'ChordLabel'.
+ignorePitchSpelling :: ChordLabel -> ChordLabel
+ignorePitchSpelling NoChord    = NoChord
+ignorePitchSpelling UndefChord = UndefChord
+ignorePitchSpelling c          = fmap (pcToRoot . toPitchClass) c
 --------------------------------------------------------------------------------
 -- Classes
 --------------------------------------------------------------------------------
 
 -- | A class to compare datatypes that sound the same (they contain the 
 -- same pitch class content):
--- http://en.wikipedia.org/wiki/Enharmonic
+-- <http://en.wikipedia.org/wiki/Enharmonic>
 class EnHarEq a where
   (&==) :: a -> a -> Bool
   (&/=) :: a -> a -> Bool

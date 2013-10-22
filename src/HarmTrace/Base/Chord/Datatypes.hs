@@ -1,6 +1,7 @@
 {-# OPTIONS_GHC -Wall             #-}
 {-# LANGUAGE FlexibleInstances    #-}
 {-# LANGUAGE DeriveGeneric        #-}
+{-# LANGUAGE DeriveFunctor        #-}
 
 --------------------------------------------------------------------------------
 -- |
@@ -33,6 +34,10 @@ module HarmTrace.Base.Chord.Datatypes (
   , Mode (..)
   -- ** Chords
   , Chord (..)
+  , chordRoot
+  , chordShorthand
+  , chordAdditions
+  , chordBass
   , Shorthand (..)
   , Addition (..)
   , IntNat (..)
@@ -45,8 +50,10 @@ module HarmTrace.Base.Chord.Datatypes (
   , Triad (..)
   -- * Tests & Utilities
   , shortChord
+  , discardBass
   , isNoneChord
   , isAddition
+  , catchNoChord
   ) where
   
 import Data.Maybe                 ( fromJust )
@@ -71,21 +78,37 @@ type ChordLabel   = Chord Root
 -- | A chord based on relative 'ScaleDegree's
 type ChordDegree  = Chord ScaleDegree
 
--- | The representation for a single chord 
-data Chord a = Chord { chordRoot        :: a
-                       -- ^ the 'Root' note of a chord
-                     , chordShorthand   :: Shorthand
-                       -- ^ a 'Shorthand' representing the interval
-                       -- structure of a chord
-                     , chordAdditions   :: [Addition]
-                       -- ^ the (additional) interval structure
-                     , chordBass        :: Interval
-                       -- ^ the sounding bass note, denoting an inversion when
-                       -- it is not a 'Note Nat I1'
-                     } 
-              | NoChord     -- ^ No sounding chord (silence, noise, etc.)
-              | UndefChord  -- ^ An undefined chord
-                deriving (Eq, Ord, Generic)
+-- | The representation for a single chord consisting of a root, a 'Shorthand'
+-- representing the interval structure of the chord, a list of 'Additions',
+-- for representing other (additional) structure, and the base 'Inversion'
+data Chord a = Chord a  Shorthand [Addition] Interval  -- ^ a regular chord
+             | NoChord           -- ^ No sounding chord (silence, noise, etc.)
+             | UndefChord        -- ^ An undefined chord
+                deriving (Eq, Ord, Generic, Functor)
+
+-- | Returns the root of a 'Chord', and throws an error in case of a 'NoChord' 
+-- or an 'UndefChord'.
+chordRoot :: Show a => Chord a -> a
+chordRoot = catchNoChord "Chord.Datatypes.chordRoot" (\(Chord r _ _ _) -> r) 
+
+-- | Returns the 'Shorthand' of a 'Chord', and throws an error in case of 
+-- a 'NoChord' or an 'UndefChord'.
+chordShorthand :: Show a => Chord a -> Shorthand
+chordShorthand = catchNoChord "Chord.Datatypes.chordRoot" (\(Chord _ s _ _) ->s) 
+
+-- | Returns the list of 'Additions' of a 'Chord', and throws an error in case
+-- of a 'NoChord' or an 'UndefChord'.
+chordAdditions :: Show a => Chord a -> [Addition]
+chordAdditions = catchNoChord "Chord.Datatypes.chordRoot" (\(Chord _ _ a _) ->a) 
+
+-- | Returns the bass 'Interval' of a 'Chord', and throws an error in case of 
+-- a 'NoChord' or an 'UndefChord'.
+chordBass :: Show a => Chord a -> Interval
+chordBass = catchNoChord "Chord.Datatypes.chordRoot" (\(Chord _ _ _ b) -> b) 
+
+-- | Updates the root field of a 'Chord'
+-- updateRoot :: Chord a -> a -> Chord a
+-- updateRoot (Chord r sh a b) r' = Chord r' sh a b 
 
 -- | We introduce four chord categories: major chords, minor chords, dominant
 -- seventh chords, and diminished seventh chords
@@ -132,7 +155,8 @@ data DiatonicNatural =  C | D | E | F | G | A | B
 data Addition = Add   Interval
               | NoAdd Interval deriving (Eq, Ord, Generic)
 
--- | Diatonic major intervals used to denote 'Chord' 'Addition's
+-- | Diatonic major intervals used to denote 'Chord' 'Addition's and bass
+-- 'Interval's
 data IntNat = I1  | I2  | I3  | I4 | I5 | I6 | I7 | I8 | I9 | I10 
             | I11 | I12 | I13 
   deriving (Eq, Enum, Ord, Bounded, Generic)     
@@ -171,7 +195,7 @@ instance Show Mode where
 instance Show ChordLabel where
   show NoChord    = "N"
   show UndefChord = "X"
-  show (Chord r None []  b) = show r ++ ":1/" ++ show b
+  show (Chord r None []  b) = show r ++ ":1" ++ showIv b
   show (Chord r sh   add b) = show r ++ ':' : show sh ++ showAdd add ++ showIv b
   -- show (Chord r None []  _loc _d) = show r ++ (if isRoot r then ":1" else "")
   -- show (Chord r None add _loc _d) = show r ++ ':' : showAdd add
@@ -259,7 +283,7 @@ instance Show Triad where
   show NoTriad  = "NoTriad"
   
 --------------------------------------------------------------------------------
--- Tests     
+-- Utilities     
 --------------------------------------------------------------------------------
 
 -- | A Constructor for a simple chord based on a 'Root' and 'Shorthand' only
@@ -276,6 +300,23 @@ isNoneChord _       = False
 isAddition :: Addition -> Bool
 isAddition (Add   _) = True
 isAddition (NoAdd _) = False
+
+-- | Discards a base note by replacing the bass 'Interval' by a 
+-- 'Note' 'Nat' 'I1'
+discardBass :: Chord a -> Chord a
+discardBass NoChord           = NoChord
+discardBass UndefChord        = UndefChord
+discardBass (Chord r sh a _b) = Chord r sh a (Note Nat I1)
+
+-- | Checks if the 'ChordLabel' is a 'NoChord' or 'UndefChord' and throws
+-- an error using the first argument as an function identifier for debugging.
+-- In case of a 'ChordLabel' the second argument is applied to the third
+-- argument.
+catchNoChord :: Show a => String -> (Chord a -> b) ->  Chord a -> b
+catchNoChord s f c = case c of
+       NoChord    -> error ("HarmTrace.Base."++s++" applied to a NoChord")
+       UndefChord -> error ("HarmTrace.Base."++s++" applied to a UndefChord")
+       _          -> f c
 
 --------------------------------------------------------------------------------
 -- Binary instances

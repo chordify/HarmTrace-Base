@@ -136,7 +136,10 @@ analyseTetra is = case (analyseTriad is, analyseSevth is) of
 -- >>> toTriad (Chord (Note Nat C) Min [NoAdd (Note Fl I3)] 0 0)
 -- NoTriad
 --
+-- N.B. 'toTriad' throws an error when applied to a 'NoChord' or 'UndefChord'.
 toTriad :: Chord a -> Triad
+toTriad NoChord    = error "toTriad: a NoChord has no triad to analyse"
+toTriad UndefChord = error "toTriad: a UndefChord has no triad to analyse"
 toTriad (Chord  _r  sh [] _b) = shToTriad sh -- there are no additions
 -- combine the degrees and analyse them. N.B., also NoAdd degrees are resolved
 toTriad c = analyseTriad . toIntSet $ c
@@ -228,13 +231,16 @@ toMajMin AugTriad = MajClass
 toMajMin DimTriad = MinClass
 toMajMin NoTriad  = NoClass
 
--- | applies 'toMajMin' to a 'Chord'
+-- | applies 'toMajMin' to a 'Chord', in case there is no triad, e.g. 
+-- @:sus4@ or @:sus2@, an 'UndefChord' is returned. Also, chord
+-- additions are removed. 'NoChord's and 'UndefChord's are returned untouched.
 toMajMinChord :: ChordLabel -> ChordLabel
-toMajMinChord c = c {chordShorthand = majMinSh, chordAdditions = []}
-  where majMinSh = case toMajMin (toTriad c) of
-                     MajClass -> Maj
-                     MinClass -> Min
-                     NoClass  -> None
+toMajMinChord NoChord    = NoChord
+toMajMinChord UndefChord = UndefChord
+toMajMinChord c@(Chord r _ _ b) = case toMajMin (toTriad c) of
+                     MajClass -> Chord r Maj [] b
+                     MinClass -> Chord r Min [] b
+                     NoClass  -> UndefChord
                      -- catch all: cannot happen, see toMajMin
                      _        -> error ("HarmTrace.Base.MusicRep.toMajMinChord"
                                         ++ " unexpected chord " ++ show c)
@@ -249,7 +255,7 @@ toMajMinChord c = c {chordShorthand = majMinSh, chordAdditions = []}
 toChordDegree :: Key -> ChordLabel -> ChordDegree
 toChordDegree k (Chord r sh a b) = Chord (toScaleDegree k r) sh a b
 toChordDegree _ c = 
-  error("HarmTrace.Base.MusicRep: cannot create scale degree for " ++ show c)
+  error("HarmTrace.Base.Chord.Analysis: cannot create scale degree for " ++ show c)
     
 -- | Transformes a absolute 'Root' 'Note' into a relative 'ScaleDegree', given
 -- a 'Key'.
@@ -269,7 +275,6 @@ transposeSD deg sem = transpose scaleDegrees deg sem
 
 transpose :: Diatonic a => [Note a] -> Note a -> Int -> Note a
 transpose ns n sem = ns !! ((sem + (toPitchClass n)) `mod` 12)
-
 
 
 -- | Similar to 'toScaleDegree', an interval is transformed into an absolute

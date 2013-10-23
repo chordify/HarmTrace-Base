@@ -19,11 +19,19 @@ module HarmTrace.Base.Chord.Analysis (
   , analyseTetra
   , toTriad
   , toMajMinChord
-    -- ** Misc
+  -- ** Chord components
+  , Third (..)
+  , Fifth (..)
+  , Sevth (..)
+  , analyseThird
+  , analyseFifth
+  , analyseSevth
+  -- ** Misc
   , toMode
   , toMajMin
   , toClassType
-
+  , isSus2
+  , isSus4
   -- * Scale degree transposition
   , transposeRoot
   , transposeSD
@@ -244,6 +252,22 @@ toMajMinChord c@(Chord r _ _ b) = case toMajMin (toTriad c) of
                      -- catch all: cannot happen, see toMajMin
                      _        -> error ("HarmTrace.Base.MusicRep.toMajMinChord"
                                         ++ " unexpected chord " ++ show c)
+                       
+-- | Returns True if the 'ChordLabel' has a major second, no third, 
+-- and no fourth.
+isSus2 :: ChordLabel -> Bool
+isSus2 c = let is = toIntSet c in      member 2 is 
+                               && not (member 3 is)
+                               && not (member 4 is)
+                               && not (member 5 is)
+                               
+-- | Returns True if the 'ChordLabel' has a no major second, no third, 
+-- but has a fourth.
+isSus4 :: ChordLabel -> Bool
+isSus4 c = let is = toIntSet c in not (member 2 is)
+                               && not (member 3 is)
+                               && not (member 4 is)
+                               &&     (member 5 is)
 --------------------------------------------------------------------------------
 -- Value Level Scale Degree Transposition
 -------------------------------------------------------------------------------- 

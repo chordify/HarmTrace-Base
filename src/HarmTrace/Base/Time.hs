@@ -34,7 +34,6 @@ module HarmTrace.Base.Time (
   , onset
   , offset
   , duration
-  , timeComp
   , setData
   
   -- ** Type conversion and other utilities
@@ -113,7 +112,7 @@ instance Show BeatTime where
 -- | Represents a musical time stamp, which is a 'NumData' possibly augmented
 -- with a 'Beat' denoting the position of the time stamp within a bar.
 data BeatTime = BeatTime NumData Beat
-             | Time    NumData      deriving Eq
+              | Time     NumData      deriving Eq
 
 -- we compare based on the timestamp only
 instance Ord BeatTime where

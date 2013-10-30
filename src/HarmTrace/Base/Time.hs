@@ -35,6 +35,7 @@ module HarmTrace.Base.Time (
   , offset
   , duration
   , setData
+  , getEndTime
   
   -- ** Type conversion and other utilities
   -- , fromDurations
@@ -192,6 +193,12 @@ getBeatTime td = case getTimeStamps td of
 -- | Returns the start 'Beat'
 getBeat :: Timed a -> Beat
 getBeat = beat . getBeatTime 
+
+-- | Given a list of 'Timed' values, returns the end time of the latest element
+-- in the list.
+getEndTime :: [Timed a] -> NumData
+getEndTime [] = error "getEndTime: empty list"
+getEndTime l  = offset . last $ l
 
 -- | Returns the 'NumData' timestamp, given a 'BeatTime'
 timeStamp :: BeatTime -> NumData

@@ -1,5 +1,5 @@
 name:                HarmTrace-Base
-version:             1.4.0.0
+version:             1.4.0.1
 synopsis:            Parsing and unambiguously representing musical chords.
 description:         HarmTrace: Harmony Analysis and Retrieval of Music 
                      with Type-level Representations of Abstract
@@ -16,7 +16,7 @@ maintainer:          bas@chordify.net, dreixel@chordify.net
 
 category:            Music
 build-type:          Simple
-tested-with:         GHC == 7.4.1, GHC == 7.6.1
+tested-with:         GHC == 7.4.1, GHC == 7.6.1, GHC == 7.8.2
 cabal-version:       >=1.8
 
 library
@@ -35,9 +35,9 @@ library
   
   hs-source-dirs:      src  
   
-  build-depends:       base >= 4.4 && < 4.7, 
+  build-depends:       base >= 4.4 && < 4.8, 
                        uu-parsinglib ==2.7.4.*, 
-                       ListLike ==3.1.*, 
+                       ListLike ==4.1.*, 
                        binary >= 0.6.4, 
                        ghc-prim >= 0.2,
                        containers >= 0.5.0.0,

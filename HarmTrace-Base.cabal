@@ -8,7 +8,7 @@ description:         HarmTrace: Harmony Analysis and Retrieval of Music
                      We present HarmTrace-Base, a library for parsing and 
                      unambiguously representing musical chords.
 
-copyright:           (c) 2012--2013 W. Bas de Haas and Jose Pedro Magalhaes
+copyright:           (c) 2012--2014 W. Bas de Haas and Jose Pedro Magalhaes
 license:             LGPL-3
 license-file:        LICENSE
 author:              W. Bas de Haas and Jose Pedro Magalhaes
@@ -17,9 +17,10 @@ maintainer:          bas@chordify.net, dreixel@chordify.net
 category:            Music
 build-type:          Simple
 tested-with:         GHC == 7.4.1, GHC == 7.6.1, GHC == 7.8.2
-cabal-version:       >=1.8
+cabal-version:       >=1.10
 
 library
+  default-language:    Haskell2010
   exposed-modules:     HarmTrace.Base.Chord,
                        HarmTrace.Base.Chord.Datatypes,
                        HarmTrace.Base.Chord.Analysis,
@@ -29,7 +30,6 @@ library
                        HarmTrace.Base.Parse.General, 
                        HarmTrace.Base.Parse.ChordParser, 
                        HarmTrace.Base.Time
-                       HarmTrace.Base.Tests
   
   other-modules:       HarmTrace.Base.Chord.Internal
   
@@ -40,8 +40,24 @@ library
                        ListLike ==4.1.*, 
                        binary >= 0.6.4, 
                        ghc-prim >= 0.2,
-                       containers >= 0.5.0.0,
-                       QuickCheck >= 1.0 && < 2.1
+                       containers >= 0.5.0.0
   
   ghc-options:         -Wall
                        -O2
+
+Test-Suite test-harmtrace-base
+  default-language:    Haskell2010
+  type:                exitcode-stdio-1.0
+  main-is:             Tests.hs
+  hs-source-dirs:      src
+  build-depends:       QuickCheck >= 1.0 && < 2.1,
+                       HarmTrace-Base == 1.4.0.1,
+                       
+                       base >= 4.2,
+                       uu-parsinglib ==2.7.4.*, 
+                       ListLike ==4.1.*, 
+                       binary >= 0.6.4, 
+                       ghc-prim >= 0.2,
+                       containers >= 0.5.0.0
+                       
+  ghc-options:          -Wall

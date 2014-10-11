@@ -12,13 +12,15 @@
 --
 -- Summary: Defines some property tests for testing the HarmTrace.Base package
 --------------------------------------------------------------------------------
-module HarmTrace.Base.Tests where
+module Main where
 
 import HarmTrace.Base.Chord
-import HarmTrace.Base.Parse (parseDataSafe, pChord)
+import HarmTrace.Base.Parse   ( parseDataSafe, pChord )
 
 import Test.QuickCheck
--- import Data.List (nub)
+import Test.QuickCheck.Batch
+
+import System.Exit            ( exitFailure, exitSuccess )
 
 instance Arbitrary DiatonicNatural where
   arbitrary = elements . enumFrom $ C
@@ -76,19 +78,16 @@ enHarEqProp a = a &== a
 parseProp :: Chord Root -> Bool
 parseProp c = parseDataSafe pChord (show c) == c
 
-{-
-cb :: Chord Root
-cb = Chord rb Min [Add (Note Sh I6)] (Note Nat I1)
+--------------------------------------------------------------------------------
+-- Execute the tests
+--------------------------------------------------------------------------------
 
-cs :: Chord Root
-cs = Chord rd HDim7 [] (Note Nat I1)
-
-rd :: Root
-rd = Note Nat D
-
-rc :: Root
-rc = Note Nat C
-
-rb :: Root
-rb= Note Nat B
--}
+main :: IO ()
+main = do let opts = TestOptions 100    -- nr of tests to run
+                                 0      -- no time limit
+                                 True   -- debug?
+              myTest s p = runTests ("Testing HarmTrace-Base: "++ s ++" ... ") 
+                                    opts . map run $ p
+          myTest "roots"       [ pcProp, enHarEqProp ]
+          myTest "chords"      [ pcSetProp, parseProp ]
+          myTest "intervals I" [ intervalProp ]

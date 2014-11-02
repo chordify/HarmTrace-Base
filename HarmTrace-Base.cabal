@@ -36,9 +36,8 @@ library
                        HarmTrace.Base.Parse.General, 
                        HarmTrace.Base.Parse.ChordParser, 
                        HarmTrace.Base.Time
-  
+
   other-modules:       HarmTrace.Base.Chord.Internal
-  
   hs-source-dirs:      src  
   
   build-depends:       base >= 4.4 && < 4.8, 

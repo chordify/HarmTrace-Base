@@ -10,15 +10,20 @@ description:         HarmTrace: Harmony Analysis and Retrieval of Music
 
 copyright:           (c) 2012--2014 W. Bas de Haas and Jose Pedro Magalhaes,
                      Multiphonyx Holding BV
+homepage:            https://bitbucket.org/bash/harmtrace-base
 license:             LGPL-3
 license-file:        LICENSE
 author:              W. Bas de Haas and Jose Pedro Magalhaes
 maintainer:          bas@chordify.net, dreixel@chordify.net 
-
 category:            Music
 build-type:          Simple
 tested-with:         GHC == 7.4.1, GHC == 7.6.1, GHC == 7.8.2
 cabal-version:       >=1.10
+extra-Source-Files:  README.md CHANGELOG.md
+source-repository head
+  type:              git
+  location:          git@bitbucket.org:bash/harmtrace-base.git
+
 
 library
   default-language:    Haskell2010

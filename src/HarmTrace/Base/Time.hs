@@ -1,5 +1,6 @@
 {-# LANGUAGE TypeSynonymInstances             #-}
 {-# LANGUAGE FlexibleInstances                #-}
+{-# LANGUAGE ScopedTypeVariables              #-}
 {-# LANGUAGE DeriveFunctor                    #-}
 
 --------------------------------------------------------------------------------
@@ -39,6 +40,9 @@ module HarmTrace.Base.Time (
   
   -- ** Type conversion and other utilities
   -- , fromDurations
+  , mergeTimed
+  , mergeTimedWith
+  , expandTimed
   , concatTimed
   , splitTimed
   , nextBeat
@@ -141,6 +145,7 @@ timedBT d x y = Timed d [x, y]
 
 -- | concatenates the 'BeatTime' timestamps of two 'Timed's and 
 -- creates a new 'Timed' that stores the first argument. 
+-- N.B. this function uses 'timeComp' to allow for very small timing deviations
 concatTimed :: a -> Timed a -> Timed a -> Timed a
 concatTimed dat (Timed _ ta) (Timed _ tb) = 
   Timed dat (mergeBeatTime ta tb) where
@@ -154,6 +159,50 @@ concatTimed dat (Timed _ ta) (Timed _ tb) =
                  "cannot merge BeatTimes "  ++ show a ++ " and " ++ show b)
     EQ -> a ++ tail b -- do not include the same timestamp twice
     LT -> a ++ b  
+
+
+-- | the inverse of 'mergeTimed', expanding the list 'Timed' elements to all
+-- timestamps stored in the 'getTimeStamps' list. N.B. 
+--
+-- >>> expandTimed (mergeTimed x) = x :: [Timed a]
+-- 
+-- also,
+--
+-- >>> (expandTimed cs) = cs
+--
+-- and,
+--
+-- >>> mergeTimed (mergeTimed cs) = (mergeTimed cs)
+--
+-- hold. This has been tested on the first tranche of 649 Billboard songs.
+expandTimed :: [Timed a] -> [Timed a]
+expandTimed = concatMap replic where
+
+  replic :: Timed a -> [Timed a]
+  replic (Timed c ts) = let reps = repeat c 
+                        in  zipWith3 timedBT (c : reps) ts (tail ts)
+
+-- | merges consecutive 'Timed' values that store the same element (using
+-- ('(==)'). For example:
+--
+-- >>> mergeTimed [timed "c" 0 1, timed "c" 1 2, timed "d" 3 4, timed "d" 4 5, timed "e" 5 6]
+-- >>> [Timed {getData = "c", getTimeStamps = [(0.0),(1.0),(2.0)]}
+-- >>> ,Timed {getData = "d", getTimeStamps = [(3.0),(4.0),(5.0)]}
+-- >>> ,Timed {getData = "e", getTimeStamps = [(5.0),(6.0)]}]
+-- 
+mergeTimed :: Eq a => [Timed a] -> [Timed a]
+mergeTimed = mergeTimedWith (==)
+
+-- | Does exactly what 'mergeTimed' does, but allows for a custom equality 
+-- function
+mergeTimedWith :: forall a. Eq a => (a -> a -> Bool) -> [Timed a] -> [Timed a]
+mergeTimedWith eq = foldr groupT [] where
+
+   groupT :: Eq a => Timed a -> [Timed a] -> [Timed a]
+   groupT c [] = [c]
+   groupT tc@(Timed c _ ) (th@(Timed h _ ) : t)
+     | c `eq` h  = concatTimed c tc th : t
+     | otherwise = tc : th : t
 
 -- | Splits a 'Timed' in two 'Timed's at the specified position. If
 -- the position is out of range, an error is thrown.

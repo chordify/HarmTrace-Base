@@ -17,9 +17,12 @@ module Main where
 
 import HarmTrace.Base.Chord
 import HarmTrace.Base.Parse   ( parseDataSafe, pChord )
+import HarmTrace.Base.Time
 
 import Test.QuickCheck
 import Test.QuickCheck.Batch
+
+import Data.List              ( sort )
 
 import System.Exit            ( exitFailure, exitSuccess )
 
@@ -61,6 +64,20 @@ instance Arbitrary a => Arbitrary (Chord a) where
                  b   <- arbitrary
                  return (Chord r sh [] b ) -- (Note Nat I1))
                  
+instance Arbitrary a => Arbitrary (Timed a) where
+  arbitrary = do x  <- arbitrary
+                 s  <- elements [2 .. 5]
+                 ts <- vector s -- guarantee that this list has a minimum of 2 items
+                 return . Timed x . sort $ ts
+               
+instance Arbitrary a => Arbitrary [Timed a] where
+  arbitrary = do xs <- arbitrary
+                 undefined
+                 
+instance Arbitrary BeatTime where
+  arbitrary = do choose (0.0, 100.0) >>= return . Time
+
+                 
 pcProp :: Root -> Bool
 pcProp r = (toPitchClass r) == toPitchClass (pcToRoot (toPitchClass r))
 
@@ -79,6 +96,9 @@ enHarEqProp a = a &== a
 parseProp :: Chord Root -> Bool
 parseProp c = parseDataSafe pChord (show c) == c
 
+mergeTimedTest :: [Timed (Chord Root)] -> Bool
+mergeTimedTest cs = expandTimed (mergeTimed cs) == cs
+
 --------------------------------------------------------------------------------
 -- Execute the tests
 --------------------------------------------------------------------------------
@@ -93,5 +113,6 @@ main = do let opts = TestOptions 100    -- nr of tests to run
           myTest "chords"       [ pcSetProp, parseProp ]
           myTest "intervals I"  [ intervalProp ]
           myTest "intervals II" [ intervalProp2 ]
+          -- myTest "mergeTimed I" [ mergeTimed ] 
           
           

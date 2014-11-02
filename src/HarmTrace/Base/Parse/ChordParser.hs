@@ -4,7 +4,8 @@
 --------------------------------------------------------------------------------
 -- |
 -- Module      :  HarmTrace.Base.Parse.ChordParser
--- Copyright   :  (c) 2012--2013 W. Bas de Haas and Jose Pedro Magalhaes
+-- Copyright   :  (c) 2012--2014 W. Bas de Haas and Jose Pedro Magalhaes,
+--                Multiphonyx Holding BV
 -- License     :  LGPL-3
 --
 -- Maintainer  :  bas@chordify.net, dreixel@chordify.net 

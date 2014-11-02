@@ -6,7 +6,8 @@
 --------------------------------------------------------------------------------
 -- |
 -- Module      :  HarmTrace.Base.MusicRep
--- Copyright   :  (c) 2012--2013 W. Bas de Haas and Jose Pedro Magalhaes
+-- Copyright   :  (c) 2012--2014 W. Bas de Haas and Jose Pedro Magalhaes,
+--                Multiphonyx Holding BV
 -- License     :  LGPL-3
 --
 -- Maintainer  :  bas@chordify.net, dreixel@chordify.net 
@@ -161,6 +162,7 @@ data IntNat = I1  | I2  | I3  | I4 | I5 | I6 | I7 | I8 | I9 | I10
             | I11 | I12 | I13 
   deriving (Eq, Enum, Ord, Bounded, Generic)     
 
+-- \ Represents a musical interval
 type Interval = Note IntNat
   
 -- | A musical note is a pitch (either absolute or relative) possibly modified

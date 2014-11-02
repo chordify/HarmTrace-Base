@@ -3,7 +3,8 @@
 --------------------------------------------------------------------------------
 -- |
 -- Module      :  HarmTrace.Base.Chord.Tests
--- Copyright   :  (c) 2013 W. Bas de Haas and Jose Pedro Magalhaes
+-- Copyright   :  (c) 2013--2014 W. Bas de Haas and Jose Pedro Magalhaes,
+--                Multiphonyx Holding BV
 -- License     :  LGPL-3
 --
 -- Maintainer  :  bas@chordify.net, dreixel@chordify.net 
@@ -88,6 +89,9 @@ main = do let opts = TestOptions 100    -- nr of tests to run
                                  True   -- debug?
               myTest s p = runTests ("Testing HarmTrace-Base: "++ s ++" ... ") 
                                     opts . map run $ p
-          myTest "roots"       [ pcProp, enHarEqProp ]
-          myTest "chords"      [ pcSetProp, parseProp ]
-          myTest "intervals I" [ intervalProp ]
+          myTest "roots"        [ pcProp, enHarEqProp ]
+          myTest "chords"       [ pcSetProp, parseProp ]
+          myTest "intervals I"  [ intervalProp ]
+          myTest "intervals II" [ intervalProp2 ]
+          
+          

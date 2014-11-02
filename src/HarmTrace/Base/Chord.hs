@@ -2,7 +2,8 @@
 --------------------------------------------------------------------------------
 -- |
 -- Module      :  HarmTrace.Base.Chord
--- Copyright   :  (c) 2013 W. Bas de Haas and Jose Pedro Magalhaes
+-- Copyright   :  (c) 2013--2014 W. Bas de Haas and Jose Pedro Magalhaes,
+--                Multiphonyx Holding BV
 -- License     :  LGPL-3
 --
 -- Maintainer  :  bas@chordify.net, dreixel@chordify.net 

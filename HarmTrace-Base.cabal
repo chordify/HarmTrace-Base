@@ -8,7 +8,8 @@ description:         HarmTrace: Harmony Analysis and Retrieval of Music
                      We present HarmTrace-Base, a library for parsing and 
                      unambiguously representing musical chords.
 
-copyright:           (c) 2012--2014 W. Bas de Haas and Jose Pedro Magalhaes
+copyright:           (c) 2012--2014 W. Bas de Haas and Jose Pedro Magalhaes,
+                     Multiphonyx Holding BV
 license:             LGPL-3
 license-file:        LICENSE
 author:              W. Bas de Haas and Jose Pedro Magalhaes

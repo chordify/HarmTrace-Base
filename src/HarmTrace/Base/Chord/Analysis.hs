@@ -2,7 +2,8 @@
 --------------------------------------------------------------------------------
 -- |
 -- Module      :  HarmTrace.Base.MusicRep
--- Copyright   :  (c) 2013 W. Bas de Haas and Jose Pedro Magalhaes
+-- Copyright   :  (c) 2013--2014 W. Bas de Haas and Jose Pedro Magalhaes,
+--                Multiphonyx Holding BV
 -- License     :  LGPL-3
 --
 -- Maintainer  :  bas@chordify.net, dreixel@chordify.net 
@@ -107,8 +108,13 @@ shToClassType Maj13    = MajClass
 shToClassType Thirteen = DomClass
 
 -- should not be exported, used only in toTriad
+-- | A 'Third' can by major, minor or absent
 data Third = MajThird | MinThird             | NoThird deriving (Eq, Show)
+
+-- | A 'Fifth' can be perfect, diminished, augmented or absent
 data Fifth = DimFifth | PerfFifth | AugFifth | NoFifth deriving (Eq, Show)
+
+-- | A seventh can be major, minor, diminished, or absent
 data Sevth = DimSev   | MinSev    | MajSev   | NoSev   deriving (Eq, Show)
 
 triadToSh :: Triad -> Shorthand
@@ -166,14 +172,14 @@ analyseTriad is =
        (NoThird,  _        ) -> NoTriad
        (_      ,  NoFifth  ) -> NoTriad
       
--- analyses the third in a degree list
+-- | analyses the third in a degree list
 analyseThird :: IntSet -> Third
 analyseThird is
   | member 4 is = MajThird
   | member 3 is = MinThird
   | otherwise   = NoThird
       
--- analyses the fifth in a degree list 
+-- | analyses the fifth in a degree list 
 analyseFifth :: IntSet -> Fifth
 analyseFifth is 
   | member 7 is = PerfFifth
@@ -181,7 +187,7 @@ analyseFifth is
   | member 8 is = AugFifth
   | otherwise   = NoFifth
 
--- analyses the fifth in a degree list 
+-- | analyses the fifth in a degree list 
 analyseSevth :: IntSet -> Sevth
 analyseSevth is
   | member 10 is = MinSev

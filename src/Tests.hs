@@ -1,5 +1,6 @@
-{-# LANGUAGE FlexibleInstances    #-}
-{-# OPTIONS_GHC -fno-warn-orphans #-}
+{-# LANGUAGE FlexibleInstances          #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# OPTIONS_GHC -fno-warn-orphans       #-}
 --------------------------------------------------------------------------------
 -- |
 -- Module      :  HarmTrace.Base.Chord.Tests
@@ -22,7 +23,7 @@ import HarmTrace.Base.Time
 import Test.QuickCheck
 import Test.QuickCheck.Batch
 
-import Data.List              ( sort )
+import Data.List              ( sort, foldl' )
 
 import System.Exit            ( exitFailure, exitSuccess )
 
@@ -70,9 +71,22 @@ instance Arbitrary a => Arbitrary (Timed a) where
                  ts <- vector s -- guarantee that this list has a minimum of 2 items
                  return . Timed x . sort $ ts
                
-instance Arbitrary a => Arbitrary [Timed a] where
-  arbitrary = do xs <- arbitrary
-                 undefined
+newtype ChkTimed = ChkTimed [Timed ChordLabel] deriving (Show, Eq)
+instance Arbitrary ChkTimed where
+  arbitrary = do let f :: [Timed a] -> (a, NumData) -> [Timed a]
+                     f [   ] (a, x) = [timed a 0 x]
+                     f (h:t) (a, x) = let o = offset h in timed a o (o+x) : h : t
+                     
+                     dups :: [Bool] -> [a] -> [a]
+                     dups [ ]     l     = l
+                     dups _      [ ]    = []
+                     dups (b:bs) (e:es) | b         = e : dups bs (e : es)
+                                        | otherwise = e : dups bs es
+                 
+                 ds <- arbitrary 
+                 as <- arbitrary >>= return . dups ds
+                 ns <- arbitrary >>= return . filter (> 0) 
+                 return . ChkTimed . reverse . foldl' f [] $ zip as ns
                  
 instance Arbitrary BeatTime where
   arbitrary = do choose (0.0, 100.0) >>= return . Time
@@ -96,8 +110,14 @@ enHarEqProp a = a &== a
 parseProp :: Chord Root -> Bool
 parseProp c = parseDataSafe pChord (show c) == c
 
-mergeTimedTest :: [Timed (Chord Root)] -> Bool
-mergeTimedTest cs = expandTimed (mergeTimed cs) == cs
+mergeTimedTest :: ChkTimed -> Bool
+mergeTimedTest (ChkTimed cs) = expandTimed (mergeTimed cs) == cs
+
+mergeTimedTest2 :: ChkTimed -> Bool
+mergeTimedTest2 (ChkTimed cs) = expandTimed cs == cs
+
+mergeTimedTest3 :: ChkTimed -> Bool
+mergeTimedTest3 (ChkTimed cs) = mergeTimed (mergeTimed cs) == mergeTimed cs
 
 --------------------------------------------------------------------------------
 -- Execute the tests
@@ -113,6 +133,6 @@ main = do let opts = TestOptions 100    -- nr of tests to run
           myTest "chords"       [ pcSetProp, parseProp ]
           myTest "intervals I"  [ intervalProp ]
           myTest "intervals II" [ intervalProp2 ]
-          -- myTest "mergeTimed I" [ mergeTimed ] 
+          myTest "mergeTimed"   [ mergeTimedTest, mergeTimedTest2, mergeTimedTest3 ] 
           
           

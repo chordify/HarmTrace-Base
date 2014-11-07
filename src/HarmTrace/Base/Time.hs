@@ -172,7 +172,7 @@ concatTimed dat (Timed _ ta) (Timed _ tb) =
 --
 -- and,
 --
--- >>> mergeTimed (mergeTimed cs) = (mergeTimed cs)
+-- >>> mergeTimed (mergeTimed (mergeTimed cs)) = (mergeTimed cs)
 --
 -- hold. This has been tested on the first tranche of 649 Billboard songs.
 expandTimed :: [Timed a] -> [Timed a]

@@ -89,7 +89,7 @@ data Timed a = Timed { -- | Returns the contained datatype
 
 -- | For now, we fix the number of available beats to four, because this is also
 -- hard-coded into the bar and beat-tracker.
-data Beat = One | Two | Three | Four | NoBeat deriving (Eq, Enum)
+data Beat = One | Two | Three | Four | NoBeat deriving (Eq, Ord, Enum)
 
 --------------------------------------------------------------------------------
 -- Instances of high-level data structure

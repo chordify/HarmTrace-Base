@@ -1,5 +1,5 @@
 name:                HarmTrace-Base
-version:             1.4.0.1
+version:             1.4.0.2
 synopsis:            Parsing and unambiguously representing musical chords.
 description:         HarmTrace: Harmony Analysis and Retrieval of Music 
                      with Type-level Representations of Abstract

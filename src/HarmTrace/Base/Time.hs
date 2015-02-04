@@ -276,12 +276,14 @@ duration td = offset td - onset td
 -- TODO: replace by ad-hoc enum instance?
 -- | returns the next beat, e.g. @ nextBeat Two = Three @. 
 -- Following the (current) definition of 'Beat', we still assume 4/4, in the 
--- future this function should also have the meter as an argument.
-nextBeat, prevBeat :: Beat -> Beat 
+-- future this function should also have the meter as an argument. 
+-- N.B. @ nextBeat Four = One @
+nextBeat :: Beat -> Beat 
 nextBeat Four = One
 nextBeat b    = succ b
 
 -- | returns the previous 'Beat', similar to 'prevBeat'.
+prevBeat :: Beat -> Beat 
 prevBeat One  = Four
 prevBeat b    = pred b
 

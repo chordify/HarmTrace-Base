@@ -6,7 +6,7 @@
 --------------------------------------------------------------------------------
 -- |
 -- Module      :  HarmTrace.Base.MusicTime
--- Copyright   :  (c) 2012--2013 W. Bas de Haas and Jose Pedro Magalhaes
+-- Copyright   :  (c) 2012--2015 W. Bas de Haas and Jose Pedro Magalhaes
 -- License     :  LGPL-3
 --
 -- Maintainer  :  bas@chordify.net, dreixel@chordify.net 
@@ -90,6 +90,10 @@ data Timed a = Timed { -- | Returns the contained datatype
 -- | For now, we fix the number of available beats to four, because this is also
 -- hard-coded into the bar and beat-tracker.
 data Beat = One | Two | Three | Four | NoBeat deriving (Eq, Ord, Enum)
+
+-- | Having a high-level representation of a musical meter: 'Duple' is
+-- counted in two and 'Triple' in three.
+data MeterKind = Duple | Triple deriving (Eq, Show, Ord)
 
 --------------------------------------------------------------------------------
 -- Instances of high-level data structure
@@ -278,14 +282,16 @@ duration td = offset td - onset td
 -- Following the (current) definition of 'Beat', we still assume 4/4, in the 
 -- future this function should also have the meter as an argument. 
 -- N.B. @ nextBeat Four = One @
-nextBeat :: Beat -> Beat 
-nextBeat Four = One
-nextBeat b    = succ b
+nextBeat :: MeterKind -> Beat -> Beat 
+nextBeat Duple  Four  = One
+nextBeat Triple Three = One
+nextBeat _      b     = succ b
 
 -- | returns the previous 'Beat', similar to 'prevBeat'.
-prevBeat :: Beat -> Beat 
-prevBeat One  = Four
-prevBeat b    = pred b
+prevBeat :: MeterKind -> Beat -> Beat 
+prevBeat Duple  One  = Four
+prevBeat Triple One  = Three
+prevBeat _      b    = pred b
 
 -- | drops the time (with or without 'Beat') information of a list 
 -- 'Timed' data structure 

@@ -45,6 +45,7 @@ module HarmTrace.Base.Time (
   , expandTimed
   , concatTimed
   , splitTimed
+  , updateBeat
   , nextBeat
   , prevBeat 
   , dropTimed
@@ -223,7 +224,36 @@ splitTimed td@(Timed d t) s
   | otherwise    = e
       where e = error ( "HarmTrace.Base.MusicTime.splitTimed: Timestamp " 
                       ++ show s ++ " not in range of Timed: " ++ show td) 
+
+-- | Changes the internal 'MeterKind' of a 'Timed' sequence. We assume
+-- that meter changes do nog occur.
+--setMeterKind :: MeterKind -> [Timed a] -> [Timed a]
+--setMeterKind mk x = 
+  --let reset = foldr step  
   
+      --step :: Timed a -> Timed a -> Timed a
+      --step a
+  --in case splitPickup x of
+                     --([],cs) -> cs
+                     --(pu,cs) -> 
+                     
+-- | Update the 'Beat's in 'Timed' data given a 'MeterKind' and a 
+-- starting beat:
+-- 
+-- >>> updateBeat Triple Two (Timed "c" [ BeatTime 0 Three 
+-- >>>                                  , BeatTime 1 Four
+-- >>>                                  , BeatTime 2 One])
+-- >>> Timed {getData = "c", getTimeStamps = [(0.0, 2),(1.0, 3),(2.0, 1)]}
+updateBeat :: MeterKind -> Beat -> Timed a -> Timed a
+updateBeat mk strt (Timed d ts) = 
+  Timed d . zipWith BeatTime (map timeStamp ts) 
+          . iterate (nextBeat mk) $ strt
+
+-- | 
+-- N.B. calls 'expandTimed' before splitting
+splitPickup :: [Timed a] -> ([Timed a], [Timed a])
+splitPickup = span (\t -> (getBeat t) /= One) . expandTimed
+
     
 -- | compares to 'NumData' timestamps taking a rounding error 'roundingError'
 -- into account.
@@ -256,12 +286,12 @@ getEndTime l  = offset . last $ l
 -- | Returns the 'NumData' timestamp, given a 'BeatTime'
 timeStamp :: BeatTime -> NumData
 timeStamp (BeatTime t _bt) = t
-timeStamp (Time    t    ) = t  
+timeStamp (Time     t    ) = t  
 
 -- | Returns the 'NumData' timestamp, given a 'BeatTime'
 beat :: BeatTime -> Beat
 beat (BeatTime _t bt) = bt
-beat (Time    _t   ) = NoBeat
+beat (Time     _t   ) = NoBeat
 
 -- | Returns the onset time stamp
 onset :: Timed a -> NumData
@@ -307,4 +337,4 @@ pprint :: Show a => Timed a -> String
 pprint (Timed d [ ]) = "not set - not set: " ++ show d
 pprint (Timed d [x]) = show x ++" - not set: " ++ show d
 pprint (Timed d ts ) = show (head ts) ++ " - " ++ show (last ts) 
-                                          ++ ": "  ++ show d
+                                      ++ ": "  ++ show d

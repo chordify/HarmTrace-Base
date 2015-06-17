@@ -30,8 +30,10 @@ module HarmTrace.Base.Time (
   -- ** Data access
   , timed
   , timedBT
-  , getBeatTime 
-  , getBeat 
+  , onBeatTime 
+  , offBeatTime 
+  , onBeat 
+  , offBeat 
   , onset
   , offset
   , duration
@@ -58,7 +60,7 @@ module HarmTrace.Base.Time (
 
 ) where
              
-import Data.List                      ( intercalate )
+import Data.List                      ( intercalate, mapAccumL )
 
 -- | When reducing and expanding 'Timed' types there might be rounding
 -- errors in the floating point time stamps. The 'roundingError' parameter
@@ -227,16 +229,22 @@ splitTimed td@(Timed d t) s
 
 -- | Changes the internal 'MeterKind' of a 'Timed' sequence. We assume
 -- that meter changes do nog occur.
---setMeterKind :: MeterKind -> [Timed a] -> [Timed a]
---setMeterKind mk x = 
-  --let reset = foldr step  
-  
-      --step :: Timed a -> Timed a -> Timed a
-      --step a
-  --in case splitPickup x of
-                     --([],cs) -> cs
-                     --(pu,cs) -> 
-                     
+setMeterKind :: MeterKind -> [Timed a] -> [Timed a]
+setMeterKind mk x = 
+  let reset = undefined
+  in case splitPickup x of
+       ([],cs) -> cs
+       (pu,cs) -> undefined
+       --(pu,cs) -> case getBeat . last $ pu of
+       --            Four -> 
+
+updateBeats :: MeterKind -> [Timed a] -> [Timed a]
+updateBeats _  []       = []
+updateBeats mk cs@(h:_) = snd . mapAccumL f (onBeat h) $ cs 
+
+  where f :: Beat -> Timed a -> (Beat, Timed a)
+        f a b = let x = updateBeat mk a b in (offBeat x, x) 
+
 -- | Update the 'Beat's in 'Timed' data given a 'MeterKind' and a 
 -- starting beat:
 -- 
@@ -252,7 +260,7 @@ updateBeat mk strt (Timed d ts) =
 -- | 
 -- N.B. calls 'expandTimed' before splitting
 splitPickup :: [Timed a] -> ([Timed a], [Timed a])
-splitPickup = span (\t -> (getBeat t) /= One) . expandTimed
+splitPickup = span (\t -> (onBeat t) /= One) . expandTimed
 
     
 -- | compares to 'NumData' timestamps taking a rounding error 'roundingError'
@@ -267,22 +275,6 @@ timeComp a b
 setData :: Timed a -> b -> Timed b
 setData td d = td {getData = d}
 
--- | Returns the start time stamp
-getBeatTime :: Timed a -> BeatTime
-getBeatTime td = case getTimeStamps td of
-  []    -> error "HarmTrace.Base.MusicTime.getBeatTime: no timestamps are stored"
-  (h:_) -> h
-
--- | Returns the start 'Beat'
-getBeat :: Timed a -> Beat
-getBeat = beat . getBeatTime 
-
--- | Given a list of 'Timed' values, returns the end time of the latest element
--- in the list.
-getEndTime :: [Timed a] -> NumData
-getEndTime [] = error "getEndTime: empty list"
-getEndTime l  = offset . last $ l
-
 -- | Returns the 'NumData' timestamp, given a 'BeatTime'
 timeStamp :: BeatTime -> NumData
 timeStamp (BeatTime t _bt) = t
@@ -293,15 +285,39 @@ beat :: BeatTime -> Beat
 beat (BeatTime _t bt) = bt
 beat (Time     _t   ) = NoBeat
 
+-- | Returns the start 'BeatTime'
+onBeatTime :: Timed a -> BeatTime
+onBeatTime td = case getTimeStamps td of
+  []    -> error "HarmTrace.Base.Time.onBeatTime: no timestamps are stored"
+  (h:_) -> h
+
+-- | Returns the offset time stamp
+offBeatTime :: Timed a -> BeatTime
+offBeatTime td = case getTimeStamps td of
+  []  -> error "HarmTrace.Base.Time.offBeatTime: no timestamps are stored"
+  l   -> last $ l
+
+-- | Returns the start 'Beat'
+onBeat :: Timed a -> Beat
+onBeat = beat . onBeatTime 
+
+-- | Returns the offset time stamp
+offBeat :: Timed a -> Beat
+offBeat = beat . offBeatTime
+
 -- | Returns the onset time stamp
 onset :: Timed a -> NumData
-onset = timeStamp . getBeatTime 
+onset = timeStamp . onBeatTime 
 
 -- | Returns the offset time stamp
 offset :: Timed a -> NumData
-offset td = case getTimeStamps td of
-  []  -> error "HarmTrace.Base.MusicTime.offset: no timestamps are stored"
-  l   -> timeStamp . last $ l
+offset = timeStamp . offBeatTime 
+
+-- | Given a list of 'Timed' values, returns the end time of the latest element
+-- in the list.
+getEndTime :: [Timed a] -> NumData
+getEndTime [] = error "getEndTime: empty list"
+getEndTime l  = offset . last $ l
 
 -- | Returns the duration of 'Timed'
 duration :: Timed a -> NumData
@@ -313,14 +329,16 @@ duration td = offset td - onset td
 -- future this function should also have the meter as an argument. 
 -- N.B. @ nextBeat Four = One @
 nextBeat :: MeterKind -> Beat -> Beat 
-nextBeat Duple  Four  = One
-nextBeat Triple Three = One
-nextBeat _      b     = succ b
+nextBeat Duple  Four   = One
+nextBeat Triple Three  = One
+nextBeat _      NoBeat = error "HarmTrace.Base.Time.nextBeat: nextBeat applied toNoBeat"
+nextBeat _      b      = succ b
 
 -- | returns the previous 'Beat', similar to 'prevBeat'.
 prevBeat :: MeterKind -> Beat -> Beat 
 prevBeat Duple  One  = Four
 prevBeat Triple One  = Three
+prevBeat _      NoBeat = error "HarmTrace.Base.Time.prevBeat: nextBeat applied toNoBeat"
 prevBeat _      b    = pred b
 
 -- | drops the time (with or without 'Beat') information of a list 

@@ -33,6 +33,8 @@ import Data.List                  ( partition )
 import Data.IntSet                ( IntSet, fromList, union, insert, singleton
                                   , empty, (\\) )
 
+-- TODO wrap this Int in an IC newtype
+
 -- | Converts an 'Int'erval class to an 'Interval'
 icToInterval :: Int -> Interval
 icToInterval i

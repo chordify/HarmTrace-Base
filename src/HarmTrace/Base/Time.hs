@@ -25,6 +25,7 @@ module HarmTrace.Base.Time (
   , Timed (..)
   , Beat (..)
   , BeatTime (..) 
+  , MeterKind (..)
 
   -- * Functions
   -- ** Data access
@@ -47,7 +48,9 @@ module HarmTrace.Base.Time (
   , expandTimed
   , concatTimed
   , splitTimed
-  , updateBeat
+  , setMeterKind
+  , updateBeats
+  , splitPickup -- remove
   , nextBeat
   , prevBeat 
   , dropTimed
@@ -230,17 +233,30 @@ splitTimed td@(Timed d t) s
 -- | Changes the internal 'MeterKind' of a 'Timed' sequence. We assume
 -- that meter changes do nog occur.
 setMeterKind :: MeterKind -> [Timed a] -> [Timed a]
+setMeterKind _ [] = []
 setMeterKind mk x = 
-  let reset = undefined
-  in case splitPickup x of
-       ([],cs) -> cs
-       (pu,cs) -> undefined
-       --(pu,cs) -> case getBeat . last $ pu of
-       --            Four -> 
+  let (pu, cs) = splitPickup x -- will expand the chords
+  
+      srtpu    = (iterate (prevBeat mk) (lastBeat mk)) !! (pred . length $ pu)
+      srt      = onBeat (head cs)
+      
+  in  (updateBeats mk srtpu pu) ++
+      (updateBeats mk srt   cs)
 
-updateBeats :: MeterKind -> [Timed a] -> [Timed a]
-updateBeats _  []       = []
-updateBeats mk cs@(h:_) = snd . mapAccumL f (onBeat h) $ cs 
+-- | applies updateBeat to a list
+-- 
+-- >>> updateBeats Triple Three [ timedBT "a" (BeatTime 0 Three) (BeatTime 1 Four)
+-- >>>                          , timedBT "a" (BeatTime 1 Four) (BeatTime 2 One)
+-- >>>                          , Timed "a" [ BeatTime 2 One, BeatTime 3 Two
+-- >>>                                      , BeatTime 4 Three, BeatTime 5 Four]]
+-- >>> [Timed {getData = "a", getTimeStamps = [(0.0, 3),(1.0, 1)]}
+-- >>> ,Timed {getData = "a", getTimeStamps = [(1.0, 1),(2.0, 2)]}
+-- >>> ,Timed {getData = "a", getTimeStamps = [(2.0, 2),(3.0, 3),(4.0, 1),(5.0, 2)]}]
+updateBeats :: MeterKind -> Beat -> [Timed a] -> [Timed a]
+updateBeats _      _      [] = []
+updateBeats Triple Four   cs = updateBeats Triple One cs
+updateBeats _      NoBeat cs = cs
+updateBeats mk b cs = snd . mapAccumL f b $ cs 
 
   where f :: Beat -> Timed a -> (Beat, Timed a)
         f a b = let x = updateBeat mk a b in (offBeat x, x) 
@@ -260,7 +276,10 @@ updateBeat mk strt (Timed d ts) =
 -- | 
 -- N.B. calls 'expandTimed' before splitting
 splitPickup :: [Timed a] -> ([Timed a], [Timed a])
-splitPickup = span (\t -> (onBeat t) /= One) . expandTimed
+splitPickup cs = case span (\t -> (onBeat t) /= One) . expandTimed $ cs of
+                  -- (x, []) -> ([], x) -- in case we have a very short sequence 
+                                     -- don't treat it as a pickup
+                  y       -> y
 
     
 -- | compares to 'NumData' timestamps taking a rounding error 'roundingError'
@@ -340,6 +359,14 @@ prevBeat Duple  One  = Four
 prevBeat Triple One  = Three
 prevBeat _      NoBeat = error "HarmTrace.Base.Time.prevBeat: nextBeat applied toNoBeat"
 prevBeat _      b    = pred b
+
+-- | returns the last 'Beat' of the 'MeterKind' 
+-- 
+-- >>> lastBeat Duple 
+-- >>> Four
+lastBeat :: MeterKind -> Beat
+lastBeat Triple = Three
+lastBeat Duple  = Four
 
 -- | drops the time (with or without 'Beat') information of a list 
 -- 'Timed' data structure 

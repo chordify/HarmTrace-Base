@@ -39,7 +39,9 @@ module HarmTrace.Base.Chord.Analysis (
   , toChordDegree
   , toScaleDegree
   , intervalToPitch
-  , icToInterval
+  
+  -- exported twice
+  -- , icToInterval
   , toChord
   ) where
   

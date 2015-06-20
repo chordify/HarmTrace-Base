@@ -71,7 +71,8 @@ instance Arbitrary a => Arbitrary (Timed a) where
                  ts <- vector s -- guarantee that this list has a minimum of 2 items
                  return . Timed x . sort $ ts
                
-newtype ChkTimed = ChkTimed [Timed ChordLabel] deriving (Show, Eq)
+data ChkTimed = ChkTimed MeterKind [Timed ChordLabel] deriving (Show, Eq)
+
 instance Arbitrary ChkTimed where
   arbitrary = do let f :: [Timed a] -> (a, NumData) -> [Timed a]
                      f [   ] (a, x) = [timed a 0 x]
@@ -86,11 +87,21 @@ instance Arbitrary ChkTimed where
                  ds <- arbitrary 
                  as <- arbitrary >>= return . dups ds
                  ns <- arbitrary >>= return . filter (> 0) 
-                 return . ChkTimed . reverse . foldl' f [] $ zip as ns
+                 
+                 mk <- arbitrary
+                 bt <- arbitrary
+                 
+                 return . ChkTimed mk . updateBeats mk bt 
+                        . reverse . foldl' f [] $ zip as ns
                  
 instance Arbitrary BeatTime where
   arbitrary = do choose (0.0, 100.0) >>= return . Time
 
+instance Arbitrary MeterKind where 
+  arbitrary = elements [Duple, Triple]
+
+instance Arbitrary Beat where
+  arbitrary = elements [One, Two, Three, Four, NoBeat]
                  
 pcProp :: Root -> Bool
 pcProp r = (toPitchClass r) == toPitchClass (pcToRoot (toPitchClass r))
@@ -111,13 +122,17 @@ parseProp :: Chord Root -> Bool
 parseProp c = parseDataSafe pChord (show c) == c
 
 mergeTimedTest :: ChkTimed -> Bool
-mergeTimedTest (ChkTimed cs) = expandTimed (mergeTimed cs) == cs
+mergeTimedTest (ChkTimed _ cs) = expandTimed (mergeTimed cs) == cs
 
 mergeTimedTest2 :: ChkTimed -> Bool
-mergeTimedTest2 (ChkTimed cs) = expandTimed cs == cs
+mergeTimedTest2 (ChkTimed _ cs) = expandTimed cs == cs
 
 mergeTimedTest3 :: ChkTimed -> Bool
-mergeTimedTest3 (ChkTimed cs) = mergeTimed (mergeTimed cs) == mergeTimed cs
+mergeTimedTest3 (ChkTimed _ cs) = mergeTimed (mergeTimed cs) == mergeTimed cs
+
+meterKind1 :: ChkTimed -> Bool
+meterKind1 (ChkTimed Duple  cs) = setMeterKind Duple  (setMeterKind Triple cs) == cs
+meterKind1 (ChkTimed Triple cs) = setMeterKind Triple (setMeterKind Duple  cs) == cs
 
 --------------------------------------------------------------------------------
 -- Execute the tests
@@ -134,5 +149,6 @@ main = do let opts = TestOptions 100    -- nr of tests to run
           myTest "intervals I"  [ intervalProp ]
           myTest "intervals II" [ intervalProp2 ]
           myTest "mergeTimed"   [ mergeTimedTest, mergeTimedTest2, mergeTimedTest3 ] 
+          myTest "meterKind"    [ meterKind1 ] 
           
           

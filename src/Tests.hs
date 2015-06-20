@@ -130,9 +130,14 @@ mergeTimedTest2 (ChkTimed _ cs) = expandTimed cs == cs
 mergeTimedTest3 :: ChkTimed -> Bool
 mergeTimedTest3 (ChkTimed _ cs) = mergeTimed (mergeTimed cs) == mergeTimed cs
 
-meterKind1 :: ChkTimed -> Bool
-meterKind1 (ChkTimed Duple  cs) = setMeterKind Duple  (setMeterKind Triple cs) == cs
-meterKind1 (ChkTimed Triple cs) = setMeterKind Triple (setMeterKind Duple  cs) == cs
+
+meterKind1, meterKind2 :: ChkTimed -> Bool
+meterKind1 (ChkTimed Duple  cs) = setMeterKind Duple  cs == cs
+meterKind1 (ChkTimed Triple cs) = setMeterKind Triple cs == cs
+
+-- meterKind1 (ChkTimed Duple  cs) = setMeterKind Duple  (setMeterKind Triple cs) == cs
+-- meterKind1 (ChkTimed Triple cs) = setMeterKind Triple (setMeterKind Duple  cs) == cs
+
 
 --------------------------------------------------------------------------------
 -- Execute the tests

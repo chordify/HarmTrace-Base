@@ -277,7 +277,7 @@ updateBeat mk strt (Timed d ts) =
 -- N.B. calls 'expandTimed' before splitting
 splitPickup :: [Timed a] -> ([Timed a], [Timed a])
 splitPickup cs = case span (\t -> (onBeat t) /= One) . expandTimed $ cs of
-                  -- (x, []) -> ([], x) -- in case we have a very short sequence 
+                  (x, []) -> ([], x) -- in case we have a very short sequence 
                                      -- don't treat it as a pickup
                   y       -> y
 

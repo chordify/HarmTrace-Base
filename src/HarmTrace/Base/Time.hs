@@ -65,6 +65,7 @@ module HarmTrace.Base.Time (
 ) where
              
 import Data.List                      ( intercalate, mapAccumL )
+import Text.Printf                    ( printf )
 
 -- | When reducing and expanding 'Timed' types there might be rounding
 -- errors in the floating point time stamps. The 'roundingError' parameter
@@ -115,8 +116,8 @@ instance Show Beat where
   show NoBeat = "x"
 
 instance Show BeatTime where
-  show (BeatTime t bt) = '(' : show t ++ ", " ++ show bt ++ ")"
-  show (Time t)       = '(' : show t ++ ")"
+  show (BeatTime t bt) = printf ("(%.2f, " ++ show bt ++ ")") t
+  show (Time t)        = printf  "(%.2f)" t
 
     
 --------------------------------------------------------------------------------

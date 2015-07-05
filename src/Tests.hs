@@ -75,19 +75,27 @@ instance Arbitrary a => Arbitrary (Timed a) where
 data ChkTimed = ChkTimed MeterKind [Timed ChordLabel] deriving (Show, Eq)
 
 instance Arbitrary ChkTimed where
-  arbitrary = do let f :: [Timed a] -> (a, NumData) -> [Timed a]
-                     f [   ] (a, x) = [timed a 0 x]
-                     f (h:t) (a, x) = let o = offset h in timed a o (o+x) : h : t
+  arbitrary = do let -- Step function for creating a Timed ChordLabel
+                     f :: [Timed a] -> (a, [NumData]) -> [Timed a]
+                     f _     (_,[]) = error "should not happen" 
+                     f [   ] (a, x) = [Timed a (map Time (0:x))]
+                     f (h:t) (a, x) = let o   = offset h 
+                                          g y = Time (y + o)
+                                      in Timed a (map g (0:x)) : h : t
                      
+                     -- creates additional duplicates at random places
+                     -- dups ds ["a","b"] might return ["a", "a", "b"]
                      dups :: [Bool] -> [a] -> [a]
                      dups [ ]     l     = l
                      dups _      [ ]    = []
                      dups (b:bs) (e:es) | b         = e : dups bs (e : es)
                                         | otherwise = e : dups bs es
                  
-                 ds <- arbitrary 
-                 as <- arbitrary >>= return . dups ds
-                 ns <- arbitrary >>= return . filter (> 0) 
+                 ds <- arbitrary  -- [Bool]
+                 as <- arbitrary >>= return . dups ds -- chords including duplicates
+                 ns <- arbitrary >>= return . map (sort . map abs)
+                                 >>= return . filter (\x -> let l = length x in l > 0 && l <= 4) 
+                                
                  
                  mk <- arbitrary
                  bt <- elements [One, Two, Three, Four]
@@ -122,19 +130,18 @@ enHarEqProp a = a &== a
 parseProp :: Chord Root -> Bool
 parseProp c = parseDataSafe pChord (show c) == c
 
-mergeTimedTest :: ChkTimed -> Bool
-mergeTimedTest (ChkTimed _ cs) = expandTimed (mergeTimed cs) == cs
-
-mergeTimedTest2 :: ChkTimed -> Bool
-mergeTimedTest2 (ChkTimed _ cs) = expandTimed cs == cs
-
-mergeTimedTest3 :: ChkTimed -> Bool
+mergeTimedTest, mergeTimedTest2, mergeTimedTest3, mergeTimedTest4 :: ChkTimed -> Bool
+mergeTimedTest (ChkTimed _ cs) = expandTimed (mergeTimed cs) == expandTimed cs
+mergeTimedTest2 (ChkTimed _ cs) = expandTimed (expandTimed cs) == expandTimed cs
 mergeTimedTest3 (ChkTimed _ cs) = mergeTimed (mergeTimed cs) == mergeTimed cs
+mergeTimedTest4 (ChkTimed _ cs) = mergeTimed (expandTimed cs) == mergeTimed cs
 
+meterKind1, meterKind2 :: ChkTimed -> Bool
+meterKind1 (ChkTimed Duple  cs) = mergeTimed (setMeterKind Duple  cs) == mergeTimed cs
+meterKind1 (ChkTimed Triple cs) = mergeTimed (setMeterKind Triple cs) == mergeTimed cs
 
-meterKind1 :: ChkTimed -> Bool
-meterKind1 (ChkTimed Duple  cs) = setMeterKind Duple  cs == cs
-meterKind1 (ChkTimed Triple cs) = setMeterKind Triple cs == cs
+meterKind2 (ChkTimed Duple  cs) = setMeterKind Duple  cs == expandTimed cs
+meterKind2 (ChkTimed Triple cs) = setMeterKind Triple cs == expandTimed cs
 
 -- meterKind1 (ChkTimed Duple  cs) = setMeterKind Duple  (setMeterKind Triple cs) == cs
 -- meterKind1 (ChkTimed Triple cs) = setMeterKind Triple (setMeterKind Duple  cs) == cs
@@ -149,7 +156,7 @@ correctBeatTimes mk (a:b:tl) = beat b == nextBeat mk (beat a) && correctBeatTime
 
 correctNextBeatMK :: (MeterKind, ChkTimed) -> Bool
 correctNextBeatMK (mk, ChkTimed _ cs) = correctNextBeat 
-                                      $ (ChkTimed mk (setMeterKind mk cs))
+                                      . ChkTimed mk . mergeTimed . setMeterKind mk $ cs
 
 --------------------------------------------------------------------------------
 -- Execute the tests
@@ -157,7 +164,7 @@ correctNextBeatMK (mk, ChkTimed _ cs) = correctNextBeat
 
 main :: IO ()
 main = do let myTest :: Testable p => String -> [p] -> IO ()
-              myTest s p = do putStrLn ("Testing HarmTrace-Base: "++ s ++": ... ") 
+              myTest s p = do putStrLn (" *** Testing HarmTrace-Base: "++ s ++": ... ") 
                               rs <- mapM verboseCheckResult p
                               when (not . and . map isSuccess $ rs) exitFailure
                               
@@ -165,9 +172,9 @@ main = do let myTest :: Testable p => String -> [p] -> IO ()
           myTest "chords"       [ pcSetProp, parseProp ]
           myTest "intervals I"  [ intervalProp ]
           -- myTest "intervals II" [ intervalProp2 ]
-          myTest "mergeTimed"   [ mergeTimedTest, mergeTimedTest2, mergeTimedTest3 ] 
+          myTest "mergeTimed"   [ mergeTimedTest, mergeTimedTest2, mergeTimedTest3, mergeTimedTest4 ] 
           myTest "nextBeat"     [ correctNextBeat ] 
-          myTest "meterKind"    [ meterKind1 ] 
+          myTest "meterKind"    [ meterKind1, meterKind2 ] 
           myTest "meterKind II" [ correctNextBeatMK ] 
           exitSuccess
           

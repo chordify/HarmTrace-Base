@@ -21,11 +21,12 @@ import HarmTrace.Base.Parse   ( parseDataSafe, pChord )
 import HarmTrace.Base.Time
 
 import Test.QuickCheck
-import Test.QuickCheck.Batch
+import Test.QuickCheck.Test   ( isSuccess )
 
 import Data.List              ( sort, foldl' )
 
 import System.Exit            ( exitFailure, exitSuccess )
+import Control.Monad          ( when )
 
 instance Arbitrary DiatonicNatural where
   arbitrary = elements . enumFrom $ C
@@ -112,8 +113,8 @@ pcSetProp c = c == toChord (chordRoot c) (toIntSet c) (Just $ chordBass c)
 intervalProp :: Interval -> Bool
 intervalProp i = i == icToInterval (toIntervalClss i)
 
-intervalProp2 :: Int -> Bool
-intervalProp2 i = i == toIntervalClss (icToInterval i)
+-- intervalProp2 :: Int -> Bool
+-- intervalProp2 i = i == toIntervalClss (icToInterval i)
 
 enHarEqProp :: Root -> Bool
 enHarEqProp a = a &== a
@@ -131,7 +132,7 @@ mergeTimedTest3 :: ChkTimed -> Bool
 mergeTimedTest3 (ChkTimed _ cs) = mergeTimed (mergeTimed cs) == mergeTimed cs
 
 
-meterKind1, meterKind2 :: ChkTimed -> Bool
+meterKind1 :: ChkTimed -> Bool
 meterKind1 (ChkTimed Duple  cs) = setMeterKind Duple  cs == cs
 meterKind1 (ChkTimed Triple cs) = setMeterKind Triple cs == cs
 
@@ -144,16 +145,15 @@ meterKind1 (ChkTimed Triple cs) = setMeterKind Triple cs == cs
 --------------------------------------------------------------------------------
 
 main :: IO ()
-main = do let opts = TestOptions 100    -- nr of tests to run
-                                 0      -- no time limit
-                                 True   -- debug?
-              myTest s p = runTests ("Testing HarmTrace-Base: "++ s ++" ... ") 
-                                    opts . map run $ p
+main = do let myTest s p = do putStrLn ("Testing HarmTrace-Base: "++ s ++": ... ") 
+                              rs <- mapM verboseCheckResult p
+                              when (not . and . map isSuccess $ rs) exitFailure
+                              
           myTest "roots"        [ pcProp, enHarEqProp ]
           myTest "chords"       [ pcSetProp, parseProp ]
           myTest "intervals I"  [ intervalProp ]
-          myTest "intervals II" [ intervalProp2 ]
+          -- myTest "intervals II" [ intervalProp2 ]
           myTest "mergeTimed"   [ mergeTimedTest, mergeTimedTest2, mergeTimedTest3 ] 
           myTest "meterKind"    [ meterKind1 ] 
-          
+          exitSuccess
           

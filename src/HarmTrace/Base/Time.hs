@@ -53,6 +53,7 @@ module HarmTrace.Base.Time (
   , splitPickup -- remove
   , nextBeat
   , prevBeat 
+  , lastBeat
   , dropTimed
   , timeStamp
   , timeComp

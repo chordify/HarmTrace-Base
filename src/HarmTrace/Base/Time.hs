@@ -259,7 +259,7 @@ updateBeats :: MeterKind -> Beat -> [Timed a] -> [Timed a]
 updateBeats _      _      [] = []
 updateBeats Triple Four   cs = updateBeats Triple One cs
 updateBeats _      NoBeat cs = cs
-updateBeats mk b cs = snd . mapAccumL f b $ cs 
+updateBeats mk s cs = snd . mapAccumL f s $ cs 
 
   where f :: Beat -> Timed a -> (Beat, Timed a)
         f a b = let x = updateBeat mk a b in (offBeat x, x) 

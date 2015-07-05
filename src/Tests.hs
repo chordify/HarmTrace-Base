@@ -93,11 +93,12 @@ instance Arbitrary ChkTimed where
                  
                  ds <- arbitrary  -- [Bool]
                  as <- arbitrary >>= return . dups ds -- chords including duplicates
+                 
+                 -- e.g. Gen [[1.2,3.4], [2.2]] etc.
                  ns <- arbitrary >>= return . map (sort . map abs)
                                  >>= return . filter (\x -> let l = length x in l > 0 && l <= 4) 
-                                
-                 
-                 mk <- arbitrary
+
+                 mk <- arbitrary -- MeterKind
                  bt <- elements [One, Two, Three, Four]
                  
                  return . ChkTimed mk . updateBeats mk bt 

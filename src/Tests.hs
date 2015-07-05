@@ -90,7 +90,7 @@ instance Arbitrary ChkTimed where
                  ns <- arbitrary >>= return . filter (> 0) 
                  
                  mk <- arbitrary
-                 bt <- arbitrary
+                 bt <- elements [One, Two, Three, Four]
                  
                  return . ChkTimed mk . updateBeats mk bt 
                         . reverse . foldl' f [] $ zip as ns
@@ -139,13 +139,25 @@ meterKind1 (ChkTimed Triple cs) = setMeterKind Triple cs == cs
 -- meterKind1 (ChkTimed Duple  cs) = setMeterKind Duple  (setMeterKind Triple cs) == cs
 -- meterKind1 (ChkTimed Triple cs) = setMeterKind Triple (setMeterKind Duple  cs) == cs
 
+correctNextBeat :: ChkTimed -> Bool
+correctNextBeat (ChkTimed mk cs) = and . map (correctBeatTimes mk . getTimeStamps) $ cs
+
+correctBeatTimes :: MeterKind -> [BeatTime] -> Bool
+correctBeatTimes _  [ ] = True
+correctBeatTimes _  [_] = True
+correctBeatTimes mk (a:b:tl) = beat b == nextBeat mk (beat a) && correctBeatTimes mk tl
+
+correctNextBeatMK :: (MeterKind, ChkTimed) -> Bool
+correctNextBeatMK (mk, ChkTimed _ cs) = correctNextBeat 
+                                      $ (ChkTimed mk (setMeterKind mk cs))
 
 --------------------------------------------------------------------------------
 -- Execute the tests
 --------------------------------------------------------------------------------
 
 main :: IO ()
-main = do let myTest s p = do putStrLn ("Testing HarmTrace-Base: "++ s ++": ... ") 
+main = do let myTest :: Testable p => String -> [p] -> IO ()
+              myTest s p = do putStrLn ("Testing HarmTrace-Base: "++ s ++": ... ") 
                               rs <- mapM verboseCheckResult p
                               when (not . and . map isSuccess $ rs) exitFailure
                               
@@ -154,6 +166,8 @@ main = do let myTest s p = do putStrLn ("Testing HarmTrace-Base: "++ s ++": ... 
           myTest "intervals I"  [ intervalProp ]
           -- myTest "intervals II" [ intervalProp2 ]
           myTest "mergeTimed"   [ mergeTimedTest, mergeTimedTest2, mergeTimedTest3 ] 
+          myTest "nextBeat"     [ correctNextBeat ] 
           myTest "meterKind"    [ meterKind1 ] 
+          myTest "meterKind II" [ correctNextBeatMK ] 
           exitSuccess
           

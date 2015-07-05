@@ -244,6 +244,7 @@ setMeterKind mk x =
   in  (updateBeats mk srtpu pu) ++
       (updateBeats mk srt   cs)
 
+-- TODO: maybe setBeats is a better name..?
 -- | applies updateBeat to a list
 -- 
 -- >>> updateBeats Triple Three [ timedBT "a" (BeatTime 0 Three) (BeatTime 1 Four)

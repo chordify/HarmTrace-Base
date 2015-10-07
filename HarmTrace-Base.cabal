@@ -17,7 +17,7 @@ author:              W. Bas de Haas and Jose Pedro Magalhaes
 maintainer:          bas@chordify.net, dreixel@chordify.net 
 category:            Music
 build-type:          Simple
-tested-with:         GHC == 7.4.1, GHC == 7.6.1, GHC == 7.8.2
+tested-with:         GHC == 7.4.1, GHC == 7.6.1, GHC == 7.8.2, GHC == 7.10.2
 cabal-version:       >=1.10
 extra-Source-Files:  README.md CHANGELOG.md
 source-repository head
@@ -40,8 +40,8 @@ library
   other-modules:       HarmTrace.Base.Chord.Internal
   hs-source-dirs:      src  
   
-  build-depends:       base >= 4.4 && < 4.8, 
-                       uu-parsinglib ==2.7.4.*, 
+  build-depends:       base >= 4.4 && < 4.9, 
+                       uu-parsinglib ==2.9.1.*, 
                        ListLike ==4.1.*, 
                        binary >= 0.6.4, 
                        ghc-prim >= 0.2,

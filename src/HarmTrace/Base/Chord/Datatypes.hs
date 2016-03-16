@@ -95,17 +95,17 @@ chordRoot = catchNoChord "Chord.Datatypes.chordRoot" (\(Chord r _ _ _) -> r)
 -- | Returns the 'Shorthand' of a 'Chord', and throws an error in case of 
 -- a 'NoChord' or an 'UndefChord'.
 chordShorthand :: Show a => Chord a -> Shorthand
-chordShorthand = catchNoChord "Chord.Datatypes.chordRoot" (\(Chord _ s _ _) ->s) 
+chordShorthand = catchNoChord "Chord.Datatypes.chordShorthand" (\(Chord _ s _ _) ->s) 
 
 -- | Returns the list of 'Additions' of a 'Chord', and throws an error in case
 -- of a 'NoChord' or an 'UndefChord'.
 chordAdditions :: Show a => Chord a -> [Addition]
-chordAdditions = catchNoChord "Chord.Datatypes.chordRoot" (\(Chord _ _ a _) ->a) 
+chordAdditions = catchNoChord "Chord.Datatypes.chordAdditions" (\(Chord _ _ a _) ->a) 
 
 -- | Returns the bass 'Interval' of a 'Chord', and throws an error in case of 
 -- a 'NoChord' or an 'UndefChord'.
 chordBass :: Show a => Chord a -> Interval
-chordBass = catchNoChord "Chord.Datatypes.chordRoot" (\(Chord _ _ _ b) -> b) 
+chordBass = catchNoChord "Chord.Datatypes.chordBass" (\(Chord _ _ _ b) -> b) 
 
 -- | Updates the root field of a 'Chord'
 -- updateRoot :: Chord a -> a -> Chord a

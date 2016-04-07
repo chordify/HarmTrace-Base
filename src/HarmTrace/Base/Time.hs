@@ -86,16 +86,17 @@ roundingError = fromRational (1 % 1000)  -- = one millisecond
 -- High-level structure
 --------------------------------------------------------------------------------
 
--- | a shorthand (also for backwards compe
-type Timed  a = Timed' a Float
-type DTimed a = Timed' a Float
+-- | a shorthand for a 'Timed'' datatype that uses 'Float' precision
+--  (also for backwards competibility) 
+type Timed  a = Timed' Float  a
+type DTimed a = Timed' Double a
 
 -- | A datatype that wraps around an (musical) datatype, adding information
 -- about the musical time to this datatype. Musical time is stored as
 -- a list of 'BeatTime' time stamps that can optionally be augmented
 -- with information about the 'Beat' position of the particular time stamp
 -- inside the bar.
-data Timed' a t = Timed { getData :: a
+data Timed' t a = Timed { getData :: a
                         -- | Returns the contained datatype
                         , getTimeStamps :: [BeatTime t]
                         -- | Returns the list of TimeStamps
@@ -156,11 +157,11 @@ fromDurations z td = foldl' step [] td where
 -}
 
 -- | alternative 'Timed' constructor
-timed :: Fractional t => a -> t -> t -> Timed' a t
+timed :: Fractional t => a -> t -> t -> Timed' t a
 timed d x y = Timed d [Time x, Time y]
 
 -- | alternative 'Timed' constructor
-timedBT :: Fractional t => a -> BeatTime t -> BeatTime t -> Timed' a t
+timedBT :: Fractional t => a -> BeatTime t -> BeatTime t -> Timed' t a
 timedBT d x y = Timed d [x, y]
 
 -- | concatenates the 'BeatTime' timestamps of two 'Timed's and
@@ -232,7 +233,7 @@ mergeTimedWith eq = foldr groupT [] where
 -- >>> ( Timed {getData = "x", getTimeStamps = [(2.0),(4.0)]}
 -- >>> , Timed {getData = "x", getTimeStamps = [(4.0),(5.0)]} )
 splitTimed :: (Show a, Ord t, Show t, Fractional t)
-           => Timed' a t -> t -> (Timed' a t, Timed' a t)
+           => Timed' t a -> t -> (Timed' t a, Timed' t a)
 splitTimed td@(Timed d t) s
   | s > onset td = case span ((< s) . timeStamp) t of
                     (_, []) -> e
@@ -318,13 +319,13 @@ beat (BeatTime _t bt) = bt
 beat (Time     _t   ) = NoBeat
 
 -- | Returns the start 'BeatTime'
-onBeatTime :: Fractional t => Timed' a t -> BeatTime t
+onBeatTime :: Fractional t => Timed' t a -> BeatTime t
 onBeatTime td = case getTimeStamps td of
   []    -> error "HarmTrace.Base.Time.onBeatTime: no timestamps are stored"
   (h:_) -> h
 
 -- | Returns the offset time stamp
-offBeatTime :: Fractional t => Timed' a t -> BeatTime t
+offBeatTime :: Fractional t => Timed' t a -> BeatTime t
 offBeatTime td = case getTimeStamps td of
   []  -> error "HarmTrace.Base.Time.offBeatTime: no timestamps are stored"
   l   -> last l
@@ -338,21 +339,21 @@ offBeat :: Timed a -> Beat
 offBeat = beat . offBeatTime
 
 -- | Returns the onset time stamp
-onset :: Fractional t => Timed' a t -> t
+onset :: Fractional t => Timed' t a -> t
 onset = timeStamp . onBeatTime
 
 -- | Returns the offset time stamp
-offset :: Fractional t => Timed' a t -> t
+offset :: Fractional t => Timed' t a -> t
 offset = timeStamp . offBeatTime
 
 -- | Given a list of 'Timed' values, returns the end time of the latest element
 -- in the list.
-getEndTime :: Fractional t => [Timed' a t] -> t
+getEndTime :: Fractional t => [Timed' t a] -> t
 getEndTime [] = error "getEndTime: empty list"
 getEndTime l  = offset . last $ l
 
 -- | Returns the duration of 'Timed'
-duration :: Fractional t => Timed' a t -> t
+duration :: Fractional t => Timed' t a -> t
 duration td = offset td - onset td
 
 -- TODO: replace by ad-hoc enum instance?

@@ -76,7 +76,7 @@ data ChkTimed = ChkTimed MeterKind [Timed ChordLabel] deriving (Show, Eq)
 
 instance Arbitrary ChkTimed where
   arbitrary = do let -- Step function for creating a Timed ChordLabel
-                     f ::Fractional t => [Timed' a t] -> (a, [t]) -> [Timed' a t]
+                     f ::Fractional t => [Timed' t a] -> (a, [t]) -> [Timed' t a]
                      f _     (_,[]) = error "should not happen"
                      f [   ] (a, x) = [Timed a (map Time (0:x))]
                      f (h:t) (a, x) = let o   = offset h

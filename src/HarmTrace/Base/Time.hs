@@ -55,6 +55,9 @@ module HarmTrace.Base.Time (
   , nextBeat
   , prevBeat
   , lastBeat
+  , updBeat
+  , updTime
+  , updateTimeStamp
   , dropTimed
   , timeStamp
   , timeComp
@@ -376,6 +379,21 @@ prevBeat _      b    = pred b
 lastBeat :: MeterKind -> Beat
 lastBeat Triple = Three
 lastBeat Duple  = Four
+
+-- | updates a 'Beat' in a 'BeatTime'
+updBeat :: Fractional t => (Beat -> Beat) -> BeatTime t -> BeatTime t
+updBeat _ (Time _) = error "updTimeBeatTime: cannot update non-existing beat"
+updBeat f (BeatTime n b) = BeatTime n (f b)
+
+-- | updates a timestamp in a 'BeatTime'
+updTime :: Fractional t => (t -> t) -> BeatTime t -> BeatTime t
+updTime f (Time     n  ) = Time     (f n)
+updTime f (BeatTime n b) = BeatTime (f n) b
+
+-- | updates the timestamps in a 'Timed' datatype
+updateTimeStamp :: Fractional t
+                => ([BeatTime t] -> [BeatTime t]) -> Timed' t a -> Timed' t a
+updateTimeStamp f (Timed a ts) = Timed a (f ts)
 
 -- | drops the time (with or without 'Beat') information of a list
 -- 'Timed' data structure

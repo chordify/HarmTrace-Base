@@ -2,15 +2,14 @@
 --------------------------------------------------------------------------------
 -- |
 -- Module      :  HarmTrace.Base.Chord.Intervals
--- Copyright   :  (c) 2013--2014 W. Bas de Haas and Jose Pedro Magalhaes,
---                Multiphonyx Holding BV
+-- Copyright   :  (c) 2012--2016, Chordify BV
 -- License     :  LGPL-3
 --
--- Maintainer  :  bas@chordify.net, dreixel@chordify.net 
+-- Maintainer  :  haskelldevelopers@chordify.net
 -- Stability   :  experimental
 -- Portability :  non-portable
 --
--- Summary: We can represent a chord as a set of intervals relative to the 
+-- Summary: We can represent a chord as a set of intervals relative to the
 -- root of the chord.
 --------------------------------------------------------------------------------
 
@@ -42,13 +41,13 @@ icToInterval i
   | otherwise         = error ("HarmTrace.Base.MusicRep.toInterval " ++
                                "invalid pitch class: " ++ show i)
 
--- | Similar to 'toPitchClss', this function calculates an enharmonic 
+-- | Similar to 'toPitchClss', this function calculates an enharmonic
 -- interval class for each 'Note Interval' in the range of [0 .. 23]
 -- ( == ['Note Nat I1' .. 'Note SS I13']
 toIntervalClss :: Interval -> Int
 toIntervalClss n@(Note m i) =
   --         1 2 3 4 5 6 7  8  9  10 11 12 13
-  let ic = ([0,2,4,5,7,9,11,12,14,16,17,19,21] !! (fromEnum i)) + modToInt m 
+  let ic = ([0,2,4,5,7,9,11,12,14,16,17,19,21] !! (fromEnum i)) + modToInt m
   in  if ic >= 0 then ic
                  else error ("HarmTrace.Base.MusicRep.toIntervalClss: no "
                           ++ "interval class for " ++ show n)
@@ -57,7 +56,7 @@ toIntervalClss n@(Note m i) =
 -- | Transforms a Chord into a list of relative intervals stored as an 'IntSet'
 -- without the root an bass note represented as the number of semitones above
 -- the root.
--- 
+--
 -- >>> toIntSet (Chord (Note Nat C) HDim7 [Add (Note Sh I11)] (Note Fl I3))
 -- fromList [3,6,10,18]
 --
@@ -74,9 +73,9 @@ toIntSet (Chord  _r sh a  _b) = let (add, rm) = partition isAddition a
 toIntSet _ = error ("HarmTrace.Base.MusicRep.toIntValList: cannot create" ++
                         "interval list for N or X")
 
--- | Converts a list of addition to an 'IntSet' containing the relative 
+-- | Converts a list of addition to an 'IntSet' containing the relative
 -- structure of the ('Addition' list of the) 'Chord'
-addToIntSet :: [Addition] -> IntSet 
+addToIntSet :: [Addition] -> IntSet
 addToIntSet add = toSet adds \\ toSet remv
   where (adds, remv) = partition isAddition add
 
@@ -88,10 +87,10 @@ toSet = fromList . map (toIntervalClss . getInt) where
   getInt :: Addition -> Interval
   getInt (NoAdd i) = i
   getInt (Add   i) = i
-        
-  
+
+
 -- | Expands a 'Shorthand' to its list of degrees
-shToIntSet :: Shorthand -> IntSet 
+shToIntSet :: Shorthand -> IntSet
 shToIntSet Maj     = fromList [4,7]              --    [Note Nat I3,Note Nat I5]
 shToIntSet Min     = fromList [3,7]              --    [Note Fl  I3,Note Nat I5]
 shToIntSet Dim     = fromList [3,6]              --    [Note Fl  I3,Note Fl  I5]
@@ -105,7 +104,7 @@ shToIntSet MinMaj7 = insert 11 (shToIntSet Min)  -- ++ [Note Nat I7]
 shToIntSet Aug7    = insert 10 (shToIntSet Aug)  -- ++ [Note Fl  I7]
 shToIntSet Maj6    = insert  9 (shToIntSet Maj)  -- ++ [Note Nat I6]
 -- Harte uses a 6 instead of b6
-shToIntSet Min6    = insert  8 (shToIntSet Min ) -- ++ [Note Fl  I6] 
+shToIntSet Min6    = insert  8 (shToIntSet Min ) -- ++ [Note Fl  I6]
 shToIntSet Nin     = insert 14 (shToIntSet Sev ) -- ++ [Note Nat I9]
 shToIntSet Maj9    = insert 14 (shToIntSet Maj7) -- ++ [Note Nat I9]
 shToIntSet Min9    = insert 14 (shToIntSet Min7) -- ++ [Note Nat I9]
@@ -120,6 +119,3 @@ shToIntSet Eleven  = insert 17 (shToIntSet Nin   ) -- ++ [Note Nat I11]
 shToIntSet Min13   = insert 21 (shToIntSet Min11 ) -- ++ [Note Nat I13]
 shToIntSet Maj13   = insert 21 (shToIntSet Maj9  ) -- ++ [Note Nat I13]
 shToIntSet Thirteen= insert 21 (shToIntSet Eleven) -- ++ [Note Nat I13]
-     
-     
-     

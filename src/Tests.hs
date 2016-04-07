@@ -3,11 +3,10 @@
 --------------------------------------------------------------------------------
 -- |
 -- Module      :  HarmTrace.Base.Chord.Tests
--- Copyright   :  (c) 2013--2014 W. Bas de Haas and Jose Pedro Magalhaes,
---                Multiphonyx Holding BV
+-- Copyright   :  (c) 2012--2016, Chordify BV
 -- License     :  LGPL-3
 --
--- Maintainer  :  bas@chordify.net, dreixel@chordify.net
+-- Maintainer  :  haskelldevelopers@chordify.net
 -- Stability   :  experimental
 -- Portability :  non-portable
 --

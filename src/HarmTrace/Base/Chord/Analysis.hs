@@ -2,11 +2,10 @@
 --------------------------------------------------------------------------------
 -- |
 -- Module      :  HarmTrace.Base.MusicRep
--- Copyright   :  (c) 2013--2014 W. Bas de Haas and Jose Pedro Magalhaes,
---                Multiphonyx Holding BV
+-- Copyright   :  (c) 2012--2016, Chordify BV
 -- License     :  LGPL-3
 --
--- Maintainer  :  bas@chordify.net, dreixel@chordify.net 
+-- Maintainer  :  haskelldevelopers@chordify.net
 -- Stability   :  experimental
 -- Portability :  non-portable
 --
@@ -39,24 +38,24 @@ module HarmTrace.Base.Chord.Analysis (
   , toChordDegree
   , toScaleDegree
   , intervalToPitch
-  
+
   -- exported twice
   -- , icToInterval
   , toChord
   ) where
-  
+
 import HarmTrace.Base.Chord.Datatypes
 import HarmTrace.Base.Chord.PitchClass
 import HarmTrace.Base.Chord.Intervals
 import HarmTrace.Base.Chord.Internal
 
 import Data.IntSet                     ( IntSet, toAscList, member, (\\) )
-  
+
 --------------------------------------------------------------------------------
 -- Transformation and analysis of chords
 --------------------------------------------------------------------------------
 
--- | Returns the 'ClassType' given a 'Chord'. This function uses 
+-- | Returns the 'ClassType' given a 'Chord'. This function uses
 -- 'analyseDegClassType' to analyse a chord and derive the 'ClassType'
 toClassType :: Chord a -> ClassType
 toClassType (Chord  _r  sh []   _b) = shToClassType sh -- no additions
@@ -66,7 +65,7 @@ toClassType c = analyseDegClassType . toIntSet $ c
 -- | Analyses a degree list and returns 'MajTriad', 'MinTriad' or 'NoTriad' if
 -- the degrees make a chord a major, minor, or no triad, respectively.
 analyseDegClassType :: IntSet -> ClassType
-analyseDegClassType degs = 
+analyseDegClassType degs =
     case (analyseThird degs, analyseFifth degs, analyseSevth degs) of
        -- Triads
        (MinThird, DimFifth , DimSev) -> DimClass
@@ -92,7 +91,7 @@ shToClassType Dim7    = DimClass
 shToClassType HDim7   = MinClass
 shToClassType MinMaj7 = MinClass
 shToClassType Aug7    = DomClass
-shToClassType Maj6    = MajClass 
+shToClassType Maj6    = MajClass
 shToClassType Min6    = MinClass
 shToClassType Nin     = DomClass
 shToClassType Maj9    = MajClass
@@ -121,13 +120,13 @@ data Sevth = DimSev   | MinSev    | MajSev   | NoSev   deriving (Eq, Show)
 
 triadToSh :: Triad -> Shorthand
 triadToSh t = case t of
-                 MajTriad -> Maj 
-                 MinTriad -> Min 
-                 AugTriad -> Aug 
-                 DimTriad -> Dim 
+                 MajTriad -> Maj
+                 MinTriad -> Min
+                 AugTriad -> Aug
+                 DimTriad -> Dim
                  NoTriad  -> None
 
--- | Analyses the structure of an 'IntSet' and returns an appropriate 
+-- | Analyses the structure of an 'IntSet' and returns an appropriate
 -- 'ShortHand', if possible
 analyseTetra :: IntSet -> Shorthand
 analyseTetra is = case (analyseTriad is, analyseSevth is) of
@@ -139,12 +138,12 @@ analyseTetra is = case (analyseTriad is, analyseSevth is) of
                     (DimTriad, DimSev) -> Dim7
                     (AugTriad, MinSev) -> Aug7
                     (t       , NoSev ) -> triadToSh t
-                    _                  -> None                 
+                    _                  -> None
 
 -- | Takes a 'Chord' and determines the 'Triad'
 --
 -- >>> toTriad (Chord (Note Nat C) Min [NoAdd (Note Fl I3),Add (Note Nat I3)] 0 0)
--- maj 
+-- maj
 --
 -- >>> toTriad (Chord (Note Nat C) HDim7 [Add (Note Sh I11)] 0 0)
 -- dim
@@ -159,11 +158,11 @@ toTriad UndefChord = error "toTriad: a UndefChord has no triad to analyse"
 toTriad (Chord  _r  sh [] _b) = shToTriad sh -- there are no additions
 -- combine the degrees and analyse them. N.B., also NoAdd degrees are resolved
 toTriad c = analyseTriad . toIntSet $ c
-   
+
 -- | Analyses a degree list and returns 'MajTriad', 'MinTriad' or 'NoTriad' if
 -- the degrees make a chord a major, minor, or no triad, respectively.
 analyseTriad :: IntSet -> Triad
-analyseTriad is =  
+analyseTriad is =
     case (analyseThird is, analyseFifth is) of
        (MajThird, PerfFifth) -> MajTriad
        (MajThird, AugFifth ) -> AugTriad
@@ -173,23 +172,23 @@ analyseTriad is =
        (MinThird, DimFifth ) -> DimTriad
        (NoThird,  _        ) -> NoTriad
        (_      ,  NoFifth  ) -> NoTriad
-      
+
 -- | analyses the third in a degree list
 analyseThird :: IntSet -> Third
 analyseThird is
   | member 4 is = MajThird
   | member 3 is = MinThird
   | otherwise   = NoThird
-      
--- | analyses the fifth in a degree list 
+
+-- | analyses the fifth in a degree list
 analyseFifth :: IntSet -> Fifth
-analyseFifth is 
+analyseFifth is
   | member 7 is = PerfFifth
   | member 6 is = DimFifth
   | member 8 is = AugFifth
   | otherwise   = NoFifth
 
--- | analyses the fifth in a degree list 
+-- | analyses the fifth in a degree list
 analyseSevth :: IntSet -> Sevth
 analyseSevth is
   | member 10 is = MinSev
@@ -197,11 +196,11 @@ analyseSevth is
   | member 9  is = DimSev
   | otherwise    = NoSev
 
- 
--- | Converts a 'Shorthand' to a 'Triad' 
+
+-- | Converts a 'Shorthand' to a 'Triad'
 -- N.B. this function should not be exported because the shorthand alone cannot
--- determine the triad 
-shToTriad :: Shorthand -> Triad     
+-- determine the triad
+shToTriad :: Shorthand -> Triad
 shToTriad Maj     = MajTriad
 shToTriad Min     = MinTriad
 shToTriad Dim     = DimTriad
@@ -213,7 +212,7 @@ shToTriad Dim7    = DimTriad
 shToTriad HDim7   = DimTriad
 shToTriad MinMaj7 = MinTriad
 shToTriad Aug7    = AugTriad
-shToTriad Maj6    = MajTriad 
+shToTriad Maj6    = MajTriad
 shToTriad Min6    = MinTriad
 shToTriad Nin     = MajTriad
 shToTriad Maj9    = MajTriad
@@ -232,13 +231,13 @@ shToTriad Thirteen = MajTriad
 
 
 -- | Converts a 'Shorthand' to a 'Mode'
-toMode :: Triad -> Mode     
+toMode :: Triad -> Mode
 toMode MajTriad = MajMode
 toMode MinTriad = MinMode
 toMode t        = error (  "HarmTrace.Base.MusicRep.toMode: cannot convert "
                         ++ " triad to mode: " ++ show t)
 
--- | Converts a 'Shorthand' to either a 'MajClass', 'MinClass' or 'NoClass' 
+-- | Converts a 'Shorthand' to either a 'MajClass', 'MinClass' or 'NoClass'
 -- 'ClassType'.
 toMajMin :: Triad -> ClassType
 toMajMin MajTriad = MajClass
@@ -247,7 +246,7 @@ toMajMin AugTriad = MajClass
 toMajMin DimTriad = MinClass
 toMajMin NoTriad  = NoClass
 
--- | applies 'toMajMin' to a 'Chord', in case there is no triad, e.g. 
+-- | applies 'toMajMin' to a 'Chord', in case there is no triad, e.g.
 -- @:sus4@ or @:sus2@, an 'UndefChord' is returned. Also, chord
 -- additions are removed. 'NoChord's and 'UndefChord's are returned untouched.
 toMajMinChord :: ChordLabel -> ChordLabel
@@ -260,16 +259,16 @@ toMajMinChord c@(Chord r _ _ b) = case toMajMin (toTriad c) of
                      -- catch all: cannot happen, see toMajMin
                      _        -> error ("HarmTrace.Base.MusicRep.toMajMinChord"
                                         ++ " unexpected chord " ++ show c)
-                       
--- | Returns True if the 'ChordLabel' has a major second, no third, 
+
+-- | Returns True if the 'ChordLabel' has a major second, no third,
 -- and no fourth.
 isSus2 :: ChordLabel -> Bool
-isSus2 c = let is = toIntSet c in      member 2 is 
+isSus2 c = let is = toIntSet c in      member 2 is
                                && not (member 3 is)
                                && not (member 4 is)
                                && not (member 5 is)
-                               
--- | Returns True if the 'ChordLabel' has a no major second, no third, 
+
+-- | Returns True if the 'ChordLabel' has a no major second, no third,
 -- but has a fourth.
 isSus4 :: ChordLabel -> Bool
 isSus4 c = let is = toIntSet c in not (member 2 is)
@@ -278,54 +277,53 @@ isSus4 c = let is = toIntSet c in not (member 2 is)
                                &&     (member 5 is)
 --------------------------------------------------------------------------------
 -- Value Level Scale Degree Transposition
--------------------------------------------------------------------------------- 
-    
+--------------------------------------------------------------------------------
+
 -- Chord root shorthand degrees location duration
--- | Given a 'Key', calculates the the 'ChordDegree' (i.e. relative, 
--- 'ScaleDegree' based 'Chord') for an absolute 'ChordLabel' using 
+-- | Given a 'Key', calculates the the 'ChordDegree' (i.e. relative,
+-- 'ScaleDegree' based 'Chord') for an absolute 'ChordLabel' using
 -- 'toScaleDegree'.
 toChordDegree :: Key -> ChordLabel -> ChordDegree
 toChordDegree k (Chord r sh a b) = Chord (toScaleDegree k r) sh a b
-toChordDegree _ c = 
+toChordDegree _ c =
   error("HarmTrace.Base.Chord.Analysis: cannot create scale degree for " ++ show c)
-    
+
 -- | Transformes a absolute 'Root' 'Note' into a relative 'ScaleDegree', given
 -- a 'Key'.
 toScaleDegree :: Key -> Root -> ScaleDegree
--- toScaleDegree _ n@(Note _ N) = 
+-- toScaleDegree _ n@(Note _ N) =
   -- error ("HarmTrace.Base.MusicRep.toScaleDegree: cannot transpose " ++ show n)
 toScaleDegree (Key kr _) cr  = -- Note Nat I
   scaleDegrees!!(((toPitchClass cr) - (toPitchClass kr)) `mod` 12)
 
 -- | Transposes a Root with a 'Int' semitones up
 transposeRoot :: Root -> Int -> Root
-transposeRoot deg sem = transpose roots deg sem 
-  
+transposeRoot deg sem = transpose roots deg sem
+
 -- | Transposes a scale degree with 'Int' semitones up
 transposeSD :: ScaleDegree -> Int -> ScaleDegree
-transposeSD deg sem = transpose scaleDegrees deg sem 
+transposeSD deg sem = transpose scaleDegrees deg sem
 
 transpose :: Diatonic a => [Note a] -> Note a -> Int -> Note a
 transpose ns n sem = ns !! ((sem + (toPitchClass n)) `mod` 12)
 
 
 -- | Similar to 'toScaleDegree', an interval is transformed into an absolute
--- 'Root' pitch, given another 'Root' that serves as a basis. 
---  
+-- 'Root' pitch, given another 'Root' that serves as a basis.
+--
 -- >>> intervalToPitch (Note Sh G) (Note Fl I13)
 -- >>> E
---  
+--
 -- >>> intervalToPitch (Note Nat C) (Note Sh I11)
 -- >>> F#
 --
 intervalToPitch :: Root -> Interval -> Root
 intervalToPitch r = pcToRoot . intValToPitchClss r
 
--- | Given an 'IntSet' (Interval Set), a 'Root' 'Note' and an optional 
--- bass 'Interval', returns a 'Chord' 
+-- | Given an 'IntSet' (Interval Set), a 'Root' 'Note' and an optional
+-- bass 'Interval', returns a 'Chord'
 toChord :: Root -> IntSet -> Maybe Interval -> Chord Root
 toChord r is mi = Chord r sh add (maybe (Note Nat I1) id mi)
- 
- where add = map (Add . icToInterval) $ toAscList (is \\ shToIntSet sh)
-       sh  = analyseTetra is     
 
+ where add = map (Add . icToInterval) $ toAscList (is \\ shToIntSet sh)
+       sh  = analyseTetra is

@@ -3,11 +3,10 @@
 --------------------------------------------------------------------------------
 -- |
 -- Module      :  HarmTrace.Base.Chord.Internal
--- Copyright   :  (c) 2013 W. Bas de Haas and Jose Pedro Magalhaes,
---                Multiphonyx Holding BV
+--- Copyright   :  (c) 2012--2016, Chordify BV
 -- License     :  LGPL-3
 --
--- Maintainer  :  bas@chordify.net, dreixel@chordify.net 
+-- Maintainer  :  haskelldevelopers@chordify.net
 -- Stability   :  experimental
 -- Portability :  non-portable
 --
@@ -32,7 +31,7 @@ modToInt SS  =  2
 modToInt FF  = -2
 
 -- | A list of 12 'ScaleDegree's, ignoring pitch spelling.
-scaleDegrees ::[ ScaleDegree ]  
+scaleDegrees ::[ ScaleDegree ]
 scaleDegrees = [ Note  Nat I
                , Note  Sh  I
                , Note  Nat II
@@ -46,10 +45,10 @@ scaleDegrees = [ Note  Nat I
                , Note  Fl  VII
                , Note  Nat VII
                ]
-               
+
 
 -- | A list of 12 'Note DiatonicNatural's, ignoring pitch spelling.
-roots ::       [ Root ]  
+roots ::       [ Root ]
 roots =        [ Note Nat C
                , Note Sh  C
                , Note Nat D

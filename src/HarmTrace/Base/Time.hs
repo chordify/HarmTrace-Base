@@ -6,10 +6,10 @@
 --------------------------------------------------------------------------------
 -- |
 -- Module      :  HarmTrace.Base.MusicTime
--- Copyright   :  (c) 2012--2015 W. Bas de Haas and Jose Pedro Magalhaes
+-- Copyright   :  (c) 2012--2016, Chordify BV
 -- License     :  LGPL-3
 --
--- Maintainer  :  bas@chordify.net, dreixel@chordify.net
+-- Maintainer  :  haskelldevelopers@chordify.net
 -- Stability   :  experimental
 -- Portability :  non-portable
 --
@@ -75,20 +75,15 @@ import Data.Ratio                     ( (%) )
 roundingError :: Fractional t => t
 roundingError = fromRational (1 % 1000)  -- = one millisecond
 
--- roundingErrorD :: BeatTime Double
--- roundingErrorD = 0.0001 -- = one millisecond
-
--- | A type synonym is defined for our main numerical representation, this
--- allows us to easily change the precision.
--- type NumData = Float
-
 --------------------------------------------------------------------------------
 -- High-level structure
 --------------------------------------------------------------------------------
 
 -- | a shorthand for a 'Timed'' datatype that uses 'Float' precision
---  (also for backwards competibility) 
+--  (also for backwards competibility)
 type Timed  a = Timed' Float  a
+
+-- | a shorthand for 'Double' precision
 type DTimed a = Timed' Double a
 
 -- | A datatype that wraps around an (musical) datatype, adding information
@@ -97,9 +92,9 @@ type DTimed a = Timed' Double a
 -- with information about the 'Beat' position of the particular time stamp
 -- inside the bar.
 data Timed' t a = Timed { getData :: a
-                        -- | Returns the contained datatype
+                        -- ^ Returns the contained datatype
                         , getTimeStamps :: [BeatTime t]
-                        -- | Returns the list of TimeStamps
+                        -- ^ Returns the list of TimeStamps
                         } deriving (Functor, Show, Eq)
 
 -- | For now, we fix the number of available beats to four, because this is also

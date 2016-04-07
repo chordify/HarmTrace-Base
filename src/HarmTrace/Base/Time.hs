@@ -20,9 +20,10 @@
 
 module HarmTrace.Base.Time (
 
-   NumData
   -- ** Representing musical time
-  , Timed (..)
+    Timed
+  , DTimed
+  , Timed' (..)
   , Beat (..)
   , BeatTime (..)
   , MeterKind (..)
@@ -65,15 +66,17 @@ module HarmTrace.Base.Time (
 ) where
 
 import Data.List                      ( intercalate, mapAccumL )
-import Text.Printf                    ( printf )
+import Data.Ratio                     ( (%) )
 
 -- | When reducing and expanding 'Timed' types there might be rounding
 -- errors in the floating point time stamps. The 'roundingError' parameter
 -- sets the acceptable rounding error that is used in the comparison of
 -- time stamps (e.g. see 'timeComp')
-roundingError :: BeatTime
-roundingError = 0.0001 -- = one millisecond
+roundingError :: Fractional t => t
+roundingError = fromRational (1 % 1000)  -- = one millisecond
 
+-- roundingErrorD :: BeatTime Double
+-- roundingErrorD = 0.0001 -- = one millisecond
 
 -- | A type synonym is defined for our main numerical representation, this
 -- allows us to easily change the precision.
@@ -83,7 +86,9 @@ roundingError = 0.0001 -- = one millisecond
 -- High-level structure
 --------------------------------------------------------------------------------
 
-type Timed a = Fractional t => Timed' a t
+-- | a shorthand (also for backwards compe
+type Timed  a = Timed' a Float
+type DTimed a = Timed' a Float
 
 -- | A datatype that wraps around an (musical) datatype, adding information
 -- about the musical time to this datatype. Musical time is stored as
@@ -116,10 +121,12 @@ instance Show Beat where
   show Four  = "4"
   show NoBeat = "x"
 
-instance Fractional t => Show (BeatTime t) where
-  show (BeatTime t bt) = printf ("(%.2f, " ++ show bt ++ ")") t
-  show (Time t)        = printf  "(%.2f)" t
+instance (Show t, Fractional t) => Show (BeatTime t) where
+  show (BeatTime t bt) = '(' : showFracShort t ++ show bt ++ ")"
+  show (Time t)        = '(' : showFracShort t ++            ")"
 
+showFracShort :: (Show t, Fractional t) => t -> String
+showFracShort = take 5 . show
 
 --------------------------------------------------------------------------------
 -- numerical data representation
@@ -130,10 +137,10 @@ instance Fractional t => Show (BeatTime t) where
 -- | Represents a musical time stamp, which is a 'NumData' possibly augmented
 -- with a 'Beat' denoting the position of the time stamp within a bar.
 data BeatTime a = BeatTime a Beat
-                | Time     a       deriving Eq
+                | Time     a       deriving (Functor, Eq)
 
 -- we compare based on the timestamp only
-instance Ord BeatTime where
+instance (Ord t, Fractional t) => Ord (BeatTime t) where
   compare a b = compare (timeStamp a) (timeStamp b)
 
 --------------------------------------------------------------------------------
@@ -149,11 +156,11 @@ fromDurations z td = foldl' step [] td where
 -}
 
 -- | alternative 'Timed' constructor
-timed :: Fractional t => a -> t -> t -> Timed a
+timed :: Fractional t => a -> t -> t -> Timed' a t
 timed d x y = Timed d [Time x, Time y]
 
 -- | alternative 'Timed' constructor
-timedBT :: a -> BeatTime -> BeatTime -> Timed a
+timedBT :: Fractional t => a -> BeatTime t -> BeatTime t -> Timed' a t
 timedBT d x y = Timed d [x, y]
 
 -- | concatenates the 'BeatTime' timestamps of two 'Timed's and
@@ -163,7 +170,8 @@ concatTimed :: a -> Timed a -> Timed a -> Timed a
 concatTimed dat (Timed _ ta) (Timed _ tb) =
   Timed dat (mergeBeatTime ta tb) where
 
-  mergeBeatTime :: [BeatTime] -> [BeatTime] -> [BeatTime]
+  mergeBeatTime :: (Ord t, Show t, Fractional t)
+                => [BeatTime t] -> [BeatTime t] -> [BeatTime t]
   mergeBeatTime [] b = b
   mergeBeatTime a [] = a
   mergeBeatTime a b = case timeComp (timeStamp . last $ a)
@@ -223,7 +231,8 @@ mergeTimedWith eq = foldr groupT [] where
 -- >>> splitTimed (Timed "x" [Time 2, Time 5]) 4
 -- >>> ( Timed {getData = "x", getTimeStamps = [(2.0),(4.0)]}
 -- >>> , Timed {getData = "x", getTimeStamps = [(4.0),(5.0)]} )
-splitTimed :: (Show a, Fractional t) => Timed a t -> t -> (Timed a, Timed a)
+splitTimed :: (Show a, Ord t, Show t, Fractional t)
+           => Timed' a t -> t -> (Timed' a t, Timed' a t)
 splitTimed td@(Timed d t) s
   | s > onset td = case span ((< s) . timeStamp) t of
                     (_, []) -> e
@@ -288,7 +297,7 @@ splitPickup cs = case span (\t -> (onBeat t) /= One) . expandTimed $ cs of
 
 -- | compares to 'NumData' timestamps taking a rounding error 'roundingError'
 -- into account.
-timeComp :: Fractional t => t -> t -> Ordering
+timeComp :: (Ord t, Fractional t) => t -> t -> Ordering
 timeComp a b
  | a > (b + roundingError) = GT
  | a < (b - roundingError) = LT
@@ -299,23 +308,23 @@ setData :: Timed a -> b -> Timed b
 setData td d = td {getData = d}
 
 -- | Returns the 'NumData' timestamp, given a 'BeatTime'
-timeStamp :: Fractional t -> BeatTime -> t
+timeStamp :: Fractional t => BeatTime t -> t
 timeStamp (BeatTime t _bt) = t
 timeStamp (Time     t    ) = t
 
 -- | Returns the 'NumData' timestamp, given a 'BeatTime'
-beat :: BeatTime -> Beat
+beat :: BeatTime t -> Beat
 beat (BeatTime _t bt) = bt
 beat (Time     _t   ) = NoBeat
 
 -- | Returns the start 'BeatTime'
-onBeatTime :: Timed a -> BeatTime
+onBeatTime :: Fractional t => Timed' a t -> BeatTime t
 onBeatTime td = case getTimeStamps td of
   []    -> error "HarmTrace.Base.Time.onBeatTime: no timestamps are stored"
   (h:_) -> h
 
 -- | Returns the offset time stamp
-offBeatTime :: Timed a -> BeatTime
+offBeatTime :: Fractional t => Timed' a t -> BeatTime t
 offBeatTime td = case getTimeStamps td of
   []  -> error "HarmTrace.Base.Time.offBeatTime: no timestamps are stored"
   l   -> last l
@@ -329,21 +338,21 @@ offBeat :: Timed a -> Beat
 offBeat = beat . offBeatTime
 
 -- | Returns the onset time stamp
-onset :: Fractional t => Timed a -> t
+onset :: Fractional t => Timed' a t -> t
 onset = timeStamp . onBeatTime
 
 -- | Returns the offset time stamp
-offset :: Fractional t => Timed a -> t
+offset :: Fractional t => Timed' a t -> t
 offset = timeStamp . offBeatTime
 
 -- | Given a list of 'Timed' values, returns the end time of the latest element
 -- in the list.
-getEndTime :: Fractional t => [Timed a] -> t
+getEndTime :: Fractional t => [Timed' a t] -> t
 getEndTime [] = error "getEndTime: empty list"
 getEndTime l  = offset . last $ l
 
 -- | Returns the duration of 'Timed'
-duration :: Fractional t => Timed a -> t
+duration :: Fractional t => Timed' a t -> t
 duration td = offset td - onset td
 
 -- TODO: replace by ad-hoc enum instance?
@@ -379,7 +388,7 @@ dropTimed = map getData
 
 -- | Pretty prints a list of 'Timed's, one per line
 prettyPrint :: Show a => [Timed a] -> String
-prettyPrint = intercalate "\n" . map pprint where
+prettyPrint = intercalate "\n" . map pprint
 
 -- | Pretty prints a single 'Timed'
 pprint :: Show a => Timed a -> String

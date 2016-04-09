@@ -23,10 +23,12 @@ module HarmTrace.Base.Parse.ChordParser (
   , pAdditions
   , pAddition
   , pKey
+  , pBeat
   ) where
 
 import HarmTrace.Base.Parse.General
 import HarmTrace.Base.Chord
+import HarmTrace.Base.Time
 
 --------------------------------------------------------------------------------
 -- Parsing String of Musical Chords
@@ -157,3 +159,11 @@ pDiaNat =    A  <$ pSym 'A'
          <|> E  <$ pSym 'E'
          <|> F  <$ pSym 'F'
          <|> G  <$ pSym 'G'
+
+-- | Parses a 'Beat'.
+pBeat :: Parser Beat
+pBeat =   One   <$ pSym '1'
+      <|> Two   <$ pSym '2'
+      <|> Three <$ pSym '3'
+      <|> Four  <$ pSym '4'
+      <?> "Beat"

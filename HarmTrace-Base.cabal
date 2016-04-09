@@ -42,7 +42,7 @@ library
 
   build-depends:       base >= 4.4 && < 4.9,
                        uu-parsinglib ==2.9.1.*,
-                       ListLike ==4.1.*,
+                       ListLike >= 3.0.1,
                        binary >= 0.6.4,
                        ghc-prim >= 0.2,
                        containers >= 0.5.0.0
@@ -57,10 +57,10 @@ Test-Suite test-harmtrace-base
   hs-source-dirs:      src
   build-depends:       QuickCheck >= 2.8,
                        random >= 1.1,
-                       HarmTrace-Base == 1.4.1.0,
+                       HarmTrace-Base == 1.5.0.0,
                        base >= 4.2,
                        uu-parsinglib ==2.9.1.*,
-                       ListLike ==4.1.*,
+                       ListLike >= 3.0.1,
                        binary >= 0.6.4,
                        ghc-prim >= 0.2,
                        containers >= 0.5.0.0

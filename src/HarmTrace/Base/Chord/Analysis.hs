@@ -34,6 +34,7 @@ module HarmTrace.Base.Chord.Analysis (
   , isSus4
   -- * Scale degree transposition
   , transposeRoot
+  , transposeCL
   , transposeSD
   , toChordDegree
   , toScaleDegree
@@ -298,11 +299,15 @@ toScaleDegree (Key kr _) cr  = -- Note Nat I
 
 -- | Transposes a Root with a 'Int' semitones up
 transposeRoot :: Root -> Int -> Root
-transposeRoot deg sem = transpose roots deg sem
+transposeRoot = transpose roots
+
+-- | Transposes a ChordLabel with a 'Int' semitones up
+transposeCL :: ChordLabel -> Int -> ChordLabel
+transposeCL c sem = fmap (flip transposeRoot sem) c
 
 -- | Transposes a scale degree with 'Int' semitones up
 transposeSD :: ScaleDegree -> Int -> ScaleDegree
-transposeSD deg sem = transpose scaleDegrees deg sem
+transposeSD = transpose scaleDegrees
 
 transpose :: Diatonic a => [Note a] -> Note a -> Int -> Note a
 transpose ns n sem = ns !! ((sem + (toPitchClass n)) `mod` 12)

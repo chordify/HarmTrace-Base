@@ -255,7 +255,8 @@ setMeterKind mk x =
       (updateBeats mk srt   cs)
 
 -- TODO: maybe setBeats is a better name..?
--- | applies updateBeat to a list
+-- | applies updateBeat to a list. 'updateBeats' requires a 'MeterKind'
+-- and a starting 'Beat'.
 --
 -- >>> updateBeats Triple Three [ timedBT "a" (BeatTime 0 Three) (BeatTime 1 Four)
 -- >>>                          , timedBT "a" (BeatTime 1 Four) (BeatTime 2 One)

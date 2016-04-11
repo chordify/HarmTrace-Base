@@ -304,9 +304,7 @@ transposeRoot deg sem = transpose roots deg sem
 
 -- | Transposes a ChordLabel with a 'Int' semitones up
 transposeCL :: ChordLabel -> Int -> ChordLabel
-transposeCL (Chord r sh add int) sem = Chord (transposeRoot r sem) sh add int
-transposeCL NoChord              _   = NoChord
-transposeCL UndefChord           _   = UndefChord
+transposeCL c sem = fmap (flip transposeRoot sem) c
   
 -- | Transposes a scale degree with 'Int' semitones up
 transposeSD :: ScaleDegree -> Int -> ScaleDegree

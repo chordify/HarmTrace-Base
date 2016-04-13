@@ -51,6 +51,7 @@ module HarmTrace.Base.Time (
   , splitTimed
   , setMeterKind
   , updateBeats
+  , updateBeat
   , splitPickup -- remove
   , nextBeat
   , prevBeat
@@ -121,8 +122,8 @@ instance Show Beat where
   show NoBeat = "x"
 
 instance (Show t, Fractional t) => Show (BeatTime t) where
-  show (BeatTime t bt) = '(' : showFracShort t ++ show bt ++ ")"
-  show (Time t)        = '(' : showFracShort t ++            ")"
+  show (BeatTime t bt) = '(' : showFracShort t ++ ',' : show bt ++ ")"
+  show (Time t)        = '(' : showFracShort t ++                  ")"
 
 showFracShort :: (Show t, Fractional t) => t -> String
 showFracShort = take 5 . show
@@ -130,8 +131,6 @@ showFracShort = take 5 . show
 --------------------------------------------------------------------------------
 -- numerical data representation
 --------------------------------------------------------------------------------
-
--- type BeatTime = BeatAndTime Float
 
 -- | Represents a musical time stamp, which is a 'NumData' possibly augmented
 -- with a 'Beat' denoting the position of the time stamp within a bar.
@@ -269,7 +268,7 @@ updateBeats :: MeterKind -> Beat -> [Timed a] -> [Timed a]
 updateBeats _      _      [] = []
 updateBeats Triple Four   cs = updateBeats Triple One cs
 updateBeats _      NoBeat cs = cs
-updateBeats mk s cs = snd . mapAccumL f s $ cs
+updateBeats mk     s      cs = snd . mapAccumL f s $ cs
 
   where f :: Beat -> Timed a -> (Beat, Timed a)
         f a b = let x = updateBeat mk a b in (offBeat x, x)

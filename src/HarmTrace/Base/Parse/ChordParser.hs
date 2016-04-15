@@ -162,8 +162,9 @@ pDiaNat =    A  <$ pSym 'A'
 
 -- | Parses a 'Beat'.
 pBeat :: Parser Beat
-pBeat =   One   <$ pSym '1'
-      <|> Two   <$ pSym '2'
-      <|> Three <$ pSym '3'
-      <|> Four  <$ pSym '4'
+pBeat =   One    <$ pSym '1'
+      <|> Two    <$ pSym '2'
+      <|> Three  <$ pSym '3'
+      <|> Four   <$ pSym '4'
+      <|> NoBeat <$ pSym 'x'
       <?> "Beat"

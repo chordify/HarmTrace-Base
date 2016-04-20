@@ -1,3 +1,4 @@
+{-# LANGUAGE DeriveGeneric                    #-}
 {-# LANGUAGE TypeSynonymInstances             #-}
 {-# LANGUAGE FlexibleInstances                #-}
 {-# LANGUAGE ScopedTypeVariables              #-}
@@ -71,6 +72,7 @@ module HarmTrace.Base.Time (
 
 import Data.List                      ( intercalate, mapAccumL )
 import Data.Ratio                     ( (%) )
+import GHC.Generics                   ( Generic )
 
 -- | When reducing and expanding 'Timed' types there might be rounding
 -- errors in the floating point time stamps. The 'roundingError' parameter
@@ -99,15 +101,15 @@ data Timed' t a = Timed { getData :: a
                         -- ^ Returns the contained datatype
                         , getTimeStamps :: [BeatTime t]
                         -- ^ Returns the list of TimeStamps
-                        } deriving (Functor, Show, Eq)
+                        } deriving (Functor, Show, Eq, Generic)
 
 -- | For now, we fix the number of available beats to four, because this is also
 -- hard-coded into the bar and beat-tracker.
-data Beat = One | Two | Three | Four | NoBeat deriving (Eq, Ord, Enum)
+data Beat = One | Two | Three | Four | NoBeat deriving (Eq, Ord, Enum, Generic)
 
 -- | Having a high-level representation of a musical meter: 'Duple' is
 -- counted in two and 'Triple' in three.
-data MeterKind = Duple | Triple deriving (Eq, Show, Ord)
+data MeterKind = Duple | Triple deriving (Eq, Show, Ord, Generic)
 
 --------------------------------------------------------------------------------
 -- Instances of high-level data structure
@@ -135,7 +137,7 @@ showFracShort = take 5 . show
 -- | Represents a musical time stamp, which is a 'NumData' possibly augmented
 -- with a 'Beat' denoting the position of the time stamp within a bar.
 data BeatTime a = BeatTime a Beat
-                | Time     a       deriving (Functor, Eq)
+                | Time     a       deriving (Functor, Eq, Generic)
 
 -- we compare based on the timestamp only
 instance (Ord t, Fractional t) => Ord (BeatTime t) where

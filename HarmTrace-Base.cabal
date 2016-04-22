@@ -55,9 +55,9 @@ Test-Suite test-harmtrace-base
   type:                exitcode-stdio-1.0
   main-is:             Tests.hs
   hs-source-dirs:      src
-  build-depends:       QuickCheck >= 2.8,
+  build-depends:       QuickCheck >= 2.7,
                        random >= 1.1,
-                       HarmTrace-Base == 1.5.0.0,
+                       HarmTrace-Base == 1.5.1.0,
                        base >= 4.2,
                        uu-parsinglib ==2.9.1.*,
                        ListLike >= 3.0.1,

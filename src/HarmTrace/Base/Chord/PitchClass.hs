@@ -26,6 +26,8 @@ module HarmTrace.Base.Chord.PitchClass (
   , rootPC
   , bassPC
   , ignorePitchSpelling
+    -- * Pitch classes applied to keys
+  , keyPitchClasses
     -- * Pitch classes applied to interval sets
   , intValToPitchClss
   , intSetToPC
@@ -51,17 +53,22 @@ newtype PCSet = PCSet {pc :: IntSet} deriving (Show, Eq, Generic)
 
 instance Binary PCSet
 
+-- | The (relative) notes in a major scale
+majorScale :: Num a => [a]
+majorScale = [0,2,4,5,7,9,11]
+
+-- | The (relative) notes in a minor scale
+minorScale :: Num a => [a]
+minorScale = [0,2,3,5,7,8,10]
+
 -- | Returns the semitone value [0 .. 11] of a 'ScaleDegree' where
 -- 0 = C, e.g. F# = 6. For the constructors 'N' and 'X' an error is thrown.
 toPitchClass :: (Diatonic a) => Note a -> Int
 toPitchClass (Note m p)
-  | ix <= 6   = noNegatives (([0,2,4,5,7,9,11] !! ix) + modToInt m) `mod` 12
+  | ix <= 6   = ((majorScale !! ix) + modToInt m) `mod` 12
   | otherwise = error ("HarmTrace.Base.MusicRep.toPitchClass: no semitone for "
                         ++ show p ++ show m )
       where ix = fromEnum p
-            noNegatives s | s < 0     = 12 + s
-                          | otherwise = s
-
 
 -- | Transforms an interval set to and a root into a 'PCSet'
 intSetToPC :: IntSet -> Root -> PCSet
@@ -95,6 +102,13 @@ toPitchClasses c = catchNoChord "Chord.PitchClass.toPitchClasses"
                                 (intSetToPC ivs . chordRoot) c
 
   where ivs = toIntSet c `union` fromList [0, toIntervalClss (chordBass c)]
+
+-- | Return the set of pitches for the given key.
+keyPitchClasses :: Key -> PCSet
+keyPitchClasses k = intSetToPC (fromList scale) (keyRoot k) where
+  scale = case keyMode k of
+    MajMode -> majorScale
+    MinMode -> minorScale
 
 -- | A short-cut applying 'intValToPitchClss' to a 'Chord'. 'bassPC' throws an
 -- error when applied to a 'NoChord' or 'UndefChord'.

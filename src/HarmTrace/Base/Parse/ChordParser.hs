@@ -143,7 +143,8 @@ pAccidental =    Sh <$ pSym    's'
 
 -- | Parses an 'Interval'
 pInterval :: Parser IntNat
-pInterval =  ((!!) [minBound..] ) . pred <$> pNaturalRaw <?> "Interval"
+pInterval =  foldr (<|>) pFail opts <?> "Interval" where
+  opts = [i <$ pString (show i) | i <- [minBound..] ]
 
 -- | Parses a 'Root' 'Note', e.g. @A@, @Bb@, or @F#@.
 pRoot :: Parser Root

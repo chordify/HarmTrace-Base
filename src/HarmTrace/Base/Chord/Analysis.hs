@@ -59,6 +59,8 @@ import Data.IntSet                     ( IntSet, toAscList, member, (\\) )
 -- | Returns the 'ClassType' given a 'Chord'. This function uses
 -- 'analyseDegClassType' to analyse a chord and derive the 'ClassType'
 toClassType :: Chord a -> ClassType
+toClassType NoChord    = NoClass
+toClassType UndefChord = NoClass
 toClassType (Chord  _r  sh []   _b) = shToClassType sh -- no additions
 -- combine the degrees and analyse them. N.B., also NoAdd degrees are resolved
 toClassType c = analyseDegClassType . toIntSet $ c

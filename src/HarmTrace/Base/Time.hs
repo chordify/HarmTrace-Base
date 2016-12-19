@@ -3,6 +3,7 @@
 {-# LANGUAGE FlexibleInstances                #-}
 {-# LANGUAGE ScopedTypeVariables              #-}
 {-# LANGUAGE DeriveFunctor                    #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving       #-}
 
 --------------------------------------------------------------------------------
 -- |
@@ -28,6 +29,7 @@ module HarmTrace.Base.Time (
   , Beat (..)
   , BeatTime (..)
   , MeterKind (..)
+  , BPM (..)
 
   -- * Functions
   -- ** Data access
@@ -67,10 +69,11 @@ module HarmTrace.Base.Time (
   , beat
   , pprint
   , prettyPrint
+  , estimateTempo
 
 ) where
 
-import Data.List                      ( intercalate, mapAccumL )
+import Data.List                      ( intercalate, mapAccumL, sort )
 import Data.Ratio                     ( (%) )
 import GHC.Generics                   ( Generic )
 
@@ -110,6 +113,9 @@ data Beat = One | Two | Three | Four | NoBeat deriving (Eq, Ord, Enum, Generic)
 -- | Having a high-level representation of a musical meter: 'Duple' is
 -- counted in two and 'Triple' in three.
 data MeterKind = Duple | Triple deriving (Eq, Show, Ord, Generic)
+
+-- | Number of beats per minute
+newtype BPM = BPM {bpm :: Int}  deriving (Show, Eq, Num)
 
 --------------------------------------------------------------------------------
 -- Instances of high-level data structure
@@ -412,3 +418,17 @@ pprint (Timed d [ ]) = "not set - not set: " ++ show d
 pprint (Timed d [x]) = show x ++" - not set: " ++ show d
 pprint (Timed d ts ) = show (head ts) ++ " - " ++ show (last ts)
                                       ++ ": "  ++ show d
+
+-- | Estimate the tempo of the song by taking the median of the timestamps. The
+--   result is returned as the number of semiquavers per minute.
+estimateTempo :: [Timed a] -> BPM
+estimateTempo = BPM . tempo . median . unify . map onset
+
+  where unify :: [Float] -> [Float]
+        unify = snd . mapAccumL (\p c -> (c,c-p)) 0
+
+        median :: [Float] -> Float
+        median l = sort l !! (length l `div` 2)
+
+        tempo :: Float -> Int
+        tempo = round . (1 /) . (/ 60)

@@ -112,6 +112,12 @@ instance Arbitrary MeterKind where
 instance Arbitrary Beat where
   arbitrary = elements [One, Two, Three, Four, NoBeat]
 
+instance Arbitrary Mode where
+  arbitrary = elements [MajMode, MinMode]
+
+instance Arbitrary Key where
+  arbitrary = Key <$> arbitrary <*> arbitrary
+
 pcProp :: Root -> Bool
 pcProp r = (toPitchClass r) == toPitchClass (pcToRoot (toPitchClass r))
 
@@ -158,6 +164,10 @@ correctNextBeatMK :: (MeterKind, ChkTimed) -> Bool
 correctNextBeatMK (mk, ChkTimed _ cs) = correctNextBeat
                                       . ChkTimed mk . mergeTimed . setMeterKind mk $ cs
 
+
+keyShowRead :: Key -> Bool
+keyShowRead k = (read $ show k) == k
+
 --------------------------------------------------------------------------------
 -- Execute the tests
 --------------------------------------------------------------------------------
@@ -176,4 +186,5 @@ main = do let myTest :: Testable p => String -> [p] -> IO ()
           myTest "nextBeat"     [ correctNextBeat ]
           myTest "meterKind"    [ meterKind1, meterKind2 ]
           myTest "meterKind II" [ correctNextBeatMK ]
+          myTest "keyShowRead"  [ keyShowRead ]
           exitSuccess

@@ -185,12 +185,33 @@ data Triad = MajTriad | MinTriad | AugTriad | DimTriad | NoTriad
 -- Instances for the general music datatypes
 --------------------------------------------------------------------------------
 
+instance Read DiatonicNatural where
+  readsPrec _ ('A':xs) = [(A, xs)]
+  readsPrec _ ('B':xs) = [(B, xs)]
+  readsPrec _ ('C':xs) = [(C, xs)]
+  readsPrec _ ('D':xs) = [(D, xs)]
+  readsPrec _ ('E':xs) = [(E, xs)]
+  readsPrec _ ('F':xs) = [(F, xs)]
+  readsPrec _ ('G':xs) = [(G, xs)]
+  readsPrec _ _        = []
+
 instance Show Key where
   show (Key r m) = show r ++ show m
+
+instance Read Key where
+  readsPrec i xs =
+    [ (Key r m, zs)
+    | (r, ys) <- readsPrec i xs
+    , (m, zs) <- readsPrec i ys
+    ]
 
 instance Show Mode where
   show MajMode = ""
   show MinMode = "m"
+
+instance Read Mode where
+  readsPrec _ ('m':xs) = [(MinMode, xs)]
+  readsPrec _      xs  = [(MajMode, xs)]
 
 -- In showing chords, we obey Harte et al.'s syntax as much as possible
 instance Show ChordLabel where
@@ -257,6 +278,13 @@ instance Show (Note IntNat) where
 instance Show (Note DiatonicNatural) where
   show (Note m r) = show r ++ show m
 
+instance Read (Note DiatonicNatural) where
+  readsPrec i xs =
+    [ (Note m r, zs)
+    | (r, ys) <- readsPrec i xs
+    , (m, zs) <- readsPrec i ys
+    ]
+
 instance Show (Note DiatonicDegree) where
   show (Note m r) = show m ++ show r
 
@@ -271,6 +299,13 @@ instance Show Accidental where
   show Fl  = "b"
   show SS  = "##"
   show FF  = "bb"
+
+instance Read Accidental where
+  readsPrec _ ('#':'#':xs) = [(SS, xs)]
+  readsPrec _ (    '#':xs) = [(Sh, xs)]
+  readsPrec _ ('b':'b':xs) = [(FF, xs)]
+  readsPrec _ (    'b':xs) = [(Fl, xs)]
+  readsPrec _          xs  = [(Nat, xs)]
 
 instance Show Addition where
   show (Add   n) = show n

@@ -26,6 +26,7 @@ module HarmTrace.Base.Chord.PitchClass (
   , rootPC
   , bassPC
   , ignorePitchSpelling
+  , altPitchSpelling
     -- * Pitch classes applied to keys
   , keyPitchClasses
     -- * Pitch classes applied to interval sets
@@ -129,6 +130,18 @@ ignorePitchSpelling :: ChordLabel -> ChordLabel
 ignorePitchSpelling NoChord    = NoChord
 ignorePitchSpelling UndefChord = UndefChord
 ignorePitchSpelling c          = fmap (pcToRoot . toPitchClass) c
+
+-- | Give the alternative pitch spelling of a chord (if it exists)
+altPitchSpelling :: ChordLabel -> Maybe ChordLabel
+altPitchSpelling NoChord    = Nothing
+altPitchSpelling UndefChord = Nothing
+altPitchSpelling (Chord (Note acc root) short add intervc) = case acc of
+  Nat -> Nothing
+  FF  -> Nothing -- todo: is this right?
+  SS  -> Nothing -- todo: is this right?
+  Fl  -> Just $ Chord (Note Sh (pred root)) short add intervc
+  Sh  -> Just $ Chord (Note Fl (succ root)) short add intervc
+
 --------------------------------------------------------------------------------
 -- Classes
 --------------------------------------------------------------------------------

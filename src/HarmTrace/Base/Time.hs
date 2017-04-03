@@ -115,7 +115,7 @@ data Beat = One | Two | Three | Four | NoBeat deriving (Eq, Ord, Enum, Generic)
 data MeterKind = Duple | Triple deriving (Eq, Show, Ord, Generic)
 
 -- | Number of beats per minute
-newtype BPM = BPM {bpm :: Int}  deriving (Show, Eq, Num)
+newtype BPM = BPM {bpm :: Int}  deriving (Show, Eq, Ord, Generic, Num)
 
 --------------------------------------------------------------------------------
 -- Instances of high-level data structure

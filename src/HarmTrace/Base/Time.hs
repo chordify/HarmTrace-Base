@@ -1,3 +1,4 @@
+
 {-# LANGUAGE DeriveGeneric                    #-}
 {-# LANGUAGE TypeSynonymInstances             #-}
 {-# LANGUAGE FlexibleInstances                #-}
@@ -75,6 +76,7 @@ module HarmTrace.Base.Time (
 
 import Data.List                      ( intercalate, mapAccumL, sort )
 import Data.Ratio                     ( (%) )
+import Data.Binary                    ( Binary )
 import GHC.Generics                   ( Generic )
 
 -- | When reducing and expanding 'Timed' types there might be rounding
@@ -121,6 +123,9 @@ newtype BPM = BPM {bpm :: Int}  deriving (Show, Eq, Ord, Generic, Num)
 -- Instances of high-level data structure
 --------------------------------------------------------------------------------
 
+instance Binary Beat
+instance Binary a => Binary (BeatTime a)
+instance (Binary t, Binary a) => Binary (Timed' t a)
 
 instance Show Beat where
   show One   = "1"

@@ -422,10 +422,13 @@ pprint (Timed d ts ) = show (head ts) ++ " - " ++ show (last ts)
 -- | Estimate the tempo of the song by taking the median of the timestamps. The
 --   result is returned as the number of semiquavers per minute.
 estimateTempo :: [Timed a] -> BPM
-estimateTempo = BPM . tempo . median . unify . map onset
-
+estimateTempo ts = case ts of
+  []  -> BPM 0
+  [t] -> BPM $ tempo $ offset t - onset t
+  _   -> BPM $ tempo $ median $ unify $ map onset ts
+  
   where unify :: [Float] -> [Float]
-        unify = snd . mapAccumL (\p c -> (c,c-p)) 0
+        unify l = zipWith (-) (tail l) l
 
         median :: [Float] -> Float
         median l = sort l !! (length l `div` 2)

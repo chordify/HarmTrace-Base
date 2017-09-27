@@ -1,5 +1,5 @@
 name:                HarmTrace-Base
-version:             1.5.5.0
+version:             1.5.6.0
 synopsis:            Parsing and unambiguously representing musical chords.
 description:         HarmTrace: Harmony Analysis and Retrieval of Music
                      with Type-level Representations of Abstract
@@ -17,7 +17,7 @@ author:              W. Bas de Haas and Jose Pedro Magalhaes
 maintainer:          bas@chordify.net, dreixel@chordify.net
 category:            Music
 build-type:          Simple
-tested-with:         GHC == 7.4.1, GHC == 7.6.1, GHC == 7.8.2, GHC == 7.10.2, GHC == 8.0.2
+tested-with:         GHC == 7.4.1, GHC == 7.6.1, GHC == 7.8.2, GHC == 7.10.2, GHC == 8.0.2, GHC == 8.2.1
 cabal-version:       >=1.10
 extra-Source-Files:  README.md CHANGELOG.md
 source-repository head
@@ -40,7 +40,7 @@ library
   other-modules:       HarmTrace.Base.Chord.Internal
   hs-source-dirs:      src
 
-  build-depends:       base >= 4.4 && < 4.10,
+  build-depends:       base >= 4.4 && < 5,
                        uu-parsinglib ==2.9.1.*,
                        ListLike >= 3.0.1,
                        binary >= 0.6.4,
@@ -57,7 +57,7 @@ Test-Suite test-harmtrace-base
   hs-source-dirs:      src
   build-depends:       QuickCheck >= 2.7,
                        random >= 1.1,
-                       HarmTrace-Base == 1.5.5.0,
+                       HarmTrace-Base -any,
                        base >= 4.2,
                        uu-parsinglib ==2.9.1.*,
                        ListLike >= 3.0.1,

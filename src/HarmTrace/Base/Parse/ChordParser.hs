@@ -56,22 +56,32 @@ pChordLabel = mkChord <$> pRoot <* (pSym ':' `opt` ':')
                       <*> (pAdditions `opt` [])
                       <*> pInversion where
 
-  mkChord :: Root -> Maybe Shorthand -> [Addition] -> Maybe Interval
+  mkChord :: Root -> Maybe Shorthand -> [Addition] -> Either Interval Root 
           -> ChordLabel
   -- if there are no degrees and no shorthand, following Harte it
   -- should be labelled a Maj chord
-  mkChord r Nothing [] b = Chord   r Maj             [] (inversion b)
-  mkChord r Nothing  a b = toChord r (addToIntSet a)    b
-  mkChord r (Just s) a b = Chord   r s               a  (inversion b)
+  mkChord r Nothing [] b = Chord   r Maj             [] (toInversion r b)
+  mkChord r Nothing  a b = toChord r (addToIntSet a)    (toInversion r b)
+  mkChord r (Just s) a b = Chord   r s               a  (toInversion r b)
 
-  -- prepares an inversion, if any
-  inversion :: Maybe Interval -> Interval
-  inversion = maybe (Note Nat I1) id
-
+  toInversion :: Root -> Either Interval Root -> Interval
+  toInversion _  (Left  iv) = iv
+  toInversion ra (Right rb) = pitchToInterval ra rb
+  
 -- Parses an inversion, but inversions are ignored for now.
-pInversion :: Parser (Maybe Interval)
-pInversion = pMaybe (pSym '/' *> pIntNote) <?> "/Inversion"
+-- pInversion :: Parser Interval
+-- pInversion = inversion <$> pMaybe (pSym '/' *> (pIntNote <|> pRoot)) <?> "/Inversion" where
 
+  -- -- prepares an inversion, if any
+  -- inversion :: Maybe (Either Interval Root) -> Interval
+  -- inversion = fromMaybe (Note Nat I1) 
+
+pInversion :: Parser (Either Interval Root)
+pInversion =    Left  <$ pSym '/' <*> pIntNote
+           <|>  Right <$ pSym '/' <*> pRoot
+           <<|> pure (Left $ Note Nat I1)
+           <?> "/Inversion"           
+  
 -- | parses a musical key description, e.g. @C:maj@, or @D:min@
 pKey :: Parser Key
 pKey = f <$> pRoot <* pSym ':' <*> pShorthand <?> "Key"

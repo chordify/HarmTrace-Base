@@ -39,6 +39,7 @@ module HarmTrace.Base.Chord.Analysis (
   , toChordDegree
   , toScaleDegree
   , intervalToPitch
+  , pitchToInterval
 
   -- exported twice
   -- , icToInterval
@@ -327,10 +328,13 @@ transpose ns n sem = ns !! ((sem + (toPitchClass n)) `mod` 12)
 intervalToPitch :: Root -> Interval -> Root
 intervalToPitch r = pcToRoot . intValToPitchClss r
 
+pitchToInterval :: Root -> Root -> Interval
+pitchToInterval ra rb = intervals !! ((toPitchClass rb - toPitchClass ra) `mod` 12)
+
 -- | Given an 'IntSet' (Interval Set), a 'Root' 'Note' and an optional
 -- bass 'Interval', returns a 'Chord'
-toChord :: Root -> IntSet -> Maybe Interval -> Chord Root
-toChord r is mi = Chord r sh add (maybe (Note Nat I1) id mi)
+toChord :: Root -> IntSet -> Interval -> Chord Root
+toChord r is mi = Chord r sh add mi
 
  where add = map (Add . icToInterval) $ toAscList (is \\ shToIntSet sh)
        sh  = analyseTetra is

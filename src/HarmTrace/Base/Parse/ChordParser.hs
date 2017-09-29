@@ -48,7 +48,6 @@ pChord =     pChordLabel
          <?> "Chord"
 
 -- Parses a chord label
--- TODO add support for inversion
 pChordLabel :: Parser ChordLabel
 {-# INLINE pChordLabel #-}
 pChordLabel = mkChord <$> pRoot <* (pSym ':' `opt` ':')
@@ -68,13 +67,6 @@ pChordLabel = mkChord <$> pRoot <* (pSym ':' `opt` ':')
   toInversion _  (Left  iv) = iv
   toInversion ra (Right rb) = pitchToInterval ra rb
   
--- Parses an inversion, but inversions are ignored for now.
--- pInversion :: Parser Interval
--- pInversion = inversion <$> pMaybe (pSym '/' *> (pIntNote <|> pRoot)) <?> "/Inversion" where
-
-  -- -- prepares an inversion, if any
-  -- inversion :: Maybe (Either Interval Root) -> Interval
-  -- inversion = fromMaybe (Note Nat I1) 
 
 pInversion :: Parser (Either Interval Root)
 pInversion =    Left  <$ pSym '/' <*> pIntNote
@@ -161,6 +153,7 @@ pRoot :: Parser Root
 {-# INLINE pRoot #-}
 pRoot = (flip Note) <$> pDiaNat <*> pAccidental
 
+-- | Parses a 'DiatonicNatural'.
 pDiaNat :: Parser DiatonicNatural
 {-# INLINE pDiaNat #-}
 pDiaNat =    A  <$ pSym 'A'

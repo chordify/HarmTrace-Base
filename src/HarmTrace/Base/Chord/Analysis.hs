@@ -328,6 +328,7 @@ transpose ns n sem = ns !! ((sem + (toPitchClass n)) `mod` 12)
 intervalToPitch :: Root -> Interval -> Root
 intervalToPitch r = pcToRoot . intValToPitchClss r
 
+-- | The inverse of 'intervalToPitch' 
 pitchToInterval :: Root -> Root -> Interval
 pitchToInterval ra rb = intervals !! ((toPitchClass rb - toPitchClass ra) `mod` 12)
 

@@ -40,10 +40,10 @@ module HarmTrace.Base.Chord.Analysis (
   , toScaleDegree
   , intervalToPitch
   , pitchToInterval
-
-  -- exported twice
-  -- , icToInterval
   , toChord
+  -- * Alternative Chord Printing
+  , showChordWithRootInterval
+    
   ) where
 
 import HarmTrace.Base.Chord.Datatypes
@@ -52,6 +52,7 @@ import HarmTrace.Base.Chord.Intervals
 import HarmTrace.Base.Chord.Internal
 
 import Data.IntSet                     ( IntSet, toAscList, member, (\\) )
+import Data.List                       ( intercalate )
 
 --------------------------------------------------------------------------------
 -- Transformation and analysis of chords
@@ -339,3 +340,22 @@ toChord r is mi = Chord r sh add mi
 
  where add = map (Add . icToInterval) $ toAscList (is \\ shToIntSet sh)
        sh  = analyseTetra is
+
+--------------------------------------------------------------------------------
+-- Alternative printing
+--------------------------------------------------------------------------------
+
+showChordWithRootInterval :: ChordLabel -> String
+showChordWithRootInterval c = 
+  let showIv :: Root -> Interval -> String
+      showIv _ (Note Nat I1) = ""
+      showIv r i             = '/' : show (intervalToPitch r i)
+      
+      showAdd :: [Addition] -> String
+      showAdd [] = ""
+      showAdd x  = '(' : intercalate "," (map show x) ++ ")"
+  in case c of 
+       NoChord    -> "N"
+       UndefChord -> "X"
+       (Chord r None []  b) -> show r ++ ":1" ++ showIv r b
+       (Chord r sh   add b) -> show r ++ ':' : show sh ++ showAdd add ++ showIv r b       

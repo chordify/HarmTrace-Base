@@ -17,9 +17,36 @@ module HarmTrace.Base.Chord (
   , module HarmTrace.Base.Chord.Analysis
   , module HarmTrace.Base.Chord.PitchClass
   , module HarmTrace.Base.Chord.Intervals
+  -- * Alternative Chord Printing
+  , showChordWithNoteInversion
   ) where
 
 import HarmTrace.Base.Chord.Datatypes
 import HarmTrace.Base.Chord.Analysis
 import HarmTrace.Base.Chord.PitchClass
 import HarmTrace.Base.Chord.Intervals
+
+import Data.List                       ( intercalate )
+
+
+--------------------------------------------------------------------------------
+-- Alternative printing
+--------------------------------------------------------------------------------
+
+-- | The Show instance obides the Harte syntax, but it can be more convenient
+-- to show a chord with the inversion printed as a 'Note' instead of an 
+-- 'Interval'
+showChordWithNoteInversion :: ChordLabel -> String
+showChordWithNoteInversion c = 
+  let showIv :: Root -> Interval -> String
+      showIv _ (Note Nat I1) = ""
+      showIv r i             = '/' : show (intervalToPitch r i)
+      
+      showAdd :: [Addition] -> String
+      showAdd [] = ""
+      showAdd x  = '(' : intercalate "," (map show x) ++ ")"
+  in case c of 
+       NoChord    -> "N"
+       UndefChord -> "X"
+       (Chord r None []  b) -> show r ++ ":1" ++ showIv r b
+       (Chord r sh   add b) -> show r ++ ':' : show sh ++ showAdd add ++ showIv r b 

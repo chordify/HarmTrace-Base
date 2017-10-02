@@ -116,13 +116,13 @@ instance Arbitrary Mode where
   arbitrary = elements [MajMode, MinMode]
 
 instance Arbitrary Key where
-  arbitrary = Key <$> arbitrary <*> arbitrary
-
+  arbitrary = Key <$> arbitrary <*> arbitrary  
+  
 pcProp :: Root -> Bool
 pcProp r = (toPitchClass r) == toPitchClass (pcToRoot (toPitchClass r))
 
 pcSetProp :: Chord Root -> Bool
-pcSetProp c = c == toChord (chordRoot c) (toIntSet c) (Just $ chordBass c)
+pcSetProp c = c == toChord (chordRoot c) (toIntSet c) (chordBass c)
 
 intervalProp :: Interval -> Bool
 intervalProp i = i == icToInterval (toIntervalClss i)
@@ -135,6 +135,11 @@ enHarEqProp a = a &== a
 
 parseProp :: Chord Root -> Bool
 parseProp c = parseDataSafe pChord (show c) == c
+
+-- N.B. this test passes if you limit the inversions to intervals within one 
+-- octave.
+parseNoteInversionProp :: Chord Root -> Bool
+parseNoteInversionProp c = parseDataSafe pChord (showChordWithNoteInversion c) == c
 
 mergeTimedTest, mergeTimedTest2, mergeTimedTest3, mergeTimedTest4 :: ChkTimed -> Bool
 mergeTimedTest (ChkTimed _ cs) = expandTimed (mergeTimed cs) == expandTimed cs

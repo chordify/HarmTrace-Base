@@ -30,6 +30,8 @@ import HarmTrace.Base.Parse.General
 import HarmTrace.Base.Chord
 import HarmTrace.Base.Time
 
+import Data.List                   ( sort )
+
 --------------------------------------------------------------------------------
 -- Parsing String of Musical Chords
 --------------------------------------------------------------------------------
@@ -119,7 +121,7 @@ pShorthand =     Maj      <$ pString "maj"
 
 -- | Parses a list of 'Chord' 'Addition's within parenthesis
 pAdditions :: Parser [Addition]
-pAdditions = pPacked (pSym '(') (pSym ')') ( pListSep (pSym ',') pAddition )
+pAdditions = sort <$> pPacked (pSym '(') (pSym ')') ( pListSep (pSym ',') pAddition )
              <?> "Addition List"
 
 -- | Parses the a 'Chord' 'Addition' (or the removal of a chord addition,

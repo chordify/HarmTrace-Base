@@ -51,13 +51,15 @@ module HarmTrace.Base.Chord.Datatypes (
   -- * Tests & Utilities
   , shortChord
   , discardBass
+  , addition
+  , insertAdd
   , isNoneChord
   , isAddition
   , catchNoChord
   ) where
 
 import Data.Maybe                 ( fromJust )
-import Data.List                  ( elemIndex, intercalate )
+import Data.List                  ( elemIndex, intercalate, insert, delete )
 import Data.Binary                ( Binary )
 import GHC.Generics               ( Generic )
 
@@ -218,14 +220,9 @@ instance Show ChordLabel where
   show NoChord    = "N"
   show UndefChord = "X"
   show (Chord r None []  b) = show r ++ ":1" ++ showIv b
-  show (Chord r sh   add b) = show r ++ ':' : show sh ++ showAdd add ++ showIv b
-  -- show (Chord r None []  _loc _d) = show r ++ (if isRoot r then ":1" else "")
-  -- show (Chord r None add _loc _d) = show r ++ ':' : showAdd add
-  -- show (Chord r sh   add _loc _d) = show r ++ ':' : show sh ++ showAdd add
-  -- show c = case chordRoot c of
-     -- n@(Note Nat N) -> show n
-     -- n@(Note Nat X) -> show n
-     -- r                  -> show r ++ ':' : show (chordShorthand c) ++ ' ' : show ( toPitchClasses  c)
+  show (Chord r sh   add b) = 
+    let (sh', add') = toHarte sh
+    in show r ++ ':' : show sh' ++ showAdd (concatMap (insertAdd add') add) ++ showIv b
 
 showIv :: Interval -> String
 showIv (Note Nat I1) = ""
@@ -247,19 +244,21 @@ instance Show Shorthand where
   show Dim7     = "dim7"
   show HDim7    = "hdim7"
   show MinMaj7  = "minmaj7"
-  show Aug7     = "aug7"
   show Maj6     = "maj6"
   show Min6     = "min6"
+  show Nin      = "9"
   show Maj9     = "maj9"
   show Min9     = "min9"
+  show Sus4     = "sus4"
+  
+  -- not part of the official Harte specification  
+  show Aug7     = "aug7"
   show Min11    = "min11"
   show Min13    = "min13"
   show Maj13    = "maj13"
-  show Sus4     = "sus4"
   show Sus2     = "sus2"
   show SevSus4  = "7sus4"
   show Five     = "5"
-  show Nin      = "9"
   show Eleven   = "11"
   show Thirteen = "13"
   show None     = ""
@@ -337,6 +336,18 @@ isAddition :: Addition -> Bool
 isAddition (Add   _) = True
 isAddition (NoAdd _) = False
 
+-- | Adds an 'Addition' to a 'Chord'
+addition :: Chord a -> Addition -> Chord a
+addition NoChord            _ = NoChord
+addition UndefChord         _ = UndefChord
+addition (Chord r sh ads b) a = Chord r sh (insertAdd ads a) b 
+
+-- | Applies an 'Addition' to a list of 'Addition's
+insertAdd :: [Addition] -> Addition -> [Addition]
+insertAdd l (Add   a) = insert (Add a) l
+insertAdd l (NoAdd r) = delete (Add r) l
+
+
 -- | Discards a base note by replacing the bass 'Interval' by a
 -- 'Note' 'Nat' 'I1'
 discardBass :: Chord a -> Chord a
@@ -354,6 +365,19 @@ catchNoChord s f c = case c of
        UndefChord -> error ("HarmTrace.Base."++s++" applied to a UndefChord")
        _          -> f c
 
+toHarte :: Shorthand -> (Shorthand, [Addition])
+toHarte c = case c of
+  Aug7     -> (Aug,  [Add (Note Fl  I7 )])
+  Min11    -> (Min9, [Add (Note Nat I11)])
+  Min13    -> (Min9, [Add (Note Nat I11), Add (Note Nat I13)])
+  Maj13    -> (Min13,[Add (Note Nat I11), Add (Note Nat I13)])
+  Sus2     -> (Sus4, [NoAdd (Note Nat I4), Add (Note Nat I2)])
+  SevSus4  -> (Sus4, [Add (Note Fl I7)])
+  Five     -> (None, [Add (Note Nat I5)])
+  Eleven   -> (Nin,  [Add (Note Nat I11)])
+  Thirteen -> (Nin,  [Add (Note Nat I11),Add (Note Nat I13)])
+  sh       -> (sh, [])     
+  
 --------------------------------------------------------------------------------
 -- Binary instances
 --------------------------------------------------------------------------------

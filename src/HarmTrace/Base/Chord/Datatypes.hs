@@ -117,7 +117,9 @@ chordBass = catchNoChord "Chord.Datatypes.chordBass" (\(Chord _ _ _ b) -> b)
 data ClassType = MajClass | MinClass | DomClass | DimClass | NoClass
   deriving (Eq, Enum, Ord, Bounded, Generic)
 
--- | Following Harte et al., we define a number of chord 'Shorthand's
+-- | Following Harte et al., we define a number of chord 'Shorthand's. We 
+-- support a few extra shorthand, but the show intance of 'Shorthand' will only
+-- output the 'Shorthand's that are in the official specification
 data Shorthand = -- | Triadic chords
                  Maj | Min | Dim | Aug
                  -- | Seventh chords
@@ -221,8 +223,9 @@ instance Show ChordLabel where
   show UndefChord = "X"
   show (Chord r None []  b) = show r ++ ":1" ++ showIv b
   show (Chord r sh   add b) = 
-    let (sh', add') = toHarte sh
-    in show r ++ ':' : show sh' ++ showAdd (concatMap (insertAdd add') add) ++ showIv b
+    let (sh', x) = toHarte sh
+        add'     = foldl (insertAdd) add x
+    in show r ++ ':' : show sh' ++ showAdd add' ++ showIv b
 
 showIv :: Interval -> String
 showIv (Note Nat I1) = ""

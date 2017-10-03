@@ -58,7 +58,7 @@ instance Arbitrary Addition where
 
 instance Arbitrary a => Arbitrary (Chord a) where
   arbitrary = do r   <- arbitrary
-                 sh  <- elements [Maj, Min, Aug, Dim, Maj7, Min7, Sev, Dim7, HDim7, Aug7, MinMaj7]
+                 sh  <- elements [Maj, Min, Aug, Dim, Maj7, Min7, Sev, Dim7, HDim7, MinMaj7]
                  -- sh  <- arbitrary
                  -- add <- arbitrary >>= listOf . return . Add
 

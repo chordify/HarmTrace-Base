@@ -222,15 +222,12 @@ instance Show ChordLabel where
   show NoChord    = "N"
   show UndefChord = "X"
   show (Chord r None []  b) = show r ++ ":1" ++ showIv b
-  show (Chord r sh   add b) = 
-    let (sh', x) = toHarte sh
-        add'     = foldl (insertAdd) add x
-    in show r ++ ':' : show sh' ++ showAdd add' ++ showIv b
+  show c = let (Chord r sh add b) = toHarte c
+           in show r ++ ':' : show sh ++ showAdd add ++ showIv b
 
 showIv :: Interval -> String
 showIv (Note Nat I1) = ""
 showIv i             = '/' : show i
-
 
 showAdd :: [Addition] -> String
 showAdd [] = ""
@@ -368,8 +365,19 @@ catchNoChord s f c = case c of
        UndefChord -> error ("HarmTrace.Base."++s++" applied to a UndefChord")
        _          -> f c
 
-toHarte :: Shorthand -> (Shorthand, [Addition])
-toHarte c = case c of
+-- | HarmTrace-Base accepts a larger vacabulary of 'Shorthand's then in specified
+-- in the original Harte specification. This function ensures that a chord is
+-- compatible with Harte syntax.
+toHarte :: Chord a -> Chord a 
+toHarte NoChord          = NoChord
+toHarte UndefChord       = UndefChord
+toHarte (Chord r sh a b) = let (sh', x) = toHarteSh sh
+                               a'       = foldl (insertAdd) a x
+                            -- in show r ++ ':' : show sh' ++ showAdd add' ++ showIv b
+                           in Chord r sh' a' b
+
+toHarteSh :: Shorthand -> (Shorthand, [Addition])
+toHarteSh c = case c of
   Aug7     -> (Aug,  [Add (Note Fl  I7 )])
   Min11    -> (Min9, [Add (Note Nat I11)])
   Min13    -> (Min9, [Add (Note Nat I11), Add (Note Nat I13)])
@@ -380,6 +388,8 @@ toHarte c = case c of
   Eleven   -> (Nin,  [Add (Note Nat I11)])
   Thirteen -> (Nin,  [Add (Note Nat I11),Add (Note Nat I13)])
   sh       -> (sh, [])     
+  
+  
   
 --------------------------------------------------------------------------------
 -- Binary instances

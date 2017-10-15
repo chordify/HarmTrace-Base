@@ -331,7 +331,7 @@ pitchToInterval ra rb = intervals !! ((toPitchClass rb - toPitchClass ra) `mod` 
 
 -- | Given an 'IntSet' (Interval Set), a 'Root' 'Note' and an optional
 -- bass 'Interval', returns a 'Chord'
-toChord :: Root -> IntSet -> Interval -> Chord Root
+toChord :: a -> IntSet -> Interval -> Chord a
 toChord r is mi = Chord r sh add mi
 
  where add = map (Add . icToInterval) $ toAscList (is \\ shToIntSet sh)

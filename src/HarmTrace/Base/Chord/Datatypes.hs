@@ -374,7 +374,7 @@ toHarte c = case c of
   Min11    -> (Min9, [Add (Note Nat I11)])
   Min13    -> (Min9, [Add (Note Nat I11), Add (Note Nat I13)])
   Maj13    -> (Min13,[Add (Note Nat I11), Add (Note Nat I13)])
-  Sus2     -> (Sus4, [NoAdd (Note Nat I4), Add (Note Nat I2)])
+  Sus2     -> (None, [Add (Note Nat I2 ), Add (Note Nat I5)])
   SevSus4  -> (Sus4, [Add (Note Fl I7)])
   Five     -> (None, [Add (Note Nat I5)])
   Eleven   -> (Nin,  [Add (Note Nat I11)])

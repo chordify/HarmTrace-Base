@@ -56,6 +56,7 @@ module HarmTrace.Base.Chord.Datatypes (
   , isNoneChord
   , isAddition
   , catchNoChord
+  , toHarte
   ) where
 
 import Data.Maybe                 ( fromJust )
@@ -381,7 +382,7 @@ toHarteSh c = case c of
   Aug7     -> (Aug,  [Add (Note Fl  I7 )])
   Min11    -> (Min9, [Add (Note Nat I11)])
   Min13    -> (Min9, [Add (Note Nat I11), Add (Note Nat I13)])
-  Maj13    -> (Min13,[Add (Note Nat I11), Add (Note Nat I13)])
+  Maj13    -> (Maj9, [Add (Note Nat I11), Add (Note Nat I13)])
   Sus2     -> (None, [Add (Note Nat I2 ), Add (Note Nat I5)])
   SevSus4  -> (Sus4, [Add (Note Fl I7)])
   Five     -> (None, [Add (Note Nat I5)])

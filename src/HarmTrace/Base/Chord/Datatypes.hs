@@ -63,6 +63,7 @@ import Data.Maybe                 ( fromJust )
 import Data.List                  ( elemIndex, intercalate, insert, delete )
 import Data.Binary                ( Binary )
 import GHC.Generics               ( Generic )
+import Control.DeepSeq            ( NFData )
 
 --------------------------------------------------------------------------------
 -- Representing musical information at the value level
@@ -408,3 +409,20 @@ instance Binary IntNat
 instance Binary a => Binary (Note a)
 instance Binary Accidental
 instance Binary Triad
+
+--------------------------------------------------------------------------------
+-- NFData
+--------------------------------------------------------------------------------
+
+instance NFData Key
+instance NFData Mode
+instance NFData a => NFData (Chord a)
+instance NFData ClassType
+instance NFData Shorthand
+instance NFData DiatonicDegree
+instance NFData DiatonicNatural
+instance NFData Addition
+instance NFData IntNat
+instance NFData a => NFData (Note a)
+instance NFData Accidental
+instance NFData Triad

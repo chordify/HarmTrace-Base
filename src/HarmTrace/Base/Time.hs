@@ -78,6 +78,7 @@ import Data.List                      ( intercalate, mapAccumL, sort )
 import Data.Ratio                     ( (%) )
 import Data.Binary                    ( Binary )
 import GHC.Generics                   ( Generic )
+import Control.DeepSeq                ( NFData )
 
 -- | When reducing and expanding 'Timed' types there might be rounding
 -- errors in the floating point time stamps. The 'roundingError' parameter
@@ -126,6 +127,10 @@ newtype BPM = BPM {bpm :: Int}  deriving (Show, Eq, Ord, Generic, Num)
 instance Binary Beat
 instance Binary a => Binary (BeatTime a)
 instance (Binary t, Binary a) => Binary (Timed' t a)
+
+instance NFData Beat
+instance NFData a => NFData (BeatTime a)
+instance (NFData t, NFData a) => NFData (Timed' t a)
 
 instance Show Beat where
   show One   = "1"

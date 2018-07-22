@@ -2,8 +2,8 @@
 
 ## HarmTrace Base: Parsing and unambiguously representing musical chords 
 
-HarmTrace base is a library for representing musical chords. It is used a 
-small number of programs. A Chordify we build our back-end in Haskell and the 
+HarmTrace base is a library for representing musical chords. It is used in a 
+small number of programs. At Chordify we build our back-end in Haskell and the 
 HarmTrace-Base library is used to represent, store, manipulate, print chords 
 etc. Basically the library offers a set of types and classes for representing 
 musical chords in an unambiguous manner as presented in [1].

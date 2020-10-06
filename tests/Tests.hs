@@ -180,9 +180,10 @@ keyShowRead k = (read $ show k) == k
 
 main :: IO ()
 main = do let myTest :: Testable p => String -> [p] -> IO ()
-              myTest s p = do putStrLn (" *** Testing HarmTrace-Base: "++ s ++": ... ")
-                              rs <- mapM verboseCheckResult p
-                              when (not . all isSuccess $ rs) exitFailure
+              myTest s p = do rs <- mapM quickCheckResult p
+                              when (not . all isSuccess $ rs) $ do
+                                putStrLn (" *** Testing HarmTrace-Base: "++ s ++" failed")
+                                exitFailure
 
           myTest "roots"        [ pcProp, enHarEqProp ]
           myTest "chords"       [ {- pcSetProp, -}  parseProp ]

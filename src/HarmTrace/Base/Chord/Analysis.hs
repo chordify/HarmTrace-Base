@@ -39,6 +39,7 @@ module HarmTrace.Base.Chord.Analysis (
   , toChordDegree
   , toScaleDegree
   , isChordInKey
+  , isNoteInKey
   , intervalToPitch
   , pitchToInterval
   , toChord    
@@ -301,6 +302,10 @@ toScaleDegree (Key kr _) cr  = -- Note Nat I
 -- | Check if all notes in a chord are in a key
 isChordInKey :: ChordLabel -> Key -> Bool
 isChordInKey c k = pc (toPitchClasses c) `isSubsetOf` pc (keyPitchClasses k)
+
+-- | Check if a note is part of a key
+isNoteInKey :: Root -> Key -> Bool
+isNoteInKey n k = toPitchClass n `member` pc (keyPitchClasses k)
 
 -- | Transposes a Root with a 'Int' semitones up
 transposeRoot :: Root -> Int -> Root

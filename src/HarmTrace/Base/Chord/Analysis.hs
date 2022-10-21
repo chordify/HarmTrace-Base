@@ -38,6 +38,7 @@ module HarmTrace.Base.Chord.Analysis (
   , transposeSD
   , toChordDegree
   , toScaleDegree
+  , isChordInKey
   , intervalToPitch
   , pitchToInterval
   , toChord    
@@ -48,7 +49,7 @@ import HarmTrace.Base.Chord.PitchClass
 import HarmTrace.Base.Chord.Intervals
 import HarmTrace.Base.Chord.Internal
 
-import Data.IntSet                     ( IntSet, toAscList, member, (\\) )
+import Data.IntSet                     ( IntSet, toAscList, member, (\\), isSubsetOf )
 
 --------------------------------------------------------------------------------
 -- Transformation and analysis of chords
@@ -296,6 +297,10 @@ toScaleDegree :: Key -> Root -> ScaleDegree
   -- error ("HarmTrace.Base.MusicRep.toScaleDegree: cannot transpose " ++ show n)
 toScaleDegree (Key kr _) cr  = -- Note Nat I
   scaleDegrees!!(((toPitchClass cr) - (toPitchClass kr)) `mod` 12)
+
+-- | Check if all notes in a chord are in a key
+isChordInKey :: ChordLabel -> Key -> Bool
+isChordInKey c k = pc (toPitchClasses c) `isSubsetOf` pc (keyPitchClasses k)
 
 -- | Transposes a Root with a 'Int' semitones up
 transposeRoot :: Root -> Int -> Root
